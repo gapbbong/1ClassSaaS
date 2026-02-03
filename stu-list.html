@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 목록</title>
+  <link rel="stylesheet" href="src/css/main.css">
+  <link rel="stylesheet" href="src/css/stu-list.css">
+</head>
+
+<body>
+  <div class="title-row">
+    <h2 id="class-title">반 정보</h2>
+    <div id="teacher-info" class="teacher-info"></div>
+  </div>
+
+  <div id="student-list" class="student-grid loading">📷</div>
+
+  <div id="overlay" onclick="closePopup()"></div>
+  <div id="popup"></div>
+
+  <div class="floating-controls">
+    <button>◀</button>
+    <button>🏠</button>
+    <button>▶</button>
+  </div>
+
+  <script type="module" src="src/js/student.js"></script>
+
+</body>
+
+</html>

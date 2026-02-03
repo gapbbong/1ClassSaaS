@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기록 모아보기</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <link rel="stylesheet" href="src/css/total-records.css">
+</head>
+
+<body>
+    <div class="top-bar">
+        <a href="index.html" class="back-link">← 처음으로</a>
+        <h1 id="page-title">기록 모아보기</h1>
+    </div>
+
+    <div class="container">
+        <div class="stats-section">
+            <div id="total-count" class="total-count">총 0건</div>
+            <button id="sort-num" class="sort-btn active">학번순</button>
+            <button id="sort-time" class="sort-btn">최신순</button>
+        </div>
+
+        <div id="log-container" class="log-container">
+            <!-- 기록 카드들이 여기에 렌더링됩니다 -->
+            <div class="loading-msg">데이터를 가져오는 중입니다...</div>
+        </div>
+    </div>
+
+    <script type="module" src="src/js/total-records.js"></script>
+</body>
+
+</html>

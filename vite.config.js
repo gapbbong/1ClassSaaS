@@ -1,0 +1,20 @@
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+
+export default defineConfig({
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        student: resolve(__dirname, 'stu-list.html'),
+        record: resolve(__dirname, 'record.html'),
+        search: resolve(__dirname, 'search.html'),
+        bulk: resolve(__dirname, 'bulk-record.html'),
+        total: resolve(__dirname, 'total-records.html')
+      }
+    }
+  },
+  server: {
+    open: true
+  }
+});

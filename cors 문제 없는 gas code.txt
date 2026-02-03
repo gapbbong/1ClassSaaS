@@ -1,0 +1,126 @@
+const SPREADSHEET_ID = "1Fnvbd2_oDlZ_JZ874smNhDoXDqvZhOzApjAFleeZIdU"; 
+
+function doGet(e) {
+  const action = e.parameter.action;
+  
+  if (action == "login") {
+    return checkLogin(e.parameter.id);
+  } else if (action == "getSettings") {
+    return getSettings();
+  } else if (action == "log") {
+    return recordLog(e.parameter);
+  }
+  
+  // 기본: 전체 학생 명단 반환
+  return getAllStudents();
+}
+
+function doPost(e) {
+  const p = e.parameter;
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  
+  // 1. 다중(일괄) 기록 저장
+  if (p.action === "bulkRecord") {
+    const sheet = ss.getSheetByName("기록");
+    const targets = JSON.parse(p.targets); // [{num, name}, ...]
+    
+    // 현재 시간
+    const now = new Date();
+    const timeStr = Utilities.formatDate(now, "Asia/Seoul", "yyyy-MM-dd HH:mm");
+
+    targets.forEach(stu => {
+      sheet.appendRow([
+        timeStr, 
+        stu.num, 
+        stu.name, 
+        p.teacher, 
+        p.good, 
+        p.bad, 
+        p.detail
+      ]);
+    });
+    return ContentService.createTextOutput(JSON.stringify({result:"success", count: targets.length})).setMimeType(ContentService.MimeType.JSON);
+  } 
+  // 2. 로그 기록 (POST 방식)
+  else if (p.action === "log") {
+    return recordLog(p);
+  }
+  // 3. 기록 삭제
+  else if (p.action === "delete") {
+     const sheet = ss.getSheetByName("생활기록");
+     const data = sheet.getDataRange().getValues();
+     for (let i = 1; i < data.length; i++) {
+        // 학번과 시간이 대략 일치하면 삭제 (문자열 비교)
+        if (String(data[i][1]) === String(p.num) && String(data[i][0]).includes(p.time.substring(0,10))) {
+           sheet.deleteRow(i + 1);
+           return ContentService.createTextOutput(JSON.stringify({result:"success"})).setMimeType(ContentService.MimeType.JSON);
+        }
+     }
+     return ContentService.createTextOutput(JSON.stringify({result:"fail"})).setMimeType(ContentService.MimeType.JSON);
+  }
+  // 4. 단일 기록 저장 (기존 방식 호환)
+  else {
+    const sheet = ss.getSheetByName("생활기록");
+    sheet.appendRow([p.time, p.num, p.name, p.teacher, p.good, p.bad, p.detail]);
+    return ContentService.createTextOutput(JSON.stringify({result:"success"})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// 교사 로그인 확인
+function checkLogin(id) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName("Teachers");
+  const data = sheet.getDataRange().getValues();
+  let result = { success: false, name: "" };
+  
+  for (let i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === String(id)) {
+      result.success = true;
+      result.name = data[i][1];
+      break;
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 설정(칭찬/벌점) 가져오기
+function getSettings() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName("Settings");
+  const data = sheet.getDataRange().getValues();
+  let settings = { good: [], bad: [] };
+  
+  for (let i = 1; i < data.length; i++) {
+    if(data[i][0]) settings.good.push(data[i][0]);
+    if(data[i][1]) settings.bad.push(data[i][1]);
+  }
+  return ContentService.createTextOutput(JSON.stringify(settings)).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 로그 기록
+function recordLog(p) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName("AccessLog");
+  if (!sheet) sheet = ss.insertSheet("AccessLog");
+  
+  sheet.appendRow([new Date(), p.id, p.action, p.device]); // A:시간, B:ID, C:행동, D:기기
+  return ContentService.createTextOutput(JSON.stringify({result:"logged"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+// 전체 학생 데이터
+function getAllStudents() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName("학생목록");
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const students = [];
+
+  for (let i = 1; i < data.length; i++) {
+    let student = {};
+    for (let j = 0; j < headers.length; j++) {
+      student[headers[j]] = data[i][j];
+    }
+    students.push(student);
+  }
+  return ContentService.createTextOutput(JSON.stringify(students)).setMimeType(ContentService.MimeType.JSON);
+}

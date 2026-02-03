@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 검색</title>
+  <link rel="stylesheet" href="src/css/main.css">
+  <link rel="stylesheet" href="src/css/search.css">
+</head>
+
+<body>
+  <h2>🔍 학생 검색</h2>
+
+  <div class="search-container">
+    <form id="searchForm" class="search-form">
+      <select id="category">
+        <option value="이름" selected>이름</option>
+        <option value="학번">학번</option>
+        <option value="출신중">출신중</option>
+        <option value="학생폰">연락처(통합)</option>
+      </select>
+      <input type="text" id="keyword" placeholder="검색어 입력..." required />
+      <button type="submit">검색</button>
+    </form>
+  </div>
+
+  <div id="result-count"></div>
+  <div id="results"></div>
+
+  <!-- 학년별/과별 인원 통계 -->
+  <div id="summary"></div>
+
+  <script type="module" src="src/js/search.js"></script>
+
+</body>
+
+</html>

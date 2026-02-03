@@ -1,0 +1,187 @@
+/* record.html 전용 스타일 */
+
+/* 상단 헤더 */
+/* 상단 여백 추가를 위해 body에 padding-top 추가 혹은 header-row에 margin-top 추가 */
+/* 여기서는 공통 body padding과 별개로 record 페이지 특화 여백 추가 */
+
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    /* 최상단 여백 추가 */
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #eee;
+    width: 100%;
+    /* 너비 꽉 채우기 */
+    box-sizing: border-box;
+    /* 패딩 포함 */
+}
+
+.header-row h2 {
+    margin: 0;
+    font-size: 28px;
+    text-align: center;
+    flex-grow: 1;
+    /* 가운데 공간 차지 */
+    /* 양쪽 버튼과 겹치지 않게 최소 여백 */
+    padding: 0 10px;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.btn-back {
+    background-color: #e0e0e0;
+    color: #333;
+}
+
+.btn-save {
+    background-color: #3399ff;
+    color: white;
+}
+
+.btn-save:disabled {
+    background-color: #ccc;
+}
+
+/* 폼 영역 */
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 15px;
+    color: #333;
+}
+
+select,
+input,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+/* 잘한 일 / 못한 일 수평 배치 */
+.behavior-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.behavior-group-good {
+    width: 40%;
+}
+
+.behavior-group-bad {
+    width: 57%;
+}
+
+/* 자세히 필드 */
+textarea#detail {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    /* 폰트 일관성 추가 */
+    font-weight: bold;
+    font-size: 15px;
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* 기록 내역 영역 */
+.record-log {
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
+.record-log h3 {
+    border-bottom: 2px solid #3399ff;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+/* 로딩 애니메이션 추가 */
+.loading-records {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+    color: #666;
+    font-weight: bold;
+}
+
+.loading-records::after {
+    content: "기록을 불러오는 중입니다";
+    animation: loadingDots 1.5s infinite steps(1, end);
+}
+
+@keyframes loadingDots {
+    0% {
+        content: "기록을 불러오는 중입니다";
+    }
+
+    25% {
+        content: "기록을 불러오는 중입니다.";
+    }
+
+    50% {
+        content: "기록을 불러오는 중입니다..";
+    }
+
+    75% {
+        content: "기록을 불러오는 중입니다...";
+    }
+
+    100% {
+        content: "기록을 불러오는 중입니다...";
+    }
+}
+
+.log-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: relative;
+    /* 삭제 버튼 배치를 위해 */
+}
+
+/* 삭제 버튼 스타일 추가 */
+.btn-delete {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #fff;
+    border: 1px solid #ff4d4d;
+    color: #ff4d4d;
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background-color: #ff4d4d;
+    color: white;
+}

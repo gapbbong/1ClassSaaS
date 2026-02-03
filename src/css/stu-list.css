@@ -1,0 +1,268 @@
+/* stu-list.html 전용 스타일 */
+
+body {
+    text-align: center;
+}
+
+/* 제목 영역 */
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 16px;
+    margin-top: 10px;
+    line-height: 1;
+}
+
+@media (min-width: 480px) {
+    .title-row {
+        flex-direction: row;
+        justify-content: center;
+        gap: 12px;
+    }
+}
+
+#class-title {
+    font-size: clamp(24px, 5.5vw, 40px);
+    /* 모바일에서 조금 더 작게 시작 */
+    margin: 4px 0;
+    font-weight: bold;
+    white-space: nowrap;
+    /* 글자가 절대 줄바꿈되지 않게 설정 */
+}
+
+#teacher-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: clamp(16px, 3.5vw, 32px);
+    /* 공간 확보를 위해 크기 소폭 축소 */
+    margin-bottom: 8px;
+    white-space: nowrap;
+}
+
+#teacher-info a {
+    margin: 0 3px;
+}
+
+/* 학생 그리드 */
+.student-grid {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    /* Flexbox child에서 width가 없으면 auto-fill 계산 불가 이슈 해결 */
+    width: 100%;
+    max-width: 1400px;
+    /* 너무 넓어지는 것 방지, 중앙 정렬 효과 */
+
+    /* 기본 모바일: 3열 고정 */
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (min-width: 600px) {
+    .student-grid {
+        gap: 12px;
+        /* 태블릿/PC: 자동 채움 (약 120px ~ 150px 기준, 1200px화면이면 8~10개) */
+        /* PC에서 8장 내외로 나오게 하려면 minmax 값을 조절 */
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+.student-grid.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding-top: 0.1%;
+    font-size: 24px;
+    color: #666;
+    text-align: center;
+    font-weight: bold;
+}
+
+.student-grid.loading::after {
+    content: "사진을 불러오는 중입니다";
+    animation: loadingDots 1.5s infinite steps(1, end);
+}
+
+@keyframes loadingDots {
+    0% {
+        content: "사진을 불러오는 중입니다";
+    }
+
+    25% {
+        content: "사진을 불러오는 중입니다.";
+    }
+
+    50% {
+        content: "사진을 불러오는 중입니다..";
+    }
+
+    75% {
+        content: "사진을 불러오는 중입니다...";
+    }
+
+    100% {
+        content: "사진을 불러오는 중입니다...";
+    }
+}
+
+/* 학생 카드 */
+.student {
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.img-container {
+    position: relative;
+    width: 100%;
+}
+
+.student img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+}
+
+/* aspect-ratio 미지원 브라우저 대응 */
+@supports not (aspect-ratio: 3 / 4) {
+    .img-container {
+        padding-top: 133.33%;
+    }
+
+    .img-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+    }
+}
+
+.student-name {
+    margin-top: 6px;
+    /* 사진과 이름 사이 여백 추가 */
+    font-size: clamp(20px, 4vw, 32px);
+    font-weight: bold;
+}
+
+.student.inactive {
+    opacity: 0.5;
+}
+
+.student .status-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(220, 53, 69, 0.9);
+    /* 빨간색 계열 */
+    color: #fff;
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    z-index: 2;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.student .record-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    background: rgba(255, 193, 7, 0.95);
+    /* 노란색/금색 계열 */
+    color: #212529;
+    font-size: 0.85em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    z-index: 2;
+    font-weight: 900;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 팝업 스타일 */
+#popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    z-index: 1000;
+    width: 300px;
+    display: none;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+#popup h3 {
+    font-size: 20px;
+    margin: 10px 0 5px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#popup .info {
+    margin-bottom: 8px;
+    font-size: 16px;
+    text-align: left;
+}
+
+#popup .info a {
+    margin-left: 5px;
+    text-decoration: none;
+}
+
+#popup img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+    border-radius: 10px;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    display: none;
+    z-index: 999;
+}
+
+/* 플로팅 컨트롤 (네비게이션) */
+.floating-controls {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    z-index: 1001;
+}
+
+.floating-controls button {
+    font-size: 20px;
+    padding: 10px 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(200, 200, 200, 0.4);
+    background: transparent;
+    color: #3399ff;
+    cursor: pointer;
+}

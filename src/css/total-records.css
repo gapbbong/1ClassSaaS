@@ -1,0 +1,230 @@
+.top-bar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14px 20px;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+}
+
+.back-link {
+    position: absolute;
+    left: 20px;
+    text-decoration: none;
+    color: #4A90E2;
+    font-weight: 700;
+}
+
+.top-bar h1 {
+    font-size: 1.1em;
+    margin: 0;
+    font-weight: 800;
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px 15px;
+}
+
+.stats-section {
+    display: flex;
+    justify-content: flex-end;
+    /* 전체 우측 정렬 */
+    align-items: center;
+    gap: 8px;
+    /* 요소 간격 */
+    margin-bottom: 15px;
+    padding: 0 5px;
+}
+
+.sort-controls {
+    display: flex;
+    gap: 6px;
+    /* 버튼과 건수 텍스트를 모두 포함하는 느낌으로 구성 */
+}
+
+.sort-btn {
+    padding: 6px 12px;
+    border: 1px solid #4A90E2;
+    background: #fff;
+    color: #4A90E2;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.sort-btn.active {
+    background: #4A90E2;
+    color: #fff;
+}
+
+.total-count {
+    font-size: 0.9em;
+    color: #4A90E2;
+    font-weight: 800;
+    white-space: nowrap;
+    margin-right: 2px;
+    /* 학번순 버튼과의 미세 간격 */
+    padding-left: 5px;
+}
+
+.log-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.log-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #4A90E2;
+}
+
+.card-inner {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+}
+
+.student-photo-area {
+    flex-shrink: 0;
+}
+
+.student-photo {
+    width: 80px;
+    height: 95px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+    background: #f9f9f9;
+}
+
+.record-info-area {
+    flex: 1;
+    min-width: 0;
+    /* 강제 줄바꿈 방지 */
+}
+
+.log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.student-info {
+    font-weight: 800;
+    color: #333;
+    font-size: 1.05em;
+}
+
+.log-time {
+    font-size: 0.8em;
+    color: #999;
+}
+
+.log-content {
+    font-size: 0.95em;
+    line-height: 1.4;
+    color: #444;
+    word-break: break-all;
+}
+
+.deed-tags {
+    margin-top: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tag {
+    font-size: 0.85em;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+.tag-good {
+    background: #e1f5fe;
+    color: #0277bd;
+}
+
+.tag-bad {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.loading-msg {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+/* 로딩 애니메이션 추가 */
+.loading-records {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+    font-weight: bold;
+}
+
+.loading-records::after {
+    content: "기록을 불러오는 중입니다";
+    animation: loadingDots 1.5s infinite steps(1, end);
+}
+
+@keyframes loadingDots {
+    0% {
+        content: "기록을 불러오는 중입니다";
+    }
+
+    25% {
+        content: "기록을 불러오는 중입니다.";
+    }
+
+    50% {
+        content: "기록을 불러오는 중입니다..";
+    }
+
+    75% {
+        content: "기록을 불러오는 중입니다...";
+    }
+
+    100% {
+        content: "기록을 불러오는 중입니다";
+    }
+}
+
+@media (max-width: 600px) {
+    .stats-section {
+        flex-direction: row;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .sort-btn {
+        padding: 5px 10px;
+        font-size: 0.75em;
+    }
+
+    .total-count {
+        font-size: 0.8em;
+    }
+
+    .top-bar h1 {
+        font-size: 1em;
+    }
+}

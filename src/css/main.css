@@ -1,0 +1,38 @@
+/* 공통 스타일 */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+* {
+    box-sizing: border-box;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+}
+
+html,
+body {
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 링크 스타일 */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+a:hover,
+a:active,
+a:focus {
+    text-decoration: none;
+}
+
+/* 스크롤바 숨기기 */
+::-webkit-scrollbar {
+    display: none;
+}

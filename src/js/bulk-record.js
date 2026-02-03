@@ -1,0 +1,264 @@
+import { fetchAllStudents } from './api.js';
+import { API_CONFIG } from './config.js';
+import { extractDriveId, getThumbnailUrl } from './utils.js';
+
+let allStudents = [];
+let selectedStudents = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. 초기 데이터 로드 (학생 명단 & 설정)
+    await initData();
+
+    // 2. 검색 입력 이벤트 설정 (버튼 클릭 및 엔터키)
+    const studentInput = document.getElementById("student-input");
+    const searchBtn = document.getElementById("search-btn");
+
+    searchBtn.addEventListener("click", () => handleSearch(studentInput.value));
+    studentInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            handleSearch(studentInput.value);
+        }
+    });
+
+    // 3. 저장 버튼 이벤트 설정
+    const saveBtn = document.getElementById("save-all-btn");
+    saveBtn.addEventListener("click", handleSaveAll);
+
+    // 4. 설정 항목 로드 (칭찬/벌점)
+    loadSettings();
+
+    // [추가] 폰/브라우저 뒤로가기 버튼과 연결 (데이터 유실 방지)
+    window.addEventListener("beforeunload", (e) => {
+        if (selectedStudents.length > 0) {
+            e.preventDefault();
+            e.returnValue = ""; // 브라우저 표준 확인창 출력
+        }
+    });
+});
+
+async function initData() {
+    try {
+        allStudents = await fetchAllStudents();
+        console.log("Loaded students:", allStudents.length);
+    } catch (error) {
+        console.error("Failed to load students:", error);
+        alert("학생 데이터를 불러오지 못했습니다.");
+    }
+}
+
+function handleSearch(value) {
+    const query = value.trim();
+
+    if (!query) return;
+
+    const student = allStudents.find(s => String(s["학번"]) === query);
+
+    if (student) {
+        addStudent(student);
+        document.getElementById("student-input").value = ""; // 입력창 초기화
+        document.getElementById("student-input").focus(); // 다시 포커스
+    } else {
+        alert("학생을 찾을 수 없습니다: " + query);
+    }
+}
+
+function addStudent(student) {
+    // 중복 추가 방지
+    if (selectedStudents.some(s => s["학번"] === student["학번"])) {
+        return;
+    }
+
+    selectedStudents.push(student);
+    appendStudentCard(student); // 전체를 다시 그리지 않고 하나만 추가
+    updateSaveButton();
+}
+
+function removeStudent(num) {
+    selectedStudents = selectedStudents.filter(s => s["학번"] !== num);
+
+    // DOM에서 직접 제거
+    const grid = document.getElementById("selected-students");
+    const cards = grid.querySelectorAll(".student-card");
+    cards.forEach(card => {
+        if (card.getAttribute("data-num") === String(num)) {
+            card.remove();
+        }
+    });
+
+    if (selectedStudents.length === 0) {
+        grid.innerHTML = `<div class="empty-msg">선택된 학생이 없습니다.</div>`;
+    }
+
+    updateSaveButton();
+}
+
+function renderSelectedStudents() {
+    const grid = document.getElementById("selected-students");
+    grid.innerHTML = "";
+
+    if (selectedStudents.length === 0) {
+        grid.innerHTML = `<div class="empty-msg">선택된 학생이 없습니다.</div>`;
+        return;
+    }
+
+    selectedStudents.forEach(student => appendStudentCard(student));
+}
+
+function appendStudentCard(student) {
+    const grid = document.getElementById("selected-students");
+
+    // "선택된 학생이 없습니다" 메시지 제거
+    const emptyMsg = grid.querySelector(".empty-msg");
+    if (emptyMsg) emptyMsg.remove();
+
+    const card = document.createElement("div");
+    card.className = "student-card";
+    card.setAttribute("data-num", student["학번"]);
+
+    const fileId = extractDriveId(student["사진저장링크"]);
+    const imgSrc = getThumbnailUrl(fileId);
+
+    const img = document.createElement("img");
+    img.src = imgSrc;
+    img.loading = "lazy";
+
+    // [개선] 이미지 로드 실패 시 재시도 로직 보강
+    img.onerror = function () {
+        if (this.getAttribute("data-retry")) {
+            // 외부 사이트(placeholder)마저 안 나올 경우를 대비해 1x1 투명 이미지로 대체
+            this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+            return;
+        }
+        this.setAttribute("data-retry", "true");
+        if (fileId) {
+            // 1차(lh3) 실패 시 -> 2차: drive.google.com 썸네일 API로 재시도
+            this.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+        }
+    };
+
+    const info = document.createElement("div");
+    info.className = "info";
+    info.textContent = student["이름"];
+
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "remove-btn";
+    removeBtn.textContent = "×";
+    removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeStudent(student["학번"]);
+    };
+
+    card.appendChild(img);
+    card.appendChild(info);
+    card.appendChild(removeBtn);
+    grid.appendChild(card);
+}
+
+// 글로벌 핸들러로 등록 (팝업에서 쓰는 student.js와 겹치지 않게 주의)
+window.removeBulkStudent = removeStudent;
+
+function updateSaveButton() {
+    const btn = document.getElementById("save-all-btn");
+    btn.textContent = `일괄 저장하기 (${selectedStudents.length}명)`;
+    btn.disabled = selectedStudents.length === 0;
+}
+
+// Settings 시트에서 항목 가져오기 (기존 로직 활용)
+async function loadSettings() {
+    try {
+        // [수정] API_CONFIG.SCRIPT_URL을 사용하여 설정 정보를 가져옴
+        const url = `${API_CONFIG.SCRIPT_URL}?action=getSettings`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        // 데이터 구조가 { result: 'ok', good: [...], bad: [...] } 라고 가정
+        const settings = data;
+
+        const goodSelect = document.getElementById("good-select");
+        const badSelect = document.getElementById("bad-select");
+
+        // 초기화
+        goodSelect.innerHTML = '<option value="">선택</option>';
+        badSelect.innerHTML = '<option value="">선택</option>';
+
+        if (settings.good && Array.isArray(settings.good)) {
+            settings.good.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item;
+                opt.textContent = item;
+                goodSelect.appendChild(opt);
+            });
+        }
+        if (settings.bad && Array.isArray(settings.bad)) {
+            settings.bad.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item;
+                opt.textContent = item;
+                badSelect.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error("Settings load error:", e);
+        // 실패 시 기본 항목이라도 표시
+        const badItems = ["지각", "복장불량", "신발불량", "가방없음", "두발불량"];
+        const badSelect = document.getElementById("bad-select");
+        badItems.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.textContent = item;
+            badSelect.appendChild(opt);
+        });
+    }
+}
+
+async function handleSaveAll() {
+    const good = document.getElementById("good-select").value;
+    const bad = document.getElementById("bad-select").value;
+    const detail = document.getElementById("detail-input").value;
+    const teacher = document.getElementById("teacher-input").value;
+
+    if (!good && !bad && !detail) {
+        alert("기록할 내용을 입력해주세요.");
+        return;
+    }
+
+    if (!confirm(`${selectedStudents.length}명의 학생에게 이 기록을 일괄 저장할까요?`)) {
+        return;
+    }
+
+    const btn = document.getElementById("save-all-btn");
+    btn.disabled = true;
+    btn.textContent = "저장 중...";
+
+    // 전송 데이터 구성
+    const formData = new FormData();
+    formData.append("action", "bulkRecord");
+    formData.append("good", good);
+    formData.append("bad", bad);
+    formData.append("detail", detail);
+    formData.append("teacher", teacher);
+    // 선택된 학생들의 학번과 이름 리스트를 JSON으로 전달
+    const targets = selectedStudents.map(s => ({ num: s["학번"], name: s["이름"] }));
+    formData.append("targets", JSON.stringify(targets));
+
+    try {
+        const response = await fetch(API_CONFIG.SCRIPT_URL, {
+            method: "POST",
+            body: formData
+        });
+        const result = await response.json();
+
+        if (result.result === "success") {
+            alert(`✅ ${result.count}명의 기록이 저장되었습니다.`);
+            location.href = "index.html"; // 메인으로 이동
+        } else {
+            alert("저장 실패: " + result.message);
+        }
+    } catch (error) {
+        console.error("Bulk save error:", error);
+        alert("통신 오류가 발생했습니다.");
+    } finally {
+        btn.disabled = false;
+        updateSaveButton();
+    }
+}

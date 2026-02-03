@@ -1,0 +1,269 @@
+/* search.html 전용 스타일 */
+
+body {
+    text-align: center;
+}
+
+h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+h4 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+/* 검색 폼 */
+.search-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-form select {
+    flex: 0 0 90px;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.search-form input[type="text"] {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.search-form button {
+    flex: 0 0 80px;
+    padding: 8px 16px;
+    font-size: 16px;
+    background-color: #3399ff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* 결과 영역 */
+#result-count {
+    margin-top: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+#results {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+.result-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    background: #f9f9f9;
+    text-align: left;
+}
+
+.result-item img {
+    width: 120px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #aaa;
+}
+
+.info-box {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    /* 글자 간격 조정 */
+}
+
+/* 전화 걸기/문자 아이콘 영역 */
+.phone-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px 0 0 0;
+    font-size: 15px;
+}
+
+.phone-actions a {
+    margin: 0 3px;
+    text-decoration: none;
+    font-size: 18px;
+    line-height: 1;
+}
+
+/* 로딩 스피너 */
+.loader {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 통계 테이블 (공통) */
+#summaryTable,
+.summary-table {
+    width: 100%;
+    /* 너비 통일 (반응형 대응) */
+    max-width: 500px;
+    margin: 20px auto;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+#summaryTable th,
+#summaryTable td,
+.summary-table th,
+.summary-table td {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    text-align: center;
+    white-space: nowrap;
+    font-size: clamp(14px, 1vw, 15px);
+}
+
+.summary-table th {
+    background-color: #f8f8f8;
+    font-weight: bold;
+    border-bottom: 3px solid #000;
+    /* 헤더 강조 */
+}
+
+#summaryTable th {
+    background: #f0f4ff;
+    /* 기존 색상 유지 또는 통일? 일단 기존 유지 */
+}
+
+.summary-table .subtotal {
+    background-color: #fffacd;
+    /* 연한 노랑 */
+    font-weight: bold;
+}
+
+.summary-table .grandtotal {
+    background-color: #e0ffe0;
+    /* 연한 초록 */
+    font-weight: bold;
+}
+
+/* 학년별 구분선 (6반 끝날 때마다) */
+.summary-table tr:nth-child(7),
+.summary-table tr:nth-child(13),
+.summary-table tr:nth-child(19) {
+    border-bottom: 3px solid #000;
+}
+
+/* 모바일 반응형 최적화 */
+@media (max-width: 600px) {
+    h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+
+    .search-form {
+        flex-wrap: wrap;
+        /* 요소가 넘치면 다음 줄로 */
+        padding: 0 10px;
+    }
+
+    .search-form select {
+        flex: 0 0 80px;
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    .search-form input[type="text"] {
+        flex: 1;
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    .search-form button {
+        flex: 1 0 100%;
+        /* 버튼을 아래줄 전체로 보내거나... 아니면 작게 유지 */
+        margin-top: 5px;
+    }
+
+    /* 버튼을 다음 줄로 보내지 않고 합치려면 */
+    .search-form button {
+        flex: 0 0 60px;
+        padding: 6px 10px;
+        font-size: 14px;
+    }
+
+    .result-item {
+        width: 95%;
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .result-item img {
+        width: 80px;
+        height: 100px;
+    }
+
+    .info-box {
+        font-size: 13px;
+    }
+
+    /* 테이블 모바일 최적화 */
+    #summaryTable,
+    .summary-table {
+        font-size: 12px;
+        display: block;
+        /* 스크롤 활성화를 위해 필요할 수 있음 */
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #summaryTable th,
+    #summaryTable td,
+    .summary-table th,
+    .summary-table td {
+        padding: 4px 6px;
+        font-size: 12px;
+    }
+}

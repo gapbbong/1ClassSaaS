@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 생활기록</title>
+  <link rel="stylesheet" href="src/css/main.css">
+  <link rel="stylesheet" href="src/css/record.css">
+</head>
+
+<body>
+
+  <!-- 상단 헤더 -->
+  <div class="header-row">
+    <button type="button" class="btn btn-back">← 뒤로</button>
+    <h2 id="pageTitle">...</h2>
+    <button type="submit" form="recordForm" class="btn btn-save" id="submitBtn">기록 저장</button>
+  </div>
+
+  <form id="recordForm">
+    <!-- 숨김 필드 -->
+    <input type="hidden" id="recordTime">
+
+    <!-- 잘한 일 / 못한 일 -->
+    <div class="behavior-row">
+      <div class="behavior-group-good">
+        <label for="good">잘한 일</label>
+        <select id="good">
+          <option value="">선택</option>
+        </select>
+      </div>
+      <div class="behavior-group-bad">
+        <label for="bad">못한 일</label>
+        <select id="bad">
+          <option value="">선택</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 자세히 -->
+    <label for="detail">자세히</label>
+    <textarea id="detail" placeholder="상세 내용 입력"></textarea>
+
+    <!-- 기록 교사 -->
+    <label for="teacherName">기록 교사(선택)</label>
+    <input type="text" id="teacherName" placeholder="선생님 성함">
+  </form>
+
+  <div class="record-log">
+    <h3>📚 기록 내역</h3>
+    <div id="logContainer">⏳ 기록을 불러오는 중입니다...</div>
+  </div>
+
+  <script type="module" src="src/js/record.js"></script>
+</body>
+
+</html>

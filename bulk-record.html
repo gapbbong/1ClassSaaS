@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일괄 생활기록</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <link rel="stylesheet" href="src/css/bulk-record.css">
+</head>
+
+<body>
+    <header class="top-bar">
+        <h1>일괄 생활기록</h1>
+    </header>
+
+    <div class="container">
+        <!-- 1. 학생 검색 및 리스트 -->
+        <div class="section search-section">
+            <div class="input-group search-box">
+                <input type="number" id="student-input" placeholder="학번 4자리..." maxlength="4" pattern="\d*">
+                <button id="search-btn" class="search-btn">조회</button>
+            </div>
+            <p class="help-text">학번을 입력하고 [조회]를 누르거나 Enter를 치세요.</p>
+
+            <div id="selected-students" class="student-grid">
+                <!-- 추가된 학생 카드가 여기에 표시됨 -->
+                <div class="empty-msg">선택된 학생이 없습니다.</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- 2. 공통 기록 폼 -->
+        <div class="section form-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>잘한 일</label>
+                    <select id="good-select">
+                        <option value="">선택</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>못한 일</label>
+                    <select id="bad-select">
+                        <option value="">선택</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>상세 내용</label>
+                <textarea id="detail-input" placeholder="상세 내용을 입력하세요..." rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>기록 교사 (선택)</label>
+                <input type="text" id="teacher-input" placeholder="선생님 성함">
+            </div>
+
+            <button id="save-all-btn" class="save-btn">일괄 저장하기 (0명)</button>
+        </div>
+    </div>
+
+    <script type="module" src="src/js/bulk-record.js"></script>
+</body>
+
+</html>
