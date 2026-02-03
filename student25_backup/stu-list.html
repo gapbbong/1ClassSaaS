@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학생 목록</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    /* 생략: 기존 CSS 그대로 유지됨 */
+    /* ... 기존의 style 태그 내 CSS는 변경 없이 그대로 사용하면 됩니다 ... */
+  </style>
+</head>
+<body>
+  <div class="class-header">
+    <button id="back-btn">뒤로</button>
+    <div class="class-title" id="class-title"></div>
+    <button id="view-record-btn">기록 보기</button>
+  </div>
+  <div id="teacher-info" class="teacher-info"></div>
+  <div id="student-list" class="student-grid loading"></div>
+  <div id="overlay" onclick="closePopup()"></div>
+  <div id="popup-container"></div>
+
+  <!-- 플로팅 버튼 -->
+  <div class="floating-buttons">
+    <button id="prev-class" title="이전 반">⬅️</button>
+    <button id="go-home" title="홈">🏠</button>
+    <button id="next-class" title="다음 반">➡️</button>
+  </div>
+
+  <script>
+  const grade = parseInt(new URLSearchParams(location.search).get("grade"));
+  const classNum = parseInt(new URLSearchParams(location.search).get("class"));
+  const cacheKey = `${grade}-${classNum}-반`;
+  const expireMs = 1000 * 60 * 60;
+
+  document.getElementById("class-title").textContent = `${grade}학년 ${classNum}반`;
+  document.getElementById("view-record-btn").onclick = () => {
+    location.href = `viewClassRec.html?grade=${grade}&class=${classNum}`;
+  };
+  document.getElementById("back-btn").onclick = () => history.back();
+  document.getElementById("prev-class").onclick = () => {
+    const newGrade = classNum === 1 && grade === 1 ? 3 : (classNum === 1 ? grade - 1 : grade);
+    const newClass = classNum === 1 ? 6 : classNum - 1;
+    location.href = `stu-list.html?grade=${newGrade}&class=${newClass}`;
+  };
+  document.getElementById("next-class").onclick = () => {
+    const newGrade = classNum === 6 && grade === 3 ? 1 : (classNum === 6 ? grade + 1 : grade);
+    const newClass = classNum === 6 ? 1 : classNum + 1;
+    location.href = `stu-list.html?grade=${newGrade}&class=${newClass}`;
+  };
+  document.getElementById("go-home").onclick = () => {
+    location.href = "index.html";
+  };
+
+  // 🔹 교사 정보 가져오기
+  fetch("get-teachers.php")
+    .then(res => res.json())
+    .then(data => {
+      const info = data.find(t => t.grade == grade && t.class == classNum);
+      if (info) {
+        document.getElementById("teacher-info").innerHTML = `
+          <div class="teacher-line">
+            <a href="tel:${info.homeroomPhone}"><img src="icons/phone-red.png" style="width:20px;" /></a>
+            <span>${info.homeroom}</span>
+            <a href="sms:${info.homeroomPhone}"><img src="icons/message-blue.png" style="width:20px;" /></a>
+            &nbsp;&nbsp;
+            <a href="tel:${info.subPhone}"><img src="icons/phone-red.png" style="width:20px;" /></a>
+            <span>${info.sub}</span>
+            <a href="sms:${info.subPhone}"><img src="icons/message-blue.png" style="width:20px;" /></a>
+          </div>
+        `;
+      }
+    })
+    .catch(err => {
+      console.error("교사 정보 실패:", err);
+    });
+
+  // 🔹 학생 데이터 캐싱 후 로딩
+  const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
+  const now = Date.now();
+
+  if (cached && now - cached.savedAt < expireMs) {
+    renderStudents(cached.students);
+  } else {
+    fetch(`student-api.php?grade=${grade}&class=${classNum}`)
+      .then(res => res.json())
+      .then(students => {
+        localStorage.setItem(cacheKey, JSON.stringify({ savedAt: now, students }));
+        renderStudents(students);
+      })
+      .catch(err => {
+        document.getElementById("student-list").textContent = "❌ 데이터 불러오기 실패";
+        console.error(err);
+      });
+  }
+
+  function extractDriveId(url) {
+    const match = url?.match(/(?:\/d\/|id=)([\w-]{25,})/);
+    return match ? match[1] : null;
+  }
+
+function showPopup(student) {
+console.log("선택된 학생 데이터:", student);
+
+  fetch("popup.html")
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById("popup-container").innerHTML = html;
+      document.getElementById("popup-close").onclick = closePopup;
+
+      const fileId = extractDriveId(student.photo_path);
+      const imgUrl = fileId
+        ? `https://drive.google.com/thumbnail?id=${fileId}`
+        : (student.photo_path?.startsWith("photos/") ? student.photo_path : "photos/noimg.jpg");
+
+      document.getElementById("popup-img").src = imgUrl;
+      document.getElementById("popup-name").textContent = `${student.student_id} ${student.name}`;
+
+      document.getElementById("popup-info").innerHTML = `
+  <div><strong>학생폰:</strong> ${student.phone || "없음"}</div>
+  <div><strong>부:</strong> ${student.father_phone || "없음"}</div>
+  <div><strong>모:</strong> ${student.mother_phone || "없음"}</div>
+  <div><strong>주소:</strong> ${student.address || "없음"}</div>
+  <div><strong>출신중:</strong> ${student.middle_school || "없음"}</div>
+  <div><strong>학적:</strong> ${student.status?.trim() || "재학중"}</div>
+`;
+
+
+      document.getElementById("record-btn").onclick = () => {
+        location.href = `input.html?name=${encodeURIComponent(student.name)}&num=${encodeURIComponent(student.student_id)}`;
+      };
+
+      document.getElementById("popup").style.display = "block";
+      document.getElementById("overlay").style.display = "block";
+    });
+}
+
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+  document.getElementById("overlay").style.display = "none";
+}
+
+  function renderStudents(students) {
+  const list = document.getElementById("student-list");
+  list.classList.remove("loading");
+  list.innerHTML = "";
+
+  students.forEach(student => {
+    const container = document.createElement("div");
+    container.className = "student";
+
+    const img = document.createElement("img");
+
+    if (student.photo_path?.includes("drive.google.com") || student.photo_path?.includes("thumbnail?id=")) {
+      const fileId = extractDriveId(student.photo_path);
+      img.src = `https://drive.google.com/thumbnail?id=${fileId}`;
+    } else if (student.photo_path?.startsWith("photos/")) {
+      img.src = encodeURI(student.photo_path);
+    } else {
+      img.src = "photos/noimg.jpg";
+    }
+
+    img.onerror = () => {
+      img.src = "photos/noimg.jpg";
+    };
+
+    const name = document.createElement("div");
+    name.className = "student-name";
+    const num = String(student.student_id).padStart(4, "0").slice(2);  // 마지막 2자리 추출
+name.textContent = `${num} ${student.name}`;
+
+
+    // 학적 상태 뱃지
+    const status = student["학적"]?.trim();
+    if (status && status !== "재학중") {
+      const badge = document.createElement("div");
+      badge.className = "status-badge";
+      badge.textContent = status;
+
+      if (status.includes("위탁")) badge.style.backgroundColor = "rgba(0,102,255,0.8)";
+      if (status.includes("자퇴")) badge.style.backgroundColor = "rgba(255,0,0,0.8)";
+      if (status.includes("전학")) badge.style.backgroundColor = "rgba(255,102,0,0.8)";
+
+      container.appendChild(badge);
+      if (["자퇴", "전학"].some(s => status.includes(s))) img.classList.add("dimmed");
+    }
+
+    let pressTimer;
+    img.addEventListener("touchstart", e => {
+      e.stopPropagation();
+      pressTimer = setTimeout(() => {
+        location.href = `input.html?name=${encodeURIComponent(student["이름"])}&num=${encodeURIComponent(student["학번"])}`;
+      }, 600);
+    });
+    img.addEventListener("touchend", () => clearTimeout(pressTimer));
+    img.addEventListener("touchmove", () => clearTimeout(pressTimer));
+
+    container.appendChild(img);
+    container.appendChild(name);
+    container.addEventListener("click", () => showPopup(student));
+    list.appendChild(container);
+  });
+
+  if (students.length === 0) {
+    list.textContent = "👀 해당 반의 데이터가 없습니다.";
+  }
+}
+
+</script>
+
+</body>
+</html>

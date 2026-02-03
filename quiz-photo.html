@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>사진 이름 퀴즈</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+
+    main {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: clamp(24px, 6vw, 36px);
+      margin-bottom: 20px;
+    }
+
+    .photo-container {
+      position: relative;
+    }
+
+    .photo {
+      width: 100%;
+      border-radius: 12px;
+      border: 3px solid #ccc;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    /* ✅ 정답일 때 세련된 애니메이션 효과 */
+    .overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 50px;
+      font-weight: bold;
+      background: rgba(0, 255, 127, 0.8); /* 연두 원형 배경 */
+      color: white;
+      width: 100px;
+      height: 100px;
+      line-height: 100px;
+      border-radius: 50%;
+      box-shadow: 0 0 10px rgba(0, 255, 127, 0.8);
+      display: none;
+      animation: pop 0.4s ease;
+    }
+
+    @keyframes pop {
+      0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    /* ❌ 오답 시 정답 이름 표시 */
+    .answer-label {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 48px; /* ✅ 기존보다 2배 */
+      font-weight: bold;
+      color: white;   /* ✅ 흰색으로 */
+      text-shadow: 2px 2px 8px black; /* 가독성 향상 */
+      display: none;
+    }
+
+    .choices {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .choice {
+      padding: 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: 2px solid #bbb;
+      background-color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .choice:hover {
+      background: #eef;
+    }
+
+    .correct {
+      background: #d3f9d8;
+      border-color: green;
+    }
+
+    .wrong {
+      background: #ffe0e0;
+      border-color: red;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h2>👀 학생 이름 맞히기</h2>
+    <div id="quiz">문제 불러오는 중...</div>
+  </main>
+
+  <script>
+    let correctName = "";
+
+    function loadQuiz() {
+      const container = document.getElementById("quiz");
+      container.innerHTML = "문제 불러오는 중...";
+
+      fetch("get-quiz-students.php")
+        .then(res => res.json())
+        .then(data => {
+          if (data.error) {
+            container.innerHTML = `<p>${data.error}</p>`;
+            return;
+          }
+
+          correctName = data.answer;
+
+          container.innerHTML = `
+            <div class="photo-container">
+              <img src="${data.photo}" class="photo" alt="학생 사진">
+              <div class="overlay" id="overlay">✨</div> <!-- ✅ 세련된 표시 -->
+              <div class="answer-label" id="answer-label">${data.answer}</div>
+            </div>
+            <div class="choices">
+              ${data.choices.map(name => `
+                <div class="choice" onclick="checkAnswer(this, '${name}')">${name}</div>
+              `).join('')}
+            </div>
+          `;
+        });
+    }
+
+    function checkAnswer(element, selectedName) {
+  const buttons = document.querySelectorAll(".choice");
+  buttons.forEach(btn => btn.onclick = null);
+
+  const overlay = document.getElementById("overlay");
+  const answerLabel = document.getElementById("answer-label");
+
+  let delay = 2000; // 기본 대기시간
+
+  if (selectedName === correctName) {
+    element.classList.add("correct");
+    overlay.style.display = "block";
+    delay = 350;  // ✅ 정답일 경우 더 빨리
+  } else {
+    element.classList.add("wrong");
+    const correctEl = [...buttons].find(btn => btn.textContent === correctName);
+    if (correctEl) correctEl.classList.add("correct");
+
+    answerLabel.style.display = "block";
+  }
+
+  setTimeout(loadQuiz, delay);
+}
+
+
+    window.addEventListener("DOMContentLoaded", loadQuiz);
+  </script>
+</body>
+</html>

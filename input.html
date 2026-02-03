@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>생활기록 입력</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 30px;
+      max-width: 700px;
+      margin: auto;
+      background-color: #f9f9f9;
+    }
+
+    .top-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .back-button {
+      background-color: #ccc;
+      border: none;
+      color: #333;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .top-header h2 {
+      font-size: 24px;
+      flex-grow: 1;
+      text-align: center;
+      margin: 0;
+    }
+
+    .record-button.secondary {
+      background-color: #007bff;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    select, input, textarea {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    textarea {
+      margin-bottom: 1px;
+    }
+
+    .info-text {
+      font-size: 13px;
+      margin-top: 4px;
+      color: #777;
+    }
+
+    #saving-text {
+      display: none;
+      margin-top: 25px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      color: #3399ff;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 25px;
+      font-size: 15px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
+    .good-text {
+      color: blue;
+      font-weight: bold;
+    }
+
+    .bad-text {
+      color: red;
+      font-weight: bold;
+    }
+
+    .time-cell {
+      font-size: 13px;
+      color: #333;
+      line-height: 1.3;
+      white-space: pre-line;
+    }
+
+    #history th:nth-child(1),
+    #history td:nth-child(1),
+    #history th:nth-child(2),
+    #history td:nth-child(2) {
+      white-space: nowrap;
+      min-width: 40px;
+      max-width: 60px;
+    }
+
+    #history th:nth-child(6),
+    #history td:nth-child(6) {
+      white-space: pre-line;
+      line-height: 1.3;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+  <script defer src="record-script.js"></script>
+</head>
+<body>
+  <div class="top-header">
+    <button class="back-button" onclick="history.back()">뒤로</button>
+    <h2 id="page-title">로딩 중...</h2>
+    <button class="record-button secondary" onclick="submitData()">기록하기</button>
+  </div>
+
+  <form onsubmit="submitData(); return false;">
+    <label for="good">잘한 일</label>
+    <select id="good" name="good">
+      <option value="">선택하세요</option>
+    </select>
+
+    <label for="bad">못한 일</label>
+    <select id="bad" name="bad">
+      <option value="">선택하세요</option>
+    </select>
+
+    <label for="teacher">기록자(선택, 선생님 성함 중 이름 초성)</label>
+    <input type="text" id="teacher" name="teacher" placeholder="예: ㅊㅅ (김철수)" />
+    <div class="info-text">※ 입력해 주시면 신뢰도 업! 부탁드려요~</div>
+
+    <label for="detail">자세히 (선택사항)</label>
+    <textarea id="detail" name="detail" rows="4" placeholder="추가 설명이 필요한 경우 입력"></textarea>
+  </form>
+
+  <div id="saving-text">기록 중입니다...</div>
+  <div id="result-msg"></div>
+
+  <div id="history">
+    <h3>📋 이전 기록</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>학번</th>
+          <th>이름</th>
+          <th>잘한 일</th>
+          <th>못한 일</th>
+          <th>기록자</th>
+          <th>시간</th>
+          <th>자세히</th>
+        </tr>
+      </thead>
+      <tbody id="record-body">
+        <tr><td colspan="7">불러오는 중...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>📸 랜덤 학생 사진</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; margin-top: 50px; }
+    img { max-width: 200px; border: 2px solid #333; border-radius: 10px; }
+    .error { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>📸 랜덤 학생 사진</h2>
+  <button onclick="loadPhoto()">학생 사진</button>
+  <div id="photoBox"></div>
+  <p id="nameBox"></p>
+  <p class="error" id="errorBox"></p>
+
+  <script>
+    async function loadPhoto() {
+      const res = await fetch("get-random-student.php");
+      const data = await res.json();
+
+      const photoBox = document.getElementById("photoBox");
+      const nameBox = document.getElementById("nameBox");
+      const errorBox = document.getElementById("errorBox");
+
+      photoBox.innerHTML = "";
+      nameBox.textContent = "";
+      errorBox.textContent = "";
+
+      if (data.error) {
+        errorBox.textContent = "🚨 " + data.error;
+        return;
+      }
+
+      const img = document.createElement("img");
+      img.src = "photos/" + data.photo_path;
+      img.alt = "학생 사진";
+
+      photoBox.appendChild(img);
+      nameBox.textContent = data.name;
+    }
+  </script>
+</body>
+</html>
