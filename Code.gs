@@ -31,11 +31,13 @@ function doGet(e) {
   const action = e.parameter.action;
 
   if (action === "verifyStudent") return verifyStudent(e.parameter.num);
-  if (action == "login") return checkLogin(e.parameter.id);
-  if (action == "getSettings") return getSettings();
-  if (action == "log") return recordLog(e.parameter);
-  if (action == "getStudentRecords") return getStudentRecords(e.parameter.num);
-  if (action == "getGroupRecords") return getGroupRecords(e.parameter.grade, e.parameter.class);
+  if (action === "login") return checkLogin(e.parameter.id);
+  if (action === "getSettings") return getSettings();
+  if (action === "getClassStats") return getClassStats();
+  if (action === "getStudentsByClass") return getStudentsByClass(e.parameter.grade, e.parameter.class);
+  if (action === "getStudentRecords") return getStudentRecords(e.parameter.num);
+  if (action === "getGroupRecords") return getGroupRecords(e.parameter.grade, e.parameter.class);
+  if (action === "log") return recordLog(e.parameter);
 
   return getAllStudents();
 }

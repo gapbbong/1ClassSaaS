@@ -169,10 +169,6 @@ body {
 }
 
 /* 로딩 애니메이션 추가 */
-.loading-records {
-    /* 더 이상 그리드 옆에 붙지 않도록 배경색이나 레이아웃 방해 요소 제거 */
-}
-
 .loading-dots::after {
     content: "";
     animation: loadingDots 1.5s infinite steps(1, end);
