@@ -10,6 +10,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 1. [최적화] 먼저 기본 레이아웃을 즉시 그립니다.
   renderInitialGrid(container);
 
+  const pageTitle = document.querySelector(".page-title");
+  if (pageTitle) {
+    pageTitle.innerHTML = `기록 <span class="loading-dots">불러오는 중</span>`;
+  }
+
   try {
     // 2. [최적화] 경량화된 통계 데이터만 비동기로 가져옵니다.
     const stats = await fetchClassStats();

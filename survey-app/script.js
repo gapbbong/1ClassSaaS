@@ -1,7 +1,7 @@
 // ✅ Student Survey App JS (v1)
 
 // [중요] 실제 서비스 시에는 선생님의 GAS SCRIPT_URL로 교체 완료해야 함
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxH4KzYZrKwmJnpa7F2WVKw4DIgghgzBKUf4UPL0ETiv-8Q9sFu29Wq-tkWrvR8_5z1nw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzKeRZGejFUe0Ud1YA_ac5UO-BslboueTaSyEvX9fyLrj0kROzQXyNP5FcsFzP-nvLqmw/exec";
 
 let currentStudentNum = null; // 초기화
 
