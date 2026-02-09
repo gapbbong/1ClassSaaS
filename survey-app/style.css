@@ -315,3 +315,10 @@ button:active {
 .missing-fields-box li {
     margin-bottom: 2px;
 }
+
+.warning-box {
+    background-color: #fdf2f2;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #fbd5d5;
+}
