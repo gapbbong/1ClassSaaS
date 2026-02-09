@@ -1,7 +1,7 @@
 // ✅ Student Survey App JS (v1)
 
 // [중요] 실제 서비스 시에는 선생님의 GAS SCRIPT_URL로 교체 완료해야 함
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyQ8C5hCol8ADNlvc8ULzm9D-LefWeEvoNN3V7lSKoIcPKJBZRnX-Hc8h18qw2AXH6djw/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyi3E8MSLAgeAFCm6JSKvdFyCCg6pFc4yuQOAGcuHzePRiZmHUV3T86r94VxNSuWnBM/exec";
 
 let currentStudentNum = null; // 초기화
 
@@ -352,8 +352,8 @@ surveyForm.addEventListener("submit", async (e) => {
     const formData = new FormData(surveyForm);
     const surveyData = {};
     formData.forEach((value, key) => {
-        // 모든 '거주가족' 체크박스 값을 콤마로 연결
-        if (key === "거주가족") {
+        // 복수 선택 항목 처리 (거주가족, 다문화여부, 등교수단)
+        if (key === "거주가족" || key === "다문화여부" || key === "등교수단") {
             if (!surveyData[key]) {
                 surveyData[key] = value;
             } else {

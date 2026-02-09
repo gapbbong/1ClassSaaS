@@ -288,16 +288,56 @@
                 <div class="form-section">
                     <h3>🌏 다문화 가정 (해당하는 경우만)</h3>
                     <div class="input-item">
-                        <label>부모님 중 외국 분이 계신가요?</label>
-                        <div class="radio-group" style="display: flex; gap: 15px; margin-bottom: 10px;">
-                            <label><input type="radio" name="다문화여부" value="해당없음" checked> 해당 없음</label>
-                            <label><input type="radio" name="다문화여부" value="아버지"> 아버지</label>
-                            <label><input type="radio" name="다문화여부" value="어머니"> 어머니</label>
+                        <label>부모님 중 외국 분이 계신가요? (복수 선택 가능)</label>
+                        <div class="checkbox-group grid-row" style="margin-bottom: 10px;">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="다문화여부" value="해당없음"> 해당 없음
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="다문화여부" value="아버지"> 아버지
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="다문화여부" value="어머니"> 어머니
+                            </label>
                         </div>
                     </div>
                     <div class="input-item">
                         <label>어느 나라 분이신가요?</label>
                         <input type="text" name="다문화국가" placeholder="예: 베트남, 필리핀, 일본 등 (해당없으면 빈칸)">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>🚌 등교 관련</h3>
+                    <div class="input-item">
+                        <label>주로 이용하는 등교 수단 (복수 선택 가능)</label>
+                        <div class="checkbox-group grid-row">
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="도보"> 도보
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="버스"> 버스
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="지하철"> 지하철
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="부모님차"> 부모님차
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="자전거"> 자전거
+                            </label>
+                            <label class="checkbox-container">
+                                <input type="checkbox" name="등교수단" value="기타"> 기타
+                            </label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label>집에서 학교까지 걸리는 시간 (편도)</label>
+                        <div class="flex-row">
+                            <input type="number" name="등교시간" placeholder="예: 20" style="width: 100px;">
+                            <span style="align-self: center; margin-left: 5px;">분 정도</span>
+                        </div>
                     </div>
                 </div>
 
