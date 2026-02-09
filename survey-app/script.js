@@ -223,21 +223,62 @@ document.addEventListener("DOMContentLoaded", () => {
 // 2-1. 제출 버튼 상태 업데이트 (동의 + 필수항목 체크)
 function updateSubmitButton() {
     const isConsentChecked = privacyConsent.checked;
-
-    // 필수 항목들이 모두 채워졌는지 확인
     const requiredInputs = surveyForm.querySelectorAll("[required]");
+
+    // 누락된 항목 이름 수집
+    const missingNames = [];
     let allFilled = true;
+
     for (const input of requiredInputs) {
         if (!input.value.trim()) {
             allFilled = false;
-            break;
+            // 라벨 찾기 (부모 요소 내의 label 태그 등)
+            // .input-item 내에 label이 있다고 가정
+            const parent = input.closest('.input-item');
+            if (parent) {
+                const label = parent.querySelector('label');
+                if (label) {
+                    // "부 연락처 🔍" 처럼 버튼 텍스트가 포함될 수 있으므로 정제 필요
+                    // 간단히 textContent 가져오고 🔍 등 제거
+                    let labelText = label.innerText.replace(/🔍/g, '').trim();
+                    // 필수 표시(*) 등이 있다면 제거 (현재 코드엔 없음)
+                    missingNames.push(labelText);
+                }
+            } else if (input === privacyConsent) {
+                // 동의 체크박스는 별도 처리
+            }
         }
     }
 
-    // 동의했는지 && 다 채웠는지
-    btnSubmit.disabled = !(isConsentChecked && allFilled);
+    if (!isConsentChecked) {
+        missingNames.push("개인정보 수집 및 이용 동의");
+    }
 
-    // 시각적 피드백 (선택사항)
+    // 메시지 박스 업데이트
+    const msgBox = document.getElementById("missing-fields-msg");
+    const msgList = document.getElementById("missing-list");
+
+    // 동의했고 다 채웠으면
+    const isComplete = isConsentChecked && allFilled;
+    btnSubmit.disabled = !isComplete;
+
+    if (msgBox && msgList) {
+        if (isComplete) {
+            msgBox.classList.add("hidden");
+        } else {
+            msgBox.classList.remove("hidden");
+            msgList.innerHTML = "";
+
+            // 너무 많으면 "외 N건" 처리하거나 그냥 다 보여줌 (여기선 다 보여줌)
+            missingNames.forEach(name => {
+                const li = document.createElement("li");
+                li.textContent = name;
+                msgList.appendChild(li);
+            });
+        }
+    }
+
+    // 시각적 피드백
     if (btnSubmit.disabled) {
         btnSubmit.style.opacity = "0.5";
         btnSubmit.style.cursor = "not-allowed";
