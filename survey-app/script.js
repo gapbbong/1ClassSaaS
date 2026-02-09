@@ -140,30 +140,42 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnSearchAddr) {
         btnSearchAddr.addEventListener("click", () => {
-            new daum.Postcode({
-                oncomplete: function (data) {
-                    let fullAddr = data.address;
-                    let extraAddr = '';
+            // [Debug] 클릭 확인용
+            // alert("주소 검색 버튼이 클릭되었습니다."); 
 
-                    if (data.userSelectedType === 'R') {
-                        if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
-                            extraAddr += data.bname;
+            if (typeof daum === 'undefined') {
+                alert("다음 우편번호 서비스가 아직 로딩되지 않았습니다. 잠시 후 다시 시도해주세요.");
+                return;
+            }
+
+            try {
+                new daum.Postcode({
+                    oncomplete: function (data) {
+                        let fullAddr = data.address;
+                        let extraAddr = '';
+
+                        if (data.userSelectedType === 'R') {
+                            if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+                                extraAddr += data.bname;
+                            }
+                            if (data.buildingName !== '' && data.apartment === 'Y') {
+                                extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                            }
+                            if (extraAddr !== '') {
+                                fullAddr += ' (' + extraAddr + ')';
+                            }
                         }
-                        if (data.buildingName !== '' && data.apartment === 'Y') {
-                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-                        }
-                        if (extraAddr !== '') {
-                            fullAddr += ' (' + extraAddr + ')';
-                        }
+
+                        if (zipInput) zipInput.value = data.zonecode;
+                        addrInput.value = fullAddr;
+
+                        if (zipInput) zipInput.dispatchEvent(new Event('input'));
+                        addrInput.dispatchEvent(new Event('input'));
                     }
-
-                    if (zipInput) zipInput.value = data.zonecode;
-                    addrInput.value = fullAddr;
-
-                    if (zipInput) zipInput.dispatchEvent(new Event('input'));
-                    addrInput.dispatchEvent(new Event('input'));
-                }
-            }).open();
+                }).open();
+            } catch (e) {
+                alert("주소 검색 팝업을 여는 도중 오류가 발생했습니다: " + e.message);
+            }
         });
     }
 
@@ -171,10 +183,15 @@ document.addEventListener("DOMContentLoaded", () => {
     btnContacts.forEach(btn => {
         // 지원하지 않는 브라우저면 버튼 숨기기
         if (!('contacts' in navigator && 'ContactsManager' in window)) {
-            btn.style.display = 'none';
+            // 사용자가 '안 눌린다'고 했으므로, 숨기지 않고 눌렀을 때 안내 메시지를 띄우는 것이 나을 수 있음
+            // btn.style.display = 'none'; 
         }
 
         btn.addEventListener("click", async () => {
+            if (!('contacts' in navigator && 'ContactsManager' in window)) {
+                return alert("이 브라우저/기기에서는 연락처 불러오기 기능을 지원하지 않습니다.\n(안드로이드 스마트폰의 Chrome/Samsung Internet 권장)");
+            }
+
             const targetName = btn.dataset.target;
             const targetInput = surveyForm.elements[targetName];
 
