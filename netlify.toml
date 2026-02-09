@@ -9,7 +9,7 @@ redirects = []
   [functions."*"]
 
 [build]
-publish = "D:\\App\\OneClass25"
+publish = "dist"
 publishOrigin = "config"
 
   [build.environment]
