@@ -477,6 +477,12 @@ surveyForm.addEventListener("submit", async (e) => {
         }
     });
 
+    // [수정] 상세주소 합치기
+    if (surveyData['상세주소']) {
+        surveyData['집주소'] = surveyData['집주소'] + " " + surveyData['상세주소'];
+        delete surveyData['상세주소']; // 구글시트에는 '상세주소' 컬럼이 없으므로 제거 (또는 합쳐서 보냄)
+    }
+
     // POST 요청용 FormData
     const postData = new FormData();
     postData.append("action", "updateStudentInfo");
