@@ -74,6 +74,41 @@ if (instaInput) {
     });
 }
 
+// MBTI 실시간 유효성 검사
+const mbtiInput = document.querySelector('input[name="MBTI"]');
+if (mbtiInput) {
+    mbtiInput.addEventListener("input", (e) => {
+        // 소문자 자동 대문자 변환 및 영문 외 제거
+        e.target.value = e.target.value.toUpperCase().replace(/[^A-Z]/g, "");
+    });
+
+    mbtiInput.addEventListener("blur", (e) => {
+        const val = e.target.value.trim();
+        if (val.length === 0) return;
+
+        if (val.length >= 5) {
+            alert("MBTI는 최대 4글자까지만 입력 가능합니다.");
+            return;
+        }
+
+        const validMbtiRegex = /^[EI][SN][TF][JP]$/;
+        const isOneCharValid = (val === 'E' || val === 'I');
+
+        if (val.length === 4) {
+            if (!validMbtiRegex.test(val)) {
+                alert("올바른 MBTI 형식이 아닙니다. (예: ENFP, ISTJ 등)");
+            }
+        } else if (val.length === 1) {
+            if (!isOneCharValid) {
+                alert("한 글자만 입력할 경우 'E' 또는 'I'만 가능합니다.");
+            }
+        } else {
+            // 2, 3글자인 경우
+            alert("MBTI는 4글자 전체(예: ENFP)를 입력하거나,\n잘 모를 경우 'E' 또는 'I' 단일 문자로만 입력해주세요.");
+        }
+    });
+}
+
 // 1. 학번 조회
 btnVerify.addEventListener("click", async () => {
     const num = inputNum.value.trim();
@@ -442,22 +477,25 @@ surveyForm.addEventListener("submit", async (e) => {
         return;
     }
 
-    // (3) MBTI 검사 (4글자)
+    // (3) MBTI 검사
     const mbtiEl = surveyForm.elements['MBTI'];
     if (mbtiEl && mbtiEl.value) {
         const mbtiVal = mbtiEl.value.trim().toUpperCase();
-        const mbtiRegex = /^[EI][NS][TF][JP]$/; // MBTI 정규식
+        const validMbtiRegex = /^[EI][SN][TF][JP]$/;
+        const isOneCharValid = (mbtiVal === 'E' || mbtiVal === 'I');
 
-        // 정규식 체크 (혹은 4글자인지만 체크)
-        if (mbtiVal.length !== 4 && mbtiVal !== "E" && mbtiVal !== "I") {
-            // 약식(E/I) 허용한다고 했으므로, 4글자 아니면 경고
-            // 엄격하게 하려면: if (!mbtiRegex.test(mbtiVal) && mbtiVal !== "E" && mbtiVal !== "I")
-            if (!/^[A-Z]{4}$/.test(mbtiVal) && mbtiVal.length > 1) {
-                alert("MBTI는 4글자 영문(예: ENFP)으로 입력해주세요.\n(잘 모르면 E 또는 I 만 적어도 됩니다)");
-                mbtiEl.focus();
-                mbtiEl.scrollIntoView({ behavior: "smooth", block: "center" });
-                return;
-            }
+        let isMbtiValid = false;
+        if (mbtiVal.length === 4 && validMbtiRegex.test(mbtiVal)) {
+            isMbtiValid = true;
+        } else if (mbtiVal.length === 1 && isOneCharValid) {
+            isMbtiValid = true;
+        }
+
+        if (!isMbtiValid) {
+            alert("MBTI 형식이 올바르지 않습니다.\n4글자 전체를 입력하거나, 'E' 또는 'I'만 입력해주세요.");
+            mbtiEl.focus();
+            mbtiEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
         }
     }
 
