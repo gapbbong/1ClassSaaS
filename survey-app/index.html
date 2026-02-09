@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <!-- Daum 우편번호 서비스 -->
+    <script src="https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 </head>
 
 <body>
@@ -44,7 +46,13 @@
                     </div>
                     <div class="input-item">
                         <label>집주소</label>
-                        <input type="text" name="집주소" placeholder="부산광역시..." required>
+                        <div class="flex-row" style="margin-bottom: 5px;">
+                            <input type="text" name="우편번호" id="zip-code" placeholder="우편번호" style="width: 120px;"
+                                readonly>
+                            <button type="button" class="primary-btn" id="btn-search-addr"
+                                style="width: 80px;">검색</button>
+                        </div>
+                        <input type="text" name="집주소" id="address-input" placeholder="주소" required readonly>
                     </div>
                 </div>
 
@@ -52,32 +60,38 @@
                     <h3>👨‍👩‍👧 가족 관계</h3>
                     <div class="grid-row">
                         <div class="input-item">
-                            <label>부 성명</label>
-                            <input type="text" name="부성명">
+                            <label>부 성명 (비상연락망)</label>
+                            <input type="text" name="부성명" required>
                         </div>
                         <div class="input-item">
                             <label>부 연락처</label>
-                            <input type="tel" name="부(연락처)">
+                            <div class="flex-row">
+                                <input type="tel" name="부(연락처)" required>
+                                <button type="button" class="btn-contact" data-target="부(연락처)">🔍</button>
+                            </div>
                         </div>
                     </div>
                     <div class="grid-row">
                         <div class="input-item">
-                            <label>모 성명</label>
-                            <input type="text" name="모성명">
+                            <label>모 성명 (비상연락망)</label>
+                            <input type="text" name="모성명" required>
                         </div>
                         <div class="input-item">
                             <label>모 연락처</label>
-                            <input type="tel" name="모(연락처)">
+                            <div class="flex-row">
+                                <input type="tel" name="모(연락처)" required>
+                                <button type="button" class="btn-contact" data-target="모(연락처)">🔍</button>
+                            </div>
                         </div>
                     </div>
                     <div class="input-item">
                         <label>형제 관계</label>
-                        <input type="text" name="형제" placeholder="예: 2남 1녀 중 첫째">
+                        <input type="text" name="형제" placeholder="예: 2남 1녀 중 첫째" required>
                         <small class="hint-text">(몇남몇녀 중 몇째인지 구체적으로 적어주세요)</small>
                     </div>
                     <div class="input-item">
                         <label>학교 소식을 가장 먼저 전해드릴 분 (주 연락처)</label>
-                        <select name="주연락대상">
+                        <select name="주연락대상" required>
                             <option value="">-- 선택해주세요 --</option>
                             <option value="어머니">어머니</option>
                             <option value="아버지">아버지</option>
@@ -88,7 +102,7 @@
                     </div>
                     <div class="input-item">
                         <label>집에서 나의 이야기를 가장 잘 들어주시는 분</label>
-                        <select name="주상담대상">
+                        <select name="주상담대상" required>
                             <option value="">-- 선택해주세요 --</option>
                             <option value="어머니">어머니</option>
                             <option value="아버지">아버지</option>
@@ -118,7 +132,7 @@
                     <div class="grid-row">
                         <div class="input-item">
                             <label>어머니와의 친밀도</label>
-                            <select name="어머니친밀도">
+                            <select name="어머니친밀도" required>
                                 <option value="">-- 선택 --</option>
                                 <option value="5">⭐⭐⭐⭐⭐ (매우 좋음)</option>
                                 <option value="4">⭐⭐⭐⭐ (좋은 편)</option>
@@ -130,7 +144,7 @@
                         </div>
                         <div class="input-item">
                             <label>아버지와의 친밀도</label>
-                            <select name="아버지친밀도">
+                            <select name="아버지친밀도" required>
                                 <option value="">-- 선택 --</option>
                                 <option value="5">⭐⭐⭐⭐⭐ (매우 좋음)</option>
                                 <option value="4">⭐⭐⭐⭐ (좋은 편)</option>
@@ -154,20 +168,21 @@
                 <div class="form-section">
                     <h3>🏫 학교 생활</h3>
                     <div class="input-item">
-                        <label>성별 (선택)</label>
-                        <select name="성별">
+                        <label>성별</label>
+                        <select name="성별" required>
+                            <option value="">-- 선택 --</option>
                             <option value="남">남</option>
                             <option value="여">여</option>
                         </select>
                     </div>
                     <div class="grid-row">
                         <div class="input-item">
-                            <label>출신 중학교 (선택)</label>
-                            <input type="text" name="출신중">
+                            <label>출신 중학교</label>
+                            <input type="text" name="출신중" required>
                         </div>
                         <div class="input-item">
-                            <label>중학교 성적 (선택)</label>
-                            <input type="text" name="중학교성적" placeholder="예: 상위 10%">
+                            <label>중학교 성적</label>
+                            <input type="text" name="중학교성적" placeholder="예: 상위 10%" required>
                         </div>
                     </div>
                 </div>
@@ -175,12 +190,17 @@
                 <div class="form-section">
                     <h3>🚀 학습 및 진로</h3>
                     <div class="input-item">
-                        <label>나의 좌우명 (선택)</label>
-                        <input type="text" name="좌우명" placeholder="예: 피할 수 없으면 즐겨라">
+                        <label>고등학교 졸업 후 진로</label>
+                        <select name="졸업후진로" required>
+                            <option value="">-- 선택 --</option>
+                            <option value="취업">취업</option>
+                            <option value="진학">진학</option>
+                            <option value="미정">미정</option>
+                        </select>
                     </div>
                     <div class="input-item">
-                        <label>나의 꿈 / 희망 직업 (선택)</label>
-                        <input type="text" name="나의꿈" placeholder="예: 로봇 엔지니어">
+                        <label>나의 꿈 / 희망 직업</label>
+                        <input type="text" name="나의꿈" placeholder="예: 로봇 엔지니어" required>
                     </div>
                     <div class="input-item">
                         <label>학습 관련 고민 (선택)</label>
@@ -191,8 +211,8 @@
                 <div class="form-section">
                     <h3>🎮 관심사와 에너지</h3>
                     <div class="input-item">
-                        <label>취미 및 특기 (선택)</label>
-                        <input type="text" name="취미특기" placeholder="예: 축구, 영상 편집, 게임">
+                        <label>취미 및 특기</label>
+                        <input type="text" name="취미특기" placeholder="예: 축구, 영상 편집, 게임" required>
                     </div>
                     <div class="grid-row">
                         <div class="input-item">
@@ -205,29 +225,29 @@
                         </div>
                     </div>
                     <div class="input-item">
-                        <label>좋아하는 음식 / 싫어하는 음식 (선택)</label>
-                        <input type="text" name="음식호불호" placeholder="예: 떡볶이 좋아함 / 오이 싫어함">
+                        <label>좋아하는 음식 / 싫어하는 음식</label>
+                        <input type="text" name="음식호불호" placeholder="예: 떡볶이 좋아함 / 오이 싫어함" required>
                     </div>
                     <div class="input-item">
-                        <label>잠드는 시간 / 수면 시간 (선택)</label>
-                        <input type="text" name="수면시간" placeholder="예: 밤 11시 / 약 7시간">
+                        <label>잠드는 시간 / 수면 시간</label>
+                        <input type="text" name="수면시간" placeholder="예: 밤 11시 / 약 7시간" required>
                     </div>
                 </div>
 
                 <div class="form-section">
                     <h3>🤝 인간관계 및 정서</h3>
                     <div class="input-item">
-                        <label>나의 장점 3가지 (선택)</label>
-                        <input type="text" name="나의장점" placeholder="예: 성실함, 잘 웃음, 포기하지 않음">
+                        <label>나의 장점 3가지</label>
+                        <input type="text" name="나의장점" placeholder="예: 성실함, 잘 웃음, 포기하지 않음" required>
                     </div>
                     <div class="input-item">
-                        <label>우리 반/학교에서 친한 친구 (선택)</label>
-                        <input type="text" name="친한친구" placeholder="의지가 되는 친구가 있다면 적어주세요.">
+                        <label>우리 반/학교에서 친한 친구</label>
+                        <input type="text" name="친한친구" placeholder="의지가 되는 친구가 있다면 적어주세요." required>
                     </div>
                     <div class="input-item">
-                        <label>MBTI (선택)</label>
+                        <label>MBTI</label>
                         <div class="flex-row">
-                            <input type="text" name="MBTI" placeholder="예: ENFP">
+                            <input type="text" name="MBTI" placeholder="예: ENFP" required>
                         </div>
                         <small class="hint-text">(모르면 E 또는 I만 적어도 좋아요)</small>
                     </div>
@@ -237,7 +257,7 @@
                     </div>
                     <div class="input-item">
                         <label>인스타 ID <span class="hint-inline">(부계정도 좋아요!)</span></label>
-                        <input type="text" name="인스타 id" placeholder="@username">
+                        <input type="text" name="인스타 id" placeholder="@username" required>
                     </div>
                 </div>
 
@@ -266,11 +286,28 @@
                 </div>
 
                 <div class="form-section">
+                    <h3>🌏 다문화 가정 (해당하는 경우만)</h3>
+                    <div class="input-item">
+                        <label>부모님 중 외국 분이 계신가요?</label>
+                        <div class="radio-group" style="display: flex; gap: 15px; margin-bottom: 10px;">
+                            <label><input type="radio" name="다문화여부" value="해당없음" checked> 해당 없음</label>
+                            <label><input type="radio" name="다문화여부" value="아버지"> 아버지</label>
+                            <label><input type="radio" name="다문화여부" value="어머니"> 어머니</label>
+                        </div>
+                    </div>
+                    <div class="input-item">
+                        <label>어느 나라 분이신가요?</label>
+                        <input type="text" name="다문화국가" placeholder="예: 베트남, 필리핀, 일본 등 (해당없으면 빈칸)">
+                    </div>
+                </div>
+
+                <div class="form-section">
                     <h3>🏥 건강 및 안전</h3>
                     <div class="grid-row">
                         <div class="input-item">
-                            <label>혈액형 (선택)</label>
-                            <select name="혈액형">
+                            <label>혈액형</label>
+                            <select name="혈액형" required>
+                                <option value="">-- 선택 --</option>
                                 <option value="A">A형</option>
                                 <option value="B">B형</option>
                                 <option value="O">O형</option>
@@ -278,13 +315,14 @@
                             </select>
                         </div>
                         <div class="input-item">
-                            <label>알레르기 / 복용 중인 약 (선택)</label>
-                            <input type="text" name="알레르기" placeholder="예: 복숭아 알레르기, 비염약">
+                            <label>알레르기 / 복용 중인 약</label>
+                            <input type="text" name="알레르기" placeholder="예: 복숭아 알레르기, 비염약 (없으면 '없음')" required>
                         </div>
                     </div>
                     <div class="input-item">
-                        <label>기타 건강 상의 특이사항 (선택)</label>
-                        <textarea name="건강특이사항" rows="2" placeholder="시력, 청력 등 선생님이 알아야 할 내용"></textarea>
+                        <label>기타 건강 상의 특이사항</label>
+                        <textarea name="건강특이사항" rows="2" placeholder="시력, 청력 등 선생님이 알아야 할 내용 (없으면 '없음'이라고 적어주세요)"
+                            required></textarea>
                     </div>
                 </div>
 
