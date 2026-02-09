@@ -10,7 +10,8 @@ export default defineConfig({
         record: resolve(__dirname, 'record.html'),
         search: resolve(__dirname, 'search.html'),
         bulk: resolve(__dirname, 'bulk-record.html'),
-        total: resolve(__dirname, 'total-records.html')
+        total: resolve(__dirname, 'total-records.html'),
+        survey: resolve(__dirname, 'survey-app/index.html')
       }
     }
   },
