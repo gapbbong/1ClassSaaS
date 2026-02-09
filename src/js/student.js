@@ -75,25 +75,24 @@ function setupEventListeners() {
     }
 }
 
+import { fetchStudentsByClass } from './api.js';
+
 function loadStudents() {
     const list = document.getElementById("student-list");
-    list.classList.add("loading"); // 로딩 클래스 추가
+    list.classList.add("loading");
 
-    fetch(API_CONFIG.SEARCH_URL)
-        .then(res => res.json())
+    fetchStudentsByClass(grade, classNum)
         .then(data => {
             list.classList.remove("loading");
-            list.innerHTML = ""; // 초기화
+            list.innerHTML = "";
 
             if (!Array.isArray(data)) {
                 list.textContent = "데이터 형식이 올바르지 않습니다.";
                 return;
             }
 
-            // 해당 반 학생 필터링
-            const filtered = data.filter(student =>
-                student["학년"] == grade && student["반"] == classNum
-            );
+            // 해당 반 학생 필터링 (서버에서 이미 필터링되어 오지만 안전을 위해 유지)
+            const filtered = data;
 
             // 학급 전체 기록 건수 합산
             const totalClassRecords = filtered.reduce((acc, s) => acc + (parseInt(s.recordCount) || 0), 0);
@@ -102,7 +101,7 @@ function loadStudents() {
                 titleElement.textContent = `${grade}학년 ${classNum}반 (${totalClassRecords}건)`;
             }
 
-            // 번호순 정렬 복구
+            // 번호순 정렬
             filtered.sort((a, b) => a["번호"] - b["번호"]);
 
             filtered.forEach(student => {

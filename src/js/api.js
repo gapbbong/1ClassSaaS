@@ -101,3 +101,29 @@ export async function fetchGroupRecords(grade, classNum) {
     }
 }
 
+/**
+ * 대시보드용 경량 통계 데이터를 가져옵니다.
+ */
+export async function fetchClassStats() {
+    try {
+        const response = await fetch(`${API_CONFIG.SCRIPT_URL}?action=getClassStats`);
+        return await response.json();
+    } catch (error) {
+        console.error("Fetch Stats Error:", error);
+        return { grandTotal: 0, classStats: {} };
+    }
+}
+
+/**
+ * 특정 반의 학생 목록만 가져옵니다.
+ */
+export async function fetchStudentsByClass(grade, classNum) {
+    try {
+        const url = `${API_CONFIG.SCRIPT_URL}?action=getStudentsByClass&grade=${grade}&class=${classNum}`;
+        const response = await fetch(url);
+        return await response.json();
+    } catch (error) {
+        console.error("Fetch Class Students Error:", error);
+        throw new Error("학급 학생 데이터를 불러오지 못했습니다.");
+    }
+}
