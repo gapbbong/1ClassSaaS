@@ -1,7 +1,7 @@
 // API 설정
 export const API_CONFIG = {
-    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbx3I2_xys75bFOA-59hKyV3kWYoTqh6pMlixpn6M9eI4US88yNE72yvfm2YMPSUA_qoQA/exec",
-    SEARCH_URL: "https://script.google.com/macros/s/AKfycbx3I2_xys75bFOA-59hKyV3kWYoTqh6pMlixpn6M9eI4US88yNE72yvfm2YMPSUA_qoQA/exec"
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzMe7iK83M_CZw4_IXYWZNEaPHbFzcm1KlZp-JgvOJVZz6pBlsNp8lwmoymCpzAVaOJ1A/exec",
+    SEARCH_URL: "https://script.google.com/macros/s/AKfycbzMe7iK83M_CZw4_IXYWZNEaPHbFzcm1KlZp-JgvOJVZz6pBlsNp8lwmoymCpzAVaOJ1A/exec"
 };
 
 // 학생 목록용 URL과 기록용 URL이 다른 것으로 보임. 확인 필요.
