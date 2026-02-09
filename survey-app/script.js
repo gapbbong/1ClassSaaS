@@ -132,60 +132,115 @@ btnContacts.forEach(btn => {
 });
 
 // 2-0-1. 주소 검색 (Daum 우편번호 API)
-const btnSearchAddr = document.getElementById("btn-search-addr");
-const addrInput = document.getElementById("address-input");
-const zipInput = document.getElementById("zip-code"); // [NEW] 우편번호
+// 버튼 이벤트 연결을 DOMContentLoaded 내부로 이동
+document.addEventListener("DOMContentLoaded", () => {
+    const btnSearchAddr = document.getElementById("btn-search-addr");
+    const addrInput = document.getElementById("address-input");
+    const zipInput = document.getElementById("zip-code");
 
-if (btnSearchAddr) {
-    btnSearchAddr.addEventListener("click", () => {
-        new daum.Postcode({
-            oncomplete: function (data) {
-                // 팝업에서 검색결과 항목을 클릭했을때 실행할 코드를 작성하는 부분.
-                // data.zonecode: 우편번호
-                // data.address: 기본 주소 (도로명/지번)
-                // data.buildingName: 건물명 (아파트 이름 등)
+    if (btnSearchAddr) {
+        btnSearchAddr.addEventListener("click", () => {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    let fullAddr = data.address;
+                    let extraAddr = '';
 
-                let fullAddr = data.address;
-                let extraAddr = '';
-
-                if (data.userSelectedType === 'R') {
-                    // 법정동명이 있을 경우 추가한다. (법정리는 제외)
-                    // 법정동의 경우 마지막 문자가 "동/로/가"로 끝난다.
-                    if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
-                        extraAddr += data.bname;
+                    if (data.userSelectedType === 'R') {
+                        if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+                            extraAddr += data.bname;
+                        }
+                        if (data.buildingName !== '' && data.apartment === 'Y') {
+                            extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                        }
+                        if (extraAddr !== '') {
+                            fullAddr += ' (' + extraAddr + ')';
+                        }
                     }
-                    // 건물명이 있고, 공동주택일 경우 추가한다.
-                    if (data.buildingName !== '' && data.apartment === 'Y') {
-                        extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
-                    }
-                    // 표시할 참고항목이 있을 경우, 괄호까지 추가한 최종 문자열을 만든다.
-                    if (extraAddr !== '') {
-                        fullAddr += ' (' + extraAddr + ')';
+
+                    if (zipInput) zipInput.value = data.zonecode;
+                    addrInput.value = fullAddr;
+
+                    if (zipInput) zipInput.dispatchEvent(new Event('input'));
+                    addrInput.dispatchEvent(new Event('input'));
+                }
+            }).open();
+        });
+    }
+
+    const btnContacts = document.querySelectorAll(".btn-contact");
+    btnContacts.forEach(btn => {
+        // 지원하지 않는 브라우저면 버튼 숨기기
+        if (!('contacts' in navigator && 'ContactsManager' in window)) {
+            btn.style.display = 'none';
+        }
+
+        btn.addEventListener("click", async () => {
+            const targetName = btn.dataset.target;
+            const targetInput = surveyForm.elements[targetName];
+
+            try {
+                const props = ['tel'];
+                const opts = { multiple: false };
+                const contacts = await navigator.contacts.select(props, opts);
+
+                if (contacts.length > 0) {
+                    const contact = contacts[0];
+                    if (contact.tel && contact.tel.length > 0) {
+                        let rawTel = contact.tel[0].replace(/[^0-9]/g, "");
+                        if (rawTel.startsWith("82")) rawTel = "0" + rawTel.substring(2);
+
+                        targetInput.value = autoHyphen(rawTel);
+                        targetInput.dispatchEvent(new Event('input'));
+                    } else {
+                        alert("선택한 연락처에 전화번호가 없습니다.");
                     }
                 }
-
-                // 우편번호와 주소 입력
-                if (zipInput) zipInput.value = data.zonecode;
-                addrInput.value = fullAddr;
-
-                // 입력 이벤트 발생 (저장 로직 트리거)
-                if (zipInput) zipInput.dispatchEvent(new Event('input'));
-                addrInput.dispatchEvent(new Event('input'));
+            } catch (ex) {
+                console.log(ex);
             }
-        }).open();
+        });
     });
-}
+});
 
 // 2-1. 개인정보 동의 체크박스 로직
+// 2-1. 제출 버튼 상태 업데이트 (동의 + 필수항목 체크)
 function updateSubmitButton() {
-    btnSubmit.disabled = !privacyConsent.checked;
+    const isConsentChecked = privacyConsent.checked;
+
+    // 필수 항목들이 모두 채워졌는지 확인
+    const requiredInputs = surveyForm.querySelectorAll("[required]");
+    let allFilled = true;
+    for (const input of requiredInputs) {
+        if (!input.value.trim()) {
+            allFilled = false;
+            break;
+        }
+    }
+
+    // 동의했는지 && 다 채웠는지
+    btnSubmit.disabled = !(isConsentChecked && allFilled);
+
+    // 시각적 피드백 (선택사항)
+    if (btnSubmit.disabled) {
+        btnSubmit.style.opacity = "0.5";
+        btnSubmit.style.cursor = "not-allowed";
+        btnSubmit.textContent = "필수 항목을 모두 입력해주세요";
+    } else {
+        btnSubmit.style.opacity = "1";
+        btnSubmit.style.cursor = "pointer";
+        btnSubmit.textContent = "설문 제출하기 🚀";
+    }
 }
 
 // 초기 상태 설정
 updateSubmitButton();
 
-// 변경 시 상태 업데이트
+// 변경 시 상태 업데이트 (동의 체크박스)
 privacyConsent.addEventListener("change", updateSubmitButton);
+
+// 변경 시 상태 업데이트 (모든 입력 필드)
+surveyForm.addEventListener("input", updateSubmitButton);
+surveyForm.addEventListener("change", updateSubmitButton);
 
 // ------------------------------------
 // 💾 데이터 안전 저장 (LocalStorage)
