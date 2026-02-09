@@ -35,11 +35,25 @@ function autoHyphen(value) {
 }
 
 // 전화번호 입력 이벤트 바인딩
+// 전화번호 입력 이벤트 바인딩 (자동 하이픈 & 유효성 검사)
 document.querySelectorAll('input[type="tel"]').forEach(input => {
+    // 1. 자동 하이픈
     input.addEventListener("input", (e) => {
         const hyphenated = autoHyphen(e.target.value);
         if (hyphenated.length <= 13) {
             e.target.value = hyphenated;
+        }
+    });
+
+    // 2. 포커스 벗어날 때(다음 칸 넘어갈 때) 형식 검사
+    input.addEventListener("blur", (e) => {
+        const val = e.target.value.trim();
+        // 값이 있을 때만 검사 (빈 값은 필수 체크에서 잡음)
+        if (val.length > 0) {
+            const phoneRegex = /^010-\d{4}-\d{4}$/;
+            if (!phoneRegex.test(val)) {
+                alert("전화번호 형식이 올바르지 않습니다.\n'010-0000-0000' 형식으로 입력해주세요.");
+            }
         }
     });
 });
