@@ -102,8 +102,9 @@
 }
 
 .student-photo {
-    width: 80px;
-    height: 95px;
+    width: 100px;
+    height: 133px;
+    /* 3:4 비율 유지 (100 * 1.33) */
     border-radius: 8px;
     object-fit: cover;
     border: 1px solid #ddd;

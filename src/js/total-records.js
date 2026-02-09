@@ -1,4 +1,4 @@
-import { fetchGroupRecords } from './api.js';
+import { fetchGroupRecords, fetchAllStudents } from './api.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
 
 let allRecords = []; // 로드된 전체 기록 데이터 보관
@@ -57,7 +57,24 @@ async function loadRecords(grade, classNum) {
         container.innerHTML = '';
         container.classList.add('loading-records');
 
-        allRecords = await fetchGroupRecords(grade, classNum);
+        // 기록 데이터와 학생 명단을 병렬로 호출
+        const [records, students] = await Promise.all([
+            fetchGroupRecords(grade, classNum),
+            fetchAllStudents()
+        ]);
+
+        allRecords = records;
+
+        // 학생 사진 맵 생성
+        const studentPhotoMap = {};
+        students.forEach(s => {
+            if (s["학번"]) studentPhotoMap[String(s["학번"])] = s["사진저장링크"];
+        });
+
+        // 각 기록에 사진 정보 병합
+        allRecords.forEach(record => {
+            record.photo = studentPhotoMap[String(record.num)] || "";
+        });
 
         // 로딩 종료
         container.classList.remove('loading-records');
@@ -119,7 +136,8 @@ function createRecordCard(record) {
     div.innerHTML = `
         <div class="card-inner">
             <div class="student-photo-area">
-                <img src="${photoUrl}" alt="${record.name}" class="student-photo" onerror="this.src='https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png'">
+                <img src="${photoUrl}" alt="${record.name}" class="student-photo" 
+                     onerror="if(!this.dataset.retry){this.dataset.retry=true; const fid='${extractDriveId(record.photo)}'; if(fid) this.src='https://drive.google.com/thumbnail?id='+fid+'&sz=w500';} else {this.src='https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png'}">
             </div>
             <div class="record-info-area">
                 <div class="log-header">
