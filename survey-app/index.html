@@ -16,7 +16,7 @@
     <div class="container">
         <header>
             <h1>우리 반 친구들을 위한 소중한 기록 💖</h1>
-            <p>여러분을 더 잘 이해하고, 한 명 한 명에게 꼭 맞는<br>따뜻한 지도를 하기 위해 선생님이 준비한 공간입니다. (v3)</p>
+            <p>여러분을 더 잘 이해하고, 한 명 한 명에게 꼭 맞는<br>따뜻한 지도를 하기 위해 선생님이 준비한 공간입니다. (v4)</p>
         </header>
 
         <!-- 1단계: 본인 확인 (건너뜀) -->
@@ -64,10 +64,12 @@
                             <input type="text" name="부성명" required>
                         </div>
                         <div class="input-item">
-                            <label>부 연락처</label>
+                            <label>
+                                부 연락처
+                                <button type="button" class="btn-contact" data-target="부(연락처)">🔍</button>
+                            </label>
                             <div class="flex-row">
                                 <input type="tel" name="부(연락처)" required>
-                                <button type="button" class="btn-contact" data-target="부(연락처)">🔍</button>
                             </div>
                         </div>
                     </div>
@@ -77,10 +79,12 @@
                             <input type="text" name="모성명" required>
                         </div>
                         <div class="input-item">
-                            <label>모 연락처</label>
+                            <label>
+                                모 연락처
+                                <button type="button" class="btn-contact" data-target="모(연락처)">🔍</button>
+                            </label>
                             <div class="flex-row">
                                 <input type="tel" name="모(연락처)" required>
-                                <button type="button" class="btn-contact" data-target="모(연락처)">🔍</button>
                             </div>
                         </div>
                     </div>
@@ -409,7 +413,7 @@
         <p>처리 중입니다...</p>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=4"></script>
 </body>
 
 </html>
