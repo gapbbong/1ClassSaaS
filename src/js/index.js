@@ -20,18 +20,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     const stats = await fetchClassStats();
 
     // 3. 상단 총 건수 업데이트
-    const pageTitle = document.querySelector(".page-title");
-    if (pageTitle) {
-      pageTitle.innerHTML = `기록 <a href="total-records.html" class="title-link">${stats.grandTotal}건</a>`;
+    if (pageTitle && stats) {
+      const grandTotal = stats.grandTotal !== undefined ? stats.grandTotal : 0;
+      pageTitle.innerHTML = `기록 <a href="total-records.html" class="title-link">${grandTotal}건</a>`;
     }
 
     // 4. 각 반 박스의 배지 업데이트
-    updateClassBadges(stats.classStats);
+    if (stats && stats.classStats) {
+      updateClassBadges(stats.classStats);
+    }
 
     container.classList.remove("loading-records");
 
   } catch (error) {
     console.error("Index load error:", error);
+    if (pageTitle) {
+      pageTitle.innerHTML = `기록 <a href="total-records.html" class="title-link">0건</a>`;
+    }
     container.classList.remove("loading-records");
     // 에러가 나도 화면은 이미 그려져 있으므로 배지만 안 나올 것입니다.
   }
