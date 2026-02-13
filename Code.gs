@@ -15,7 +15,7 @@ const REQUIRED_HEADERS = [
   "PID", "학년", "반", "파일명", "사진저장링크", "학생별시트", "학번", "이름", 
   "학생폰", "부성명", "모성명", "부(연락처)", "모(연락처)", "집주소", "학적", 
   "출신중", "성별", "중학교성적", "혈액형", "MBTI", "형제", "인스타 id", 
-  "좌우명", "나의꿈", "학습고민", "취미특기", "음식호불호", "수면시간", 
+  "좌우명", "나의꿈", "학습고민", "취미특기", "좋아하는 음식", "싫어하는 음식", "잠드는 시간", "수면시간", 
   "나의장점", "친한친구", "힘든점", "알레르기", "건강특이사항", "가족친밀도", 
   "반려동물", "자주하는게임", "게임실력", "거주가족", "어머니친밀도", "아버지친밀도",
   // --- [새 설문 항목 추가] ---
@@ -294,7 +294,9 @@ function updateStudentSheet(studentNum, surveyData) {
        sheet.getRange(rowIndex, h + 1).setValue(surveyData[key]);
     }
     if (key === "입력시간") {
-       sheet.getRange(rowIndex, h + 1).setValue(new Date());
+       const now = new Date();
+       const timeStr = Utilities.formatDate(now, "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
+       sheet.getRange(rowIndex, h + 1).setValue(timeStr);
     }
   }
   
@@ -361,7 +363,7 @@ function saveBulkRecord(p) {
 
   const targets = JSON.parse(p.targets); 
   const now = new Date();
-  const timeStr = Utilities.formatDate(now, "Asia/Seoul", "yyyy-MM-dd HH:mm");
+  const timeStr = Utilities.formatDate(now, "Asia/Seoul", "yyyy-MM-dd HH:mm:ss");
 
   targets.forEach(stu => {
     const pid = new Date().getTime() + "_" + Math.floor(Math.random()*1000);

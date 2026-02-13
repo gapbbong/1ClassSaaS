@@ -16,7 +16,7 @@
     <div class="container">
         <header>
             <h1>우리 반 친구들을 위한 소중한 기록 💖</h1>
-            <p>여러분을 더 잘 이해하고, 한 명 한 명에게 꼭 맞는<br>따뜻한 지도를 하기 위해 선생님이 준비한 공간입니다. (v17)</p>
+            <p>여러분을 더 잘 이해하고, 한 명 한 명에게 꼭 맞는<br>따뜻한 지도를 하기 위해 선생님이 준비한 공간입니다. (v18)</p>
             <p class="strong-msg"><strong>성의 없는 답변이나 무분별한 생략은 여러분을 올바르게 이해하고 지원하는 데 큰 지장을 줍니다.</strong> 이 설문은 선생님과 여러분이
                 나누는 첫 번째 진지한 소통입니다. 사소한 부분이라도 본인의 상황을 구체적이고 솔직하게 기록하여, 더 나은 1년을 함께 만들어가길 바랍니다.</p>
         </header>
@@ -194,7 +194,8 @@
                     <div class="grid-row">
                         <div class="input-item">
                             <label>출신 중학교</label>
-                            <input type="text" name="출신중" required>
+                            <input type="text" name="출신중" placeholder="예: 최고중" required>
+                            <small class="hint-text">('학교'는 제외하고 'OO중' 형식으로만 입력해주세요)</small>
                         </div>
                         <div class="input-item">
                             <label>중학교 성적</label>
@@ -240,13 +241,25 @@
                             <input type="text" name="게임실력" placeholder="예: 골드, 2500점">
                         </div>
                     </div>
-                    <div class="input-item">
-                        <label>좋아하는 음식 / 싫어하는 음식</label>
-                        <input type="text" name="음식호불호" placeholder="예: 떡볶이 좋아함 / 오이 싫어함" required>
+                    <div class="grid-row">
+                        <div class="input-item">
+                            <label>좋아하는 음식</label>
+                            <input type="text" name="좋아하는 음식" placeholder="예: 떡볶이, 마라탕" required>
+                        </div>
+                        <div class="input-item">
+                            <label>싫어하는 음식</label>
+                            <input type="text" name="싫어하는 음식" placeholder="예: 오이, 가지" required>
+                        </div>
                     </div>
-                    <div class="input-item">
-                        <label>잠드는 시간 / 수면 시간</label>
-                        <input type="text" name="수면시간" placeholder="예: 밤 11시 / 약 7시간" required>
+                    <div class="grid-row">
+                        <div class="input-item">
+                            <label>잠드는 시간</label>
+                            <input type="text" name="잠드는 시간" placeholder="예: 밤 11시" required>
+                        </div>
+                        <div class="input-item">
+                            <label>수면 시간 (양)</label>
+                            <input type="text" name="수면시간" placeholder="예: 약 7시간" required>
+                        </div>
                     </div>
                 </div>
 
@@ -266,6 +279,10 @@
                             <input type="text" name="MBTI" placeholder="예: ENFP" required>
                         </div>
                         <small class="hint-text">(모르면 E 또는 I만 적어도 좋아요)</small>
+                    </div>
+                    <div class="input-item">
+                        <label>나의 좌우명 (선택)</label>
+                        <input type="text" name="좌우명" placeholder="예: 오늘도 최선을 다하자">
                     </div>
                     <div class="input-item">
                         <label>나를 힘들게 하는 것 (요즘 고민) (선택)</label>
@@ -296,8 +313,8 @@
                         </div>
                     </div>
                     <div class="input-item">
-                        <label>나의 신앙적 고민이나 생각</label>
-                        <textarea name="종교메시지" rows="2" placeholder="종교와 관련하여 하고 싶은 이야기가 있다면 적어주세요."></textarea>
+                        <label>나의 신앙적 고민이나 생각 (선택)</label>
+                        <textarea name="종교메시지" rows="2" placeholder="종교와 관련하여 하고 싶은 이야기가 있다면 자유롭게 적어주세요."></textarea>
                     </div>
                 </div>
 

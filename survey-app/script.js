@@ -1,7 +1,7 @@
-// ✅ Student Survey App JS (v1)
+// ✅ Student Survey App JS (v2)
 
 // [중요] 실제 서비스 시에는 선생님의 GAS SCRIPT_URL로 교체 완료해야 함
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8dajvaec7Vdh1kZMM34Jhp4ljK41U0P9OQoSZ7pgPxq7Dw8qIW73ElyR5BnlSsFUs5w/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbrl7RI8oL1apRHfwNlg7HcYBFRrRbeeqGRgkM95vI28cvFrM0hR32V2pqAbNgdVxpsuQ/exec";
 
 let currentStudentNum = null; // 초기화
 
@@ -539,6 +539,10 @@ surveyForm.addEventListener("submit", async (e) => {
     const postData = new FormData();
     postData.append("action", "updateStudentInfo");
     postData.append("num", currentStudentNum);
+
+    // [추가] 학적 자동 설정
+    surveyData['학적'] = "재학";
+
     postData.append("surveyData", JSON.stringify(surveyData));
 
     try {
