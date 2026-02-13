@@ -284,8 +284,15 @@ function updateStudentSheet(studentNum, surveyData) {
     }
   }
 
+  if (!studentNum || studentNum === "null") {
+    return createJSONOutput({ result: "error", message: "학번 정보가 누락되었습니다. 다시 시도해주세요." });
+  }
+
   if (rowIndex === -1) {
+    // 신규 추가 로직을 막고 싶다면 여기서 에러 반환 가능
+    // 현재는 기존 명단에 없으면 맨 아래 추가하는 방식 유지하되 학번은 필수
     rowIndex = sheet.getLastRow() + 1;
+    sheet.getRange(rowIndex, numIndex + 1).setValue(studentNum); // 학번 강제 기입
   }
 
   for (let h = 0; h < headers.length; h++) {

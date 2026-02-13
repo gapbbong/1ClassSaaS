@@ -370,6 +370,7 @@ function saveToLocal() {
         }
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem("current_student_num", currentStudentNum); // 학번 정보도 함께 저장
     console.log("자동 저장 완료: " + new Date().toLocaleTimeString());
 }
 
@@ -410,7 +411,15 @@ function loadFromLocal() {
         });
         console.log("임시 저장된 데이터를 불러왔습니다.");
 
-        // 데이터 로드 후 제출 버튼 상태 업데이트
+        // 학번 정보 복구
+        const savedNum = localStorage.getItem("current_student_num");
+        if (savedNum && savedNum !== "null") {
+            currentStudentNum = savedNum;
+            // 만약 학번이 있다면 조회 단계를 건너뛰고 설문지로 바로 가도록 처리 (선택사항)
+            stepVerify.classList.add("hidden");
+            stepSurvey.classList.remove("hidden");
+        }
+
         updateSubmitButton();
     } catch (e) {
         console.error("데이터 복구 실패:", e);
@@ -432,6 +441,12 @@ document.addEventListener("DOMContentLoaded", () => {
 // 3. 설문 제출 (기존 코드 수정 - LockService 안내는 별도)
 surveyForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!currentStudentNum) {
+        alert("학번 정보가 유실되었습니다. 다시 한 번 학번 조회를 해주세요.");
+        location.reload(); // 안전을 위해 새로고침
+        return;
+    }
 
     const consent = document.getElementById("privacy-consent");
     if (!consent.checked) {
