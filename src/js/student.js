@@ -246,7 +246,7 @@ function showPopup(student) {
     popup.appendChild(h3);
 
     // 상세 정보
-    const exclude = ["PID", "연번", "학년", "반", "파일명", "학번", "이름", "부성명", "모성명", "학생별시트", "사진저장링크", "부(연락처)", "모(연락처)"];
+    const exclude = ["PID", "연번", "학년", "반", "파일명", "학번", "이름", "학생별시트", "사진저장링크", "주보호자성명", "보조보호자성명", "주보호자연락처", "보조보호자연락처", "주보호자관계", "보조보호자관계", "주보호자친밀도", "보조보호자친밀도", "우편번호", "집주소", "상세주소", "입력시간"];
     village:
     for (let key in student) {
         if (!exclude.includes(key) && student[key]) {

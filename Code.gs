@@ -13,15 +13,18 @@ const LOCK_WAIT_MS = 30000;
 
 const REQUIRED_HEADERS = [
   "PID", "학년", "반", "파일명", "사진저장링크", "학생별시트", "학번", "이름", 
-  "학생폰", "부성명", "모성명", "부(연락처)", "모(연락처)", "집주소", "학적", 
-  "출신중", "성별", "중학교성적", "혈액형", "MBTI", "형제", "인스타 id", 
-  "좌우명", "나의꿈", "학습고민", "취미특기", "좋아하는 음식", "싫어하는 음식", "잠드는 시간", "수면시간", 
-  "나의장점", "친한친구", "힘든점", "알레르기", "건강특이사항", "가족친밀도", 
-  "반려동물", "자주하는게임", "게임실력", "거주가족", "어머니친밀도", "아버지친밀도",
-  // --- [새 설문 항목 추가] ---
-  "우편번호", "주연락대상", "주상담대상", "다문화여부", "다문화국가", 
-  "등교수단", "등교시간", "졸업후진로", "가족종교", "종교활동", 
-  "종교메시지", "잘한일", "못한일", "기타메시지", "입력시간"
+  "학생폰", "우편번호", "집주소", "상세주소", "학적", 
+  "주보호자성명", "주보호자관계", "주보호자연락처", 
+  "보조보호자성명", "보조보호자관계", "보조보호자연락처", 
+  "형제", "주연락대상", "주상담대상", "거주가족", 
+  "주보호자친밀도", "보조보호자친밀도", "반려동물", 
+  "성별", "출신중", "중학교성적", 
+  "졸업후진로", "나의꿈", "학습고민", 
+  "취미", "특기", "자주하는게임", "게임실력", "좋아하는 음식", "싫어하는 음식", "잠드는 시간", "수면시간", 
+  "나의장점", "친한친구", "MBTI", "좌우명", "힘든점", "인스타 id", 
+  "가족종교", "종교활동", "종교메시지", "다문화여부", "다문화국가", 
+  "등교수단", "등교시간", "혈액형", "알레르기", "건강특이사항", 
+  "잘한일", "못한일", "기타메시지", "비밀번호", "입력시간"
 ];
 
 // --------------------------------------------------
@@ -30,7 +33,7 @@ const REQUIRED_HEADERS = [
 function doGet(e) {
   const action = e.parameter.action;
 
-  if (action === "verifyStudent") return verifyStudent(e.parameter.num);
+  if (action === "verifyStudent") return verifyStudent(e.parameter.num, e.parameter.pw);
   if (action === "login") return checkLogin(e.parameter.id);
   if (action === "getSettings") return getSettings();
   if (action === "getClassStats") return getClassStats();
@@ -239,7 +242,8 @@ function getStudentsByClass(grade, classNum) {
 /**
  * 학번 조회 (이름 반환 추가)
  */
-function verifyStudent(num) {
+// 1. 학생 학번 조회 및 비밀번호 설정 여부 확인
+function verifyStudent(num, pw) {
   const sheetName = getTargetSheetName();
   const sheet = getOrCreateSheet(sheetName);
   const data = sheet.getDataRange().getValues();
@@ -248,6 +252,7 @@ function verifyStudent(num) {
   let numIndex = headers.indexOf("학번");
   if (numIndex === -1) numIndex = headers.indexOf("번호");
   let nameIndex = headers.indexOf("이름");
+  let pwIndex = headers.indexOf("비밀번호");
 
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][numIndex]) === String(num)) {
@@ -255,11 +260,20 @@ function verifyStudent(num) {
       for(let j=0; j<headers.length; j++) {
         student[headers[j]] = data[i][j];
       }
-      // 프론트엔드 script.js 규격에 맞게 success, name 반환
+      
+      const hasPassword = pwIndex !== -1 && data[i][pwIndex] !== "";
+      let isPasswordCorrect = false;
+      
+      if (hasPassword && pw) {
+        isPasswordCorrect = String(data[i][pwIndex]) === String(pw);
+      }
+
       return createJSONOutput({ 
         success: true, 
         exists: true, 
         name: data[i][nameIndex] || "학생",
+        hasPassword: hasPassword,
+        isPasswordCorrect: isPasswordCorrect,
         data: student 
       });
     }
@@ -275,6 +289,7 @@ function updateStudentSheet(studentNum, surveyData) {
   
   let numIndex = headers.indexOf("학번");
   if(numIndex === -1) numIndex = headers.indexOf("번호");
+  let pwIndex = headers.indexOf("비밀번호");
 
   let rowIndex = -1;
   for (let i = 1; i < data.length; i++) {
@@ -289,10 +304,21 @@ function updateStudentSheet(studentNum, surveyData) {
   }
 
   if (rowIndex === -1) {
-    // 신규 추가 로직을 막고 싶다면 여기서 에러 반환 가능
-    // 현재는 기존 명단에 없으면 맨 아래 추가하는 방식 유지하되 학번은 필수
     rowIndex = sheet.getLastRow() + 1;
-    sheet.getRange(rowIndex, numIndex + 1).setValue(studentNum); // 학번 강제 기입
+    sheet.getRange(rowIndex, numIndex + 1).setValue(studentNum);
+  } else {
+    // 기존 데이터가 있는 경우 비밀번호 검증
+    if (pwIndex !== -1) {
+      const existingPassword = String(data[rowIndex - 1][pwIndex]).trim();
+      const providedPassword = (surveyData["비밀번호"] || "").toString().trim();
+      
+      if (existingPassword !== "" && existingPassword !== providedPassword) {
+        return createJSONOutput({ 
+          result: "error", 
+          message: "비밀번호가 일치하지 않습니다. 본인 확인을 다시 해주세요." 
+        });
+      }
+    }
   }
 
   for (let h = 0; h < headers.length; h++) {
