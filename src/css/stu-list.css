@@ -499,3 +499,64 @@ body {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* 롱프레스 액션 모달 스타일 */
+.action-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.action-btn:active {
+    background: #e9ecef;
+    transform: scale(0.98);
+}
+.action-icon {
+    font-size: 1.4em;
+}
+.action-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: #3399ff;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+.action-input-group {
+    margin: 15px 0;
+    text-align: left;
+}
+.action-input-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+    color: #666;
+    font-weight: bold;
+}
+.action-input-group input, .action-input-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 1em;
+    box-sizing: border-box;
+}

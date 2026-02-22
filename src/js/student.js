@@ -1,6 +1,22 @@
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
-import { fetchStudentsByClass, fetchClassInfo } from './api.js';
+import { fetchStudentsByClass, fetchClassInfo, saveRecord } from './api.js';
+import { supabase } from './supabase.js';
+import CryptoJS from 'crypto-js';
+
+const SECRET_KEY = 'oneclass25-secret-auth-key';
+
+function getStoredEmailPrefix() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "교사";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        const email = bytes.toString(CryptoJS.enc.Utf8);
+        return email ? email.split('@')[0] : "교사";
+    } catch (e) {
+        return "교사";
+    }
+}
 
 // URL 파라미터 파싱
 const urlParams = new URLSearchParams(window.location.search);
@@ -147,14 +163,19 @@ window.showTeacherModal = function (info, showSub = false) {
 
 function setupEventListeners() {
     // 플로팅 컨트롤 (네비게이션)
-    // HTML에 onclick="goToRelativeClass(-1)" 등이 있으므로 이를 JS로 연결
-    const prevBtn = document.querySelector(".floating-controls button:first-child");
-    const homeBtn = document.querySelector(".floating-controls button:nth-child(2)");
-    const nextBtn = document.querySelector(".floating-controls button:last-child");
+    const prevBtn = document.getElementById("prev-btn");
+    const homeBtn = document.getElementById("home-btn");
+    const surveyBtn = document.getElementById("survey-viewer-btn");
+    const nextBtn = document.getElementById("next-btn");
 
     if (prevBtn) prevBtn.addEventListener("click", () => goToRelativeClass(-1));
     if (homeBtn) homeBtn.addEventListener("click", goHome);
     if (nextBtn) nextBtn.addEventListener("click", () => goToRelativeClass(1));
+    if (surveyBtn) {
+        surveyBtn.addEventListener("click", () => {
+            window.location.href = `class-survey.html?grade=${grade || 1}&class=${classNum || 1}`;
+        });
+    }
 
     // 팝업 오버레이 클릭 시 닫기
     const overlay = document.getElementById("overlay");
@@ -293,7 +314,7 @@ function loadStudents() {
                         container.classList.add("long-pressed");
                         // 진동 피드백 (지원되는 경우)
                         if (navigator.vibrate) navigator.vibrate(50);
-                        showRecord(student);
+                        showActionModal(student);
                     }, 600); // 600ms 동안 누르면 롱 프레스
                 };
 
@@ -441,12 +462,146 @@ function closePopup() {
     if (overlay) overlay.style.display = "none";
 }
 
-// 페이지 이동 함수
-function showRecord(student) {
+// 페이지 이동 및 모달 액션
+window.showRecord = function (student) {
     const name = encodeURIComponent(student["이름"]);
     const num = encodeURIComponent(student["학번"]);
     window.location.href = `record.html?num=${num}&name=${name}`;
 }
+
+window.showActionModal = function (student) {
+    const existing = document.getElementById("action-modal");
+    if (existing) existing.remove();
+
+    const displayNum = student["번호"] || (student["학번"] ? String(student["학번"]).slice(-2) : "??");
+
+    const modal = document.createElement("div");
+    modal.id = "action-modal";
+    modal.className = "guidance-tooltip-overlay";
+    modal.innerHTML = `
+        <div class="guidance-tooltip-content" style="max-width: 350px;">
+            <h3 style="margin-bottom: 20px;">[${displayNum}번] ${student["이름"]} 기록 메뉴</h3>
+            
+            <div class="action-grid" id="action-grid-main">
+                <button class="action-btn" onclick="showRecord(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">📒</span> 생활기록 작성
+                </button>
+                <button class="action-btn" onclick="openAttendanceModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">🏃</span> 근태기록 (조퇴/외출)
+                </button>
+                <button class="action-btn" onclick="openStatusModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">🪪</span> 학적상태 변경
+                </button>
+            </div>
+            
+            <div class="guidance-tooltip-footer" style="margin-top:20px;">
+                <button class="close-tooltip-btn" onclick="this.closest('.guidance-tooltip-overlay').remove()">닫기</button>
+            </div>
+        </div>
+    `;
+
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+};
+
+window.openAttendanceModal = function (student) {
+    const grid = document.getElementById("action-grid-main");
+    if (!grid) return;
+
+    grid.innerHTML = `
+        <button class="action-btn" onclick="saveAttendance(${JSON.stringify(student).replace(/"/g, '&quot;')}, '조퇴')" style="background:#fff3cd; color:#856404; border-color:#ffeeba;">
+           <span class="action-icon">🏃</span> 바로 조퇴 기록
+        </button>
+        <div class="action-input-group">
+            <label>외출 기록 (시작 시간 ~ 종료 시간)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="time" id="out-start-time" required> 
+                <span>~</span> 
+                <input type="time" id="out-end-time" required>
+            </div>
+            <button class="action-submit-btn" onclick="saveAttendance(${JSON.stringify(student).replace(/"/g, '&quot;')}, '외출')">외출 기록 저장</button>
+        </div>
+    `;
+};
+
+window.saveAttendance = async function (student, type) {
+    let detailMsg = type;
+    if (type === '외출') {
+        const start = document.getElementById('out-start-time').value;
+        const end = document.getElementById('out-end-time').value;
+        if (!start || !end) {
+            alert("외출 시간을 모두 입력해주세요.");
+            return;
+        }
+        detailMsg = `외출 (${start} ~ ${end})`;
+    }
+
+    if (!confirm(`[${student["이름"]}] 학생의 근태를 '${detailMsg}'(으)로 기록하시겠습니까?`)) return;
+
+    const teacherPrefix = getStoredEmailPrefix();
+
+    const formData = new FormData();
+    formData.append("num", student["학번"]);
+    formData.append("bad", "근태");
+    formData.append("detail", detailMsg);
+    formData.append("teacher", teacherPrefix);
+    formData.append("time", new Date().toISOString());
+
+    try {
+        await saveRecord(formData);
+        alert("기록되었습니다.");
+        const modal = document.getElementById("action-modal");
+        if (modal) modal.remove();
+        // UI 리프레시 (건수 올리기 등) 필요 시 loadStudents 재호출
+        loadStudents();
+    } catch (e) {
+        alert("기록 저장에 실패했습니다.");
+        console.error(e);
+    }
+};
+
+window.openStatusModal = function (student) {
+    const grid = document.getElementById("action-grid-main");
+    if (!grid) return;
+
+    grid.innerHTML = `
+        <div class="action-input-group">
+            <label>변경할 학적/상태 선택</label>
+            <select id="status-select">
+                <option value="재학">재학 (기본)</option>
+                <option value="전출">전출</option>
+                <option value="전입">전입</option>
+                <option value="자퇴">자퇴</option>
+                <option value="위탁">위탁</option>
+                <option value="숙려제">숙려제</option>
+            </select>
+            <button class="action-submit-btn" onclick="saveStatus(${JSON.stringify(student).replace(/"/g, '&quot;')})">학적상태 변경 저장</button>
+        </div>
+    `;
+};
+
+window.saveStatus = async function (student) {
+    const newStatus = document.getElementById('status-select').value;
+    if (!confirm(`[${student["이름"]}] 학생의 상태를 '${newStatus}'(으)로 변경하시겠습니까?`)) return;
+
+    try {
+        const { error } = await supabase
+            .from('students')
+            .update({ status: newStatus })
+            .eq('student_id', student["학번"]);
+
+        if (error) throw error;
+
+        alert("상태가 변경되었습니다.");
+        const modal = document.getElementById("action-modal");
+        if (modal) modal.remove();
+        // 목록 다시 불러와서 UI(비활성화 딤처리, 배지 등) 갱신
+        loadStudents();
+    } catch (e) {
+        alert("상태 변경에 실패했습니다.");
+        console.error(e);
+    }
+};
 
 function goToRelativeClass(direction) {
     let g = grade || 1;
