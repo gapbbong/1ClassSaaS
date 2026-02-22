@@ -218,8 +218,10 @@ export async function fetchClassStats() {
 
         const classStats = {};
         data.forEach(item => {
-            const key = item.students.class_info;
-            classStats[key] = (classStats[key] || 0) + 1;
+            if (item && item.students && item.students.class_info) {
+                const key = item.students.class_info;
+                classStats[key] = (classStats[key] || 0) + 1;
+            }
         });
 
         return { grandTotal: grandTotal || 0, classStats };

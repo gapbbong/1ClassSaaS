@@ -1,10 +1,12 @@
 import { isLightColor } from './utils.js';
 import { fetchClassStats, fetchClassInfo } from './api.js';
 
-let classInfo = [];
-
 // CryptoJS 임포트 (Vite 환경)
 import CryptoJS from 'crypto-js';
+
+let classInfo = [];
+
+console.log("index.js loaded successfully");
 
 // 고정된 암호화 키 (로컬 스토리지에 평문 저장 방지용)
 const SECRET_KEY = 'oneclass25-secret-auth-key';
@@ -25,16 +27,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   try {
+    console.log("Starting data fetch...");
     // 1. 교사 정보(DB) 및 통계 데이터 병렬 조회
     const [infoData, stats] = await Promise.all([
       fetchClassInfo(),
       fetchClassStats()
     ]);
 
+    console.log("Data fetched. infoData:", infoData, "stats:", stats);
     classInfo = infoData;
 
     // 2. DB 정보를 바탕으로 기본 레이아웃을 그립니다.
+    console.log("Rendering initial grid...");
     renderInitialGrid(container);
+    console.log("Grid rendered.");
 
     // 3. 상단 총 건수 업데이트
     if (recordCountVal && stats) {
@@ -45,10 +51,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 4. 각 반 박스의 배지 업데이트
     if (stats && stats.classStats) {
+      console.log("Updating class badges...");
       updateClassBadges(stats.classStats);
     }
 
     container.classList.remove("loading-records");
+    console.log("Startup complete.");
 
   } catch (error) {
     console.error("Index load error:", error);
