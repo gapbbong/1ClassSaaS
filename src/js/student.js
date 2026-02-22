@@ -367,99 +367,106 @@ function showPopup(student) {
     const overlay = document.getElementById("overlay");
     if (!popup || !overlay) return;
 
-    popup.innerHTML = ""; // 초기화
     overlay.style.display = "block";
+    popup.style.display = "block";
+    popup.className = "student-detail-popup";
 
-    // 닫기 버튼
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "X";
-    closeBtn.style.float = "right";
-    closeBtn.style.border = "none";
-    closeBtn.style.background = "none";
-    closeBtn.style.fontSize = "18px";
-    closeBtn.style.fontWeight = "bold";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.onclick = closePopup;
-    popup.appendChild(closeBtn);
-
-    // 이미지 (Supabase photo_url 우선)
+    // 이미지 소스 결정
     const supabasePhotoUrl = student.photo_url;
     const driveFileId = extractDriveId(student["사진저장링크"] || student.photo_url);
 
-    if (supabasePhotoUrl || driveFileId) {
-        const img = document.createElement("img");
-        if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
-            img.src = supabasePhotoUrl;
-        } else {
-            img.src = getThumbnailUrl(driveFileId);
-        }
-
-        img.onerror = function () {
-            if (driveFileId) this.src = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000`;
-        };
-        popup.appendChild(img);
+    let imgSrc = "";
+    if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
+        imgSrc = supabasePhotoUrl;
+    } else if (driveFileId) {
+        imgSrc = getThumbnailUrl(driveFileId);
     }
 
-    // 이름 및 기록 버튼
-    const h3 = document.createElement("h3");
-    h3.textContent = `${student["학번"]} ${student["이름"]} `;
+    const fallbackImgSrc = driveFileId ? `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000` : '';
 
-    // 팝업 내부 기록 버튼
-    const recordIcon = document.createElement("span");
-    recordIcon.textContent = "📒";
-    recordIcon.style.cursor = "pointer";
-    recordIcon.onclick = (e) => {
-        e.stopPropagation();
-        showRecord(student);
-    };
-    h3.appendChild(recordIcon);
-    popup.appendChild(h3);
+    // 보여주지 않을 키 목록
+    const exclude = [
+        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크",
+        "주보호자성명", "보조보호자성명", "주보호자연락처", "보조보호자연락처",
+        "주보호자관계", "보조보호자관계", "주보호자친밀도", "보조보호자친밀도",
+        "우편번호", "집주소", "상세주소", "입력시간",
+        "pid", "student_id", "photo_url", "photo_path", "created_at", "updated_at", "class_info", "academic_year"
+    ];
 
-    // 상세 정보
-    const exclude = ["PID", "연번", "학년", "반", "파일명", "학번", "이름", "학생별시트", "사진저장링크", "주보호자성명", "보조보호자성명", "주보호자연락처", "보조보호자연락처", "주보호자관계", "보조보호자관계", "주보호자친밀도", "보조보호자친밀도", "우편번호", "집주소", "상세주소", "입력시간"];
-    village:
+    let infoHtml = "";
     for (let key in student) {
-        if (!exclude.includes(key) && student[key]) {
-            const info = document.createElement("div");
-            info.className = "info";
+        if (!exclude.includes(key) && student[key] && key !== "이름" && key !== "학번") {
+            const val = student[key];
             const isPhone = key.includes("전화") || key.includes("연락처") || key.includes("번호") || key.includes("폰");
+            const isInsta = key.toLowerCase().includes("인스타");
 
-            info.innerHTML = `<strong>${key}:</strong> ${student[key]}`;
+            infoHtml += `<div class="detail-info-row">`;
+            infoHtml += `<span class="detail-label">${key}</span>`;
+
             if (isPhone) {
-                // 전화 걸기/문자 링크 추가
-                const phoneLink = document.createElement("a");
-                phoneLink.href = `tel:${student[key]}`;
-                phoneLink.textContent = "📞";
-
-                const smsLink = document.createElement("a");
-                smsLink.href = `sms:${student[key]}`;
-                smsLink.textContent = "📩";
-
-                info.appendChild(document.createTextNode(" ")); // 공백
-                info.appendChild(phoneLink);
-                info.appendChild(smsLink);
+                infoHtml += `<span class="detail-value">${val} 
+                    <a href="tel:${val}" class="contact-icon" title="전화걸기">📞</a>
+                    <a href="sms:${val}" class="contact-icon" title="문자보내기">💬</a>
+                </span>`;
+            } else if (isInsta) {
+                const instaId = String(val).replace('@', '').trim();
+                infoHtml += `<span class="detail-value">${val} 
+                    <a href="instagram://user?username=${instaId}" class="contact-icon insta-link" title="인스타 앱 열기">📸</a>
+                </span>`;
+            } else {
+                infoHtml += `<span class="detail-value">${val}</span>`;
             }
-            popup.appendChild(info);
+            infoHtml += `</div>`;
         }
     }
 
-    // 하단 닫기 버튼
-    const closeBtn2 = document.createElement("button");
-    closeBtn2.textContent = "닫기";
-    closeBtn2.style.marginTop = "10px";
-    closeBtn2.style.padding = "5px 10px";
-    closeBtn2.style.cursor = "pointer";
-    closeBtn2.onclick = closePopup;
-    popup.appendChild(closeBtn2);
+    const escapedStudent = JSON.stringify(student).replace(/"/g, '&quot;');
+    const photoImg = imgSrc ? `<img src="${imgSrc}" onerror="this.src='${fallbackImgSrc}'" alt="${student["이름"]} 사진">` : `<div class="no-photo-placeholder">📷<br>사진 없음</div>`;
 
-    popup.style.display = "block";
+    popup.innerHTML = `
+        <div class="popup-header">
+            <h3><span class="popup-num">${student["학번"]}</span> ${student["이름"]}</h3>
+            <div class="popup-header-actions">
+                <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
+            </div>
+        </div>
+        <div class="popup-grid">
+            <div class="popup-photo-section">
+                ${photoImg}
+            </div>
+            <div class="popup-info-section">
+                <div class="popup-info-scroll">
+                    ${infoHtml || '<div class="no-data-msg">추가 정보가 없습니다.</div>'}
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 팝업 열릴 때 전역 키보드 이벤트 리스너 등록
+    window._popupKeyHandler = function (e) {
+        if (popup.style.display === "block") {
+            if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                closePopup();
+            }
+        }
+    };
+    document.addEventListener("keydown", window._popupKeyHandler);
 }
 
 function closePopup() {
     const popup = document.getElementById("popup");
     const overlay = document.getElementById("overlay");
-    if (popup) popup.style.display = "none";
+    if (popup) {
+        popup.style.display = "none";
+        popup.className = ""; // Reset class for backward compat
+    }
     if (overlay) overlay.style.display = "none";
+
+    if (window._popupKeyHandler) {
+        document.removeEventListener("keydown", window._popupKeyHandler);
+        window._popupKeyHandler = null;
+    }
 }
 
 // 페이지 이동 및 모달 액션
