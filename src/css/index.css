@@ -25,37 +25,50 @@
     white-space: nowrap;
 }
 
-.page-title {
-    font-size: 1.05em;
-    font-weight: 700;
-    color: #555;
-    margin: 0;
-    z-index: 10;
-    white-space: nowrap;
-}
-
-.bulk-button {
-    padding: 8px 14px;
-    background: #4A90E2;
-    color: #fff;
-    border-radius: 10px;
-    text-decoration: none;
-    font-size: 0.85em;
-    font-weight: 700;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background 0.2s;
-    white-space: nowrap;
-}
-
-.bulk-button:hover {
-    background: #357ABD;
-}
-
-.search-button {
-    font-size: 1.4em;
+/* 상단 네비게이션 액션 버튼 셋 (크기 1.5배 확대) */
+.nav-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border: 1px solid #eaeaea;
     color: #333;
+    cursor: pointer;
+    padding: 9px 18px;
+    /* 1.5배 */
+    border-radius: 16px;
+    /* 둥근 정도 비례 확대 */
+    min-width: 90px;
+    /* 1.5배 */
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
     text-decoration: none;
-    line-height: 1;
+}
+
+.nav-action-btn:hover {
+    background: #eef2f5;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.nav-action-btn:active {
+    transform: translateY(0);
+}
+
+.nav-icon {
+    font-size: 1.85rem;
+    /* ~1.5배 */
+    margin-bottom: 4px;
+    /* 여백 확대 */
+}
+
+.nav-text {
+    font-size: 1.1rem;
+    /* ~1.5배 */
+    font-weight: 700;
+    color: #444;
+    white-space: nowrap;
 }
 
 html,
@@ -82,8 +95,10 @@ body {
     flex-wrap: nowrap;
     width: 100%;
     flex: 1;
-    padding: 2vh 8px;
-    gap: clamp(8px, 2vw, 16px);
+    padding: 10px 8px 30px 8px;
+    /* 상단 여백 확보 */
+    gap: clamp(10px, 3vw, 24px);
+    /* 간격 확대 */
     box-sizing: border-box;
 }
 
@@ -134,7 +149,8 @@ body {
     margin-bottom: 6px;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
+    /* ... 대신 잘림 처리하여 불필요한 점 노출 방지 */
 }
 
 .count-badge {
@@ -142,11 +158,10 @@ body {
     font-weight: 600;
 }
 
-/* 기록 건수 링크 스타일 (밑줄 추가) */
+/* 기록 건수 링크 스타일 */
 .title-link,
 .count-badge-link {
-    text-decoration: underline !important;
-    text-underline-offset: 3px;
+    text-decoration: none !important;
     transition: opacity 0.2s;
 }
 
@@ -265,4 +280,72 @@ body {
         white-space: nowrap;
         font-size: clamp(0.75em, 2.5vw, 0.9em);
     }
+}
+
+/* --- 긴급 스타일 통합: 모달 및 툴팁 --- */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.contact-modal-content {
+    background: #fff;
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.floating-tooltip {
+    display: none;
+    width: 95%;
+    max-width: 550px;
+    margin: 0 auto 15px auto !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+    padding: 14px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+    z-index: 9999 !important;
+    box-sizing: border-box;
+    animation: slideInDown 0.4s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.floating-tooltip .highlight {
+    color: #ffcc00 !important;
+    font-weight: 800;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.class-box {
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+.class-box.pressing {
+    transform: scale(0.96);
+    opacity: 0.9;
 }

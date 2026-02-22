@@ -1,15 +1,18 @@
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
-import { classInfo } from './teacher-data.js';
+import { fetchStudentsByClass, fetchClassInfo } from './api.js';
 
 // URL 파라미터 파싱
 const urlParams = new URLSearchParams(window.location.search);
 const grade = parseInt(urlParams.get("grade"));
 const classNum = parseInt(urlParams.get("class"));
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    // DB에서 교사 정보 호출
+    const classInfo = await fetchClassInfo();
+
     // 1. 타이틀 및 교사 정보 설정
-    setupHeader();
+    setupHeader(classInfo);
 
     // 2. 학생 데이터 불러오기
     loadStudents();
@@ -17,11 +20,59 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. 이벤트 리스너 설정 (플로팅 버튼 등)
     setupEventListeners();
 
-    // 4. 서비스 워커 등록
+    // 4. 안내 메시지 추가
+    setupGuidance();
+
+    // 5. 서비스 워커 등록
     registerServiceWorker();
 });
 
-function setupHeader() {
+function setupGuidance() {
+    // 사용자가 '다시 보지 않기'를 선택했는지 확인
+    if (localStorage.getItem("hideGuidanceTooltip") === "true") return;
+
+    const list = document.getElementById("student-list");
+    if (!list) return;
+
+    // 모달형 툴팁 생성
+    const overlay = document.createElement("div");
+    overlay.className = "guidance-tooltip-overlay";
+
+    overlay.innerHTML = `
+        <div class="guidance-tooltip-content">
+            <h3>💡 생활기록 팁</h3>
+            <p>학생 사진을 <strong>길게 누르면</strong><br>바로 생활기록을 할 수 있습니다!</p>
+            <div class="guidance-tooltip-footer">
+                <button class="close-tooltip-btn">확인</button>
+                <button class="never-see-again-btn">다시 보지 않기</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 이벤트 리스너
+    const closeBtn = overlay.querySelector(".close-tooltip-btn");
+    const neverBtn = overlay.querySelector(".never-see-again-btn");
+
+    closeBtn.onclick = () => {
+        document.body.removeChild(overlay);
+    };
+
+    neverBtn.onclick = () => {
+        localStorage.setItem("hideGuidanceTooltip", "true");
+        document.body.removeChild(overlay);
+    };
+
+    // 배경 클릭 시 닫기
+    overlay.onclick = (e) => {
+        if (e.target === overlay) {
+            document.body.removeChild(overlay);
+        }
+    };
+}
+
+function setupHeader(classInfo) {
     const titleElement = document.getElementById("class-title");
     if (grade && classNum) {
         titleElement.textContent = `${grade}학년 ${classNum}반`;
@@ -31,31 +82,68 @@ function setupHeader() {
     }
 
     const teacherInfoElement = document.getElementById("teacher-info");
-    const info = classInfo.find(c => c.grade === grade && c.class === classNum);
+    const info = classInfo ? classInfo.find(c => c.grade === grade && c.class === classNum) : null;
     if (info) {
-        // 교사 정보 렌더링
-        // 교사 정보 렌더링 (담임 + 부담임)
-        // 교사 정보 렌더링 (담임 + 부담임 수평 배치)
+        // 교사 이름 클릭 → 연락처 모달 방식으로 변경
         teacherInfoElement.innerHTML = `
-            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px;">
-                <!-- 담임 -->
-                <div style="display: flex; align-items: center; gap: 4px;">
-                    <span style="font-weight: bold;">${info.homeroom}</span>
-                    <a href="tel:${info.homeroomPhone}" style="text-decoration: none; font-size: 0.9em;">📞</a>
-                    <a href="sms:${info.homeroomPhone}" style="text-decoration: none; font-size: 0.9em;">💬</a>
-                </div>
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                <button class="teacher-contact-btn" onclick="showTeacherModal(${JSON.stringify(info).replace(/"/g, '&quot;')})">
+                    <span class="teacher-badge homeroom">담임</span>
+                    <span class="teacher-name">${info.homeroom}</span>
+                </button>
                 ${info.sub ? `
-                <!-- 부담임 -->
-                <div style="display: flex; align-items: center; gap: 4px; color: #555;">
-                    <span style="color: #ccc; margin: 0 2px;">|</span>
-                    <span style="font-size: 0.95em;">${info.sub}</span>
-                    <a href="tel:${info.subPhone}" style="text-decoration: none; font-size: 0.9em;">📞</a>
-                    <a href="sms:${info.subPhone}" style="text-decoration: none; font-size: 0.9em;">💬</a>
-                </div>` : ''}
+                <button class="teacher-contact-btn" onclick="showTeacherModal(${JSON.stringify(info).replace(/"/g, '&quot;')}, true)">
+                    <span class="teacher-badge sub">부담임</span>
+                    <span class="teacher-name">${info.sub}</span>
+                </button>` : ''}
             </div>
         `;
     }
 }
+
+// 교사 연락처 모달 표시
+window.showTeacherModal = function (info, showSub = false) {
+    const existing = document.getElementById("teacher-contact-modal");
+    if (existing) existing.remove();
+
+    const name = showSub ? info.sub : info.homeroom;
+    const phone = showSub ? info.subPhone : info.homeroomPhone;
+    const role = showSub ? "부담임" : "담임";
+
+    const modal = document.createElement("div");
+    modal.id = "teacher-contact-modal";
+    modal.className = "guidance-tooltip-overlay";
+    modal.innerHTML = `
+        <div class="guidance-tooltip-content teacher-modal">
+            <div class="teacher-modal-header">
+                <span class="teacher-badge ${showSub ? 'sub' : 'homeroom'}">${role}</span>
+                <h3>${name} 선생님</h3>
+            </div>
+            <p class="teacher-phone">${phone}</p>
+            <div class="teacher-modal-actions">
+                <a href="tel:${phone}" class="modal-action-btn call-btn">
+                    <span>📞</span> 전화
+                </a>
+                <a href="sms:${phone}" class="modal-action-btn sms-btn">
+                    <span>💬</span> 문자
+                </a>
+            </div>
+            ${info.sub ? `
+            <div class="teacher-modal-switch">
+                <button onclick="this.closest('.guidance-tooltip-overlay').remove(); showTeacherModal(${JSON.stringify(info).replace(/"/g, '&quot;')}, ${!showSub})">
+                    ${showSub ? `담임 ${info.homeroom} 선생님 연락처` : `부담임 ${info.sub} 선생님 연락처`} 보기
+                </button>
+            </div>` : ''}
+            <div class="guidance-tooltip-footer" style="margin-top:16px;">
+                <button class="close-tooltip-btn" onclick="this.closest('.guidance-tooltip-overlay').remove()">닫기</button>
+            </div>
+        </div>
+    `;
+
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+};
+
 
 function setupEventListeners() {
     // 플로팅 컨트롤 (네비게이션)
@@ -75,7 +163,6 @@ function setupEventListeners() {
     }
 }
 
-import { fetchStudentsByClass } from './api.js';
 
 function loadStudents() {
     const list = document.getElementById("student-list");
@@ -119,25 +206,35 @@ function loadStudents() {
                 const imgContainer = document.createElement("div");
                 imgContainer.className = "img-container";
 
-                // 이미지
-                const fileId = extractDriveId(student["사진저장링크"]);
+                // 이미지 (Supabase photo_url 우선, 구글 드라이브 하위 호환)
                 const img = document.createElement("img");
-                img.src = getThumbnailUrl(fileId);
+                const supabasePhotoUrl = student.photo_url;
+                const driveLink = student["사진저장링크"] || "";
+                const driveFileId = extractDriveId(driveLink || supabasePhotoUrl);
+
+                if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
+                    img.src = supabasePhotoUrl;
+                } else if (driveFileId) {
+                    img.src = getThumbnailUrl(driveFileId);
+                } else if (supabasePhotoUrl) {
+                    // 파일명만 있는 경우 Supabase Public URL 구성 시도 (만약 경로가 정해져 있다면)
+                    // 일단 구글 썸네일로 폴백 시도
+                    img.src = `https://drive.google.com/thumbnail?id=${supabasePhotoUrl.split('.')[0]}&sz=w500`;
+                } else {
+                    img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+                }
+
                 img.loading = "lazy";
 
-                // [수정] 이미지 로드 실패 시 대체 경로 시도 (Fallback)
+                // 이미지 로드 실패 시 대체 경로 시도 (Fallback)
                 img.onerror = function () {
                     if (this.getAttribute("data-retry")) {
-                        // 2차 시도(드라이브 직접 접근)도 실패 시 투명 이미지
                         this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
                         return;
                     }
-
                     this.setAttribute("data-retry", "true");
-
-                    if (fileId) {
-                        // 1차(lh3) 실패 시 -> 2차: drive.google.com 썸네일 API 시도
-                        this.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+                    if (driveFileId) {
+                        this.src = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w500`;
                     }
                 };
 
@@ -159,31 +256,75 @@ function loadStudents() {
                     imgContainer.appendChild(recordBadge);
                 }
 
-                // 이름 및 생활기록 아이콘
+                // 이름 및 학번 표시
                 const nameDiv = document.createElement("div");
                 nameDiv.className = "student-name";
 
-                const numberStr = String(student["학번"]).slice(-2);
+                // [수정] 번호 우선 표시 (학번 4자리 중 뒤 2자리 또는 번호 필드)
+                // 사용자가 '번호'라고 부르는 것을 명확히 표시하기 위해 '번호' 필드가 있으면 그것을, 없으면 학번의 뒤 2자리를 사용
+                let displayNum = student["번호"] || (student["학번"] ? String(student["학번"]).slice(-2) : "??");
+                // 한 자리 숫자인 경우 앞에 0 붙임 (예: 1 -> 01)
+                if (displayNum && !isNaN(displayNum) && String(displayNum).length === 1) {
+                    displayNum = "0" + displayNum;
+                }
+                const studentName = student["이름"] || "이름없음";
 
-                // 텍스트 노드 생성
-                nameDiv.appendChild(document.createTextNode(`${numberStr} ${student["이름"]} `));
-
-                // 생활기록 아이콘 생성 및 이벤트 리스너
-                const recordIcon = document.createElement("span");
-                recordIcon.textContent = "📒";
-                recordIcon.style.cursor = "pointer";
-
-                recordIcon.addEventListener("click", (e) => {
-                    e.stopPropagation(); // 팝업 열기 방지
-                    showRecord(student);
-                });
-                nameDiv.appendChild(recordIcon);
+                // 번호와 이름을 명확하게 span으로 감싸고 아이콘 제거
+                nameDiv.innerHTML = `
+                        <div class="name-badge">
+                            <span class="student-num">${displayNum}</span>
+                            <span class="student-nm">${studentName}</span>
+                        </div>
+                    `;
 
                 container.appendChild(imgContainer);
                 container.appendChild(nameDiv);
 
-                // 학생 클릭 시 팝업
-                container.addEventListener("click", () => showPopup(student));
+                // 롱 프레스 및 클릭 로직 구현
+                let pressTimer;
+                let isLongPress = false;
+
+                const startPress = (e) => {
+                    isLongPress = false;
+                    container.classList.add("pressing");
+                    pressTimer = setTimeout(() => {
+                        isLongPress = true;
+                        container.classList.remove("pressing");
+                        container.classList.add("long-pressed");
+                        // 진동 피드백 (지원되는 경우)
+                        if (navigator.vibrate) navigator.vibrate(50);
+                        showRecord(student);
+                    }, 600); // 600ms 동안 누르면 롱 프레스
+                };
+
+                const cancelPress = () => {
+                    clearTimeout(pressTimer);
+                    container.classList.remove("pressing");
+                    container.classList.remove("long-pressed");
+                };
+
+                const handleRelease = (e) => {
+                    clearTimeout(pressTimer);
+                    container.classList.remove("pressing");
+                    if (!isLongPress) {
+                        // 짧게 클릭한 경우에만 팝업 표시
+                        showPopup(student);
+                    }
+                    isLongPress = false;
+                };
+
+                // 마우스 이벤트
+                container.addEventListener("mousedown", startPress);
+                container.addEventListener("mouseup", handleRelease);
+                container.addEventListener("mouseleave", cancelPress);
+
+                // 터치 이벤트
+                container.addEventListener("touchstart", (e) => {
+                    // 기본 동작(스크롤 등)은 유지하면서 롱 프레스 체크
+                    startPress(e);
+                }, { passive: true });
+                container.addEventListener("touchend", handleRelease);
+                container.addEventListener("touchmove", cancelPress);
 
                 list.appendChild(container);
             });
@@ -220,13 +361,21 @@ function showPopup(student) {
     closeBtn.onclick = closePopup;
     popup.appendChild(closeBtn);
 
-    // 큰 이미지
-    const fileId = extractDriveId(student["사진저장링크"]);
-    if (fileId) {
+    // 이미지 (Supabase photo_url 우선)
+    const supabasePhotoUrl = student.photo_url;
+    const driveFileId = extractDriveId(student["사진저장링크"] || student.photo_url);
+
+    if (supabasePhotoUrl || driveFileId) {
         const img = document.createElement("img");
-        img.src = getThumbnailUrl(fileId); // 팝업은 고해상도 필요? 썸네일 일단 사용
-        // 원본 이미지가 필요하다면 구글 드라이브 URL 패턴 변경 필요
-        // img.src = `https://drive.google.com/uc?export=view&id=${fileId}`; // 원본 (느릴 수 있음)
+        if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
+            img.src = supabasePhotoUrl;
+        } else {
+            img.src = getThumbnailUrl(driveFileId);
+        }
+
+        img.onerror = function () {
+            if (driveFileId) this.src = `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000`;
+        };
         popup.appendChild(img);
     }
 

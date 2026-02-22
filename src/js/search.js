@@ -215,9 +215,17 @@ function renderResults(results) {
     countBox.innerHTML = `🔹 총 ${results.length}건 검색되었습니다.`;
 
     resultBox.innerHTML = results.map(student => {
-        const fileId = extractDriveId(student["사진저장링크"]);
-        // 썸네일 URL 사용
-        const bgUrl = getThumbnailUrl(fileId);
+        const photoUrl = student["사진저장링크"] || "";
+        const fileId = extractDriveId(photoUrl);
+
+        let bgUrl;
+        if (photoUrl.startsWith('http') && !photoUrl.includes('drive.google.com')) {
+            // Supabase 스토리지 등 직접 링크인 경우
+            bgUrl = photoUrl;
+        } else {
+            // 구글 드라이브인 경우 썸네일 사용
+            bgUrl = getThumbnailUrl(fileId);
+        }
 
         const phone = student["학생폰"] || "";
         const phoneTag = phone

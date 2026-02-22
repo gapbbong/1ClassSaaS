@@ -1,28 +1,46 @@
-import { classInfo } from './teacher-data.js';
 import { isLightColor } from './utils.js';
-import { fetchClassStats } from './api.js';
+import { fetchClassStats, fetchClassInfo } from './api.js';
+
+let classInfo = [];
+
+// CryptoJS 임포트 (Vite 환경)
+import CryptoJS from 'crypto-js';
+
+// 고정된 암호화 키 (로컬 스토리지에 평문 저장 방지용)
+const SECRET_KEY = 'oneclass25-secret-auth-key';
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // 인증 체크 (인증 완료 전에는 화면 안보이게/클릭 못하게 함)
+  const isAuthenticated = await initAuth();
+  if (!isAuthenticated) return;
+
   const container = document.getElementById("class-list");
   container.innerHTML = "";
   container.classList.add("loading-records");
 
-  // 1. [최적화] 먼저 기본 레이아웃을 즉시 그립니다.
-  renderInitialGrid(container);
-
-  const pageTitle = document.querySelector(".page-title");
-  if (pageTitle) {
-    pageTitle.innerHTML = `기록 <span class="loading-dots">불러오는 중</span>`;
+  const recordCountVal = document.getElementById("record-count-val");
+  if (recordCountVal) {
+    recordCountVal.innerText = "";
+    recordCountVal.classList.add("loading-dots");
   }
 
   try {
-    // 2. [최적화] 경량화된 통계 데이터만 비동기로 가져옵니다.
-    const stats = await fetchClassStats();
+    // 1. 교사 정보(DB) 및 통계 데이터 병렬 조회
+    const [infoData, stats] = await Promise.all([
+      fetchClassInfo(),
+      fetchClassStats()
+    ]);
+
+    classInfo = infoData;
+
+    // 2. DB 정보를 바탕으로 기본 레이아웃을 그립니다.
+    renderInitialGrid(container);
 
     // 3. 상단 총 건수 업데이트
-    if (pageTitle && stats) {
+    if (recordCountVal && stats) {
       const grandTotal = stats.grandTotal !== undefined ? stats.grandTotal : 0;
-      pageTitle.innerHTML = `기록 <a href="total-records.html" class="title-link">${grandTotal}건</a>`;
+      recordCountVal.classList.remove("loading-dots");
+      recordCountVal.innerText = grandTotal;
     }
 
     // 4. 각 반 박스의 배지 업데이트
@@ -34,13 +52,174 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (error) {
     console.error("Index load error:", error);
-    if (pageTitle) {
-      pageTitle.innerHTML = `기록 <a href="total-records.html" class="title-link">0건</a>`;
+    if (recordCountVal) {
+      recordCountVal.classList.remove("loading-dots");
+      recordCountVal.innerText = "0";
     }
     container.classList.remove("loading-records");
-    // 에러가 나도 화면은 이미 그려져 있으므로 배지만 안 나올 것입니다.
   }
+
+  // 5. 모달 이벤트 등록
+  initContactModal();
+  initGlobalTip();
+  initHeaderMenu();
 });
+
+// ----------------------------------------------------
+// 헤더 메뉴 및 로그아웃 로직
+// ----------------------------------------------------
+function initHeaderMenu() {
+  const hamburgerBtn = document.getElementById("hamburger-btn");
+  const hamburgerDropdown = document.getElementById("hamburger-dropdown");
+  const logoutBtn = document.getElementById("logout-btn");
+
+  if (hamburgerBtn && hamburgerDropdown) {
+    // 햄버거 아이콘 클릭 (토글)
+    hamburgerBtn.addEventListener("click", (e) => {
+      e.stopPropagation(); // 바디 클릭 방지
+      hamburgerDropdown.style.display = hamburgerDropdown.style.display === "block" ? "none" : "block";
+    });
+
+    // 화면 다른 곳 클릭하면 닫히게 설정
+    document.addEventListener("click", () => {
+      hamburgerDropdown.style.display = "none";
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      if (confirm("정말로 로그아웃 하시겠습니까?")) {
+        localStorage.removeItem("teacher_auth_token");
+        // 전체 새로고침
+        location.reload();
+      }
+    });
+  }
+}
+
+// ----------------------------------------------------
+// 교사 인증 로직 (Local Storage + Crypto JS)
+// ----------------------------------------------------
+async function initAuth() {
+  const authModal = document.getElementById('auth-modal');
+  const authInput = document.getElementById('auth-email-input');
+  const authSubmit = document.getElementById('auth-submit-btn');
+  const errorMsg = document.getElementById('auth-error-msg');
+  const titleBar = document.querySelector('.title-bar');
+  const classGrid = document.querySelector('.class-grid');
+
+  // 암호화된 이메일 불러오기
+  function getStoredEmail() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return null;
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+      return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+      return null; // 복호화 에러 시 null 반환
+    }
+  }
+
+  // 암호화하여 저장
+  function setStoredEmail(email) {
+    const encrypted = CryptoJS.AES.encrypt(email, SECRET_KEY).toString();
+    localStorage.setItem('teacher_auth_token', encrypted);
+  }
+
+  const storedEmail = getStoredEmail();
+
+  // 이미 인증되어있다면 모달 숨기고 진행
+  if (storedEmail) {
+    authModal.style.display = 'none';
+    return true;
+  }
+
+  // 인증 안 되어 있으면 모달 메인에 강제 노출 (배경 콘텐츠 숨기기)
+  titleBar.style.display = 'none';
+  classGrid.style.display = 'none';
+
+  authModal.style.display = 'flex';
+  authModal.style.backgroundColor = 'rgba(255,255,255,1)'; // 불투명하게 덮기
+
+  return new Promise((resolve) => {
+    authSubmit.addEventListener('click', async () => {
+      const email = authInput.value.trim();
+      if (!email) {
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = '이메일을 입력해주세요.';
+        return;
+      }
+
+      authSubmit.textContent = '확인 중...';
+      errorMsg.style.display = 'none';
+
+      try {
+        // supabase 모듈은 api.js에서 이미 쓰고 있으므로 빌려서 쓸 수 있도록 맨 위에 추가합니다.
+        // 여기서는 api.js 쪽에 함수를 만들어 부르는 것이 더 좋습니다.
+        const { supabase } = await import('./supabase.js');
+
+        const { data, error } = await supabase
+          .from('teachers')
+          .select('email')
+          .eq('email', email)
+          .maybeSingle();
+
+        if (error || !data) {
+          errorMsg.style.display = 'block';
+          errorMsg.textContent = '등록되지 않은 교사 이메일입니다.';
+          authSubmit.textContent = '인증하기';
+        } else {
+          // 인증 통과
+          setStoredEmail(data.email);
+          authModal.style.display = 'none';
+          // 화면 복구
+          titleBar.style.display = 'flex';
+          classGrid.style.display = 'flex';
+          resolve(true);
+        }
+      } catch (err) {
+        console.error('Auth error', err);
+        errorMsg.style.display = 'block';
+        errorMsg.textContent = '네트워크 오류가 발생했습니다.';
+        authSubmit.textContent = '인증하기';
+      }
+    });
+
+    // 엔터키 지원
+    authInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        authSubmit.click();
+      }
+    });
+  });
+}
+
+
+function initGlobalTip() {
+  const tipEl = document.getElementById("global-tip");
+  const hideCheckbox = document.getElementById("hide-global-tip");
+  const closeBtn = document.getElementById("close-global-tip");
+
+  if (!tipEl || !hideCheckbox) return;
+
+  if (localStorage.getItem("hideGlobalTip") !== "true") {
+    tipEl.style.display = "flex";
+  }
+
+  // 체크박스 누르면 바로 사라지게 처리
+  hideCheckbox.addEventListener("change", (e) => {
+    if (e.target.checked) {
+      localStorage.setItem("hideGlobalTip", "true");
+      tipEl.style.display = "none";
+    }
+  });
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      tipEl.style.display = "none";
+    });
+  }
+}
 
 function renderInitialGrid(container) {
   container.innerHTML = "";
@@ -60,34 +239,43 @@ function renderInitialGrid(container) {
         let light = 90 - (classNum * 12);
         const bgColor = `hsl(${hue}, 60%, ${light}%)`;
 
+        // 2-6반 담임 강제 보정 (DB 동기화 지연 대비)
+        if (grade === 2 && classNum === 6 && info.homeroom === "미정") {
+          info.homeroom = "장효윤";
+          info.homeroomPhone = "010-8713-2882";
+        }
+
         box.innerHTML = `
-                    <section class="class-section" style="background-color: ${bgColor}; ${light < 55 ? 'color: #fff;' : ''}">
-                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : ''}">
-                            <a class="class-button" href="stu-list.html?grade=${info.grade}&class=${info.class}" 
-                               style="background-color: ${bgColor}; color: ${isLightColor(bgColor) ? '#000' : '#fff'}">
-                                ${info.grade}-${info.class}반
-                            </a>
+                    <section class="class-section" 
+                             style="background-color: ${bgColor}; ${light < 55 ? 'color: #fff;' : ''}; cursor: pointer; -webkit-tap-highlight-color: transparent;">
+                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : ''}; pointer-events: none;">
+                            <span class="class-label">${grade}-${classNum}반</span>
                             <span id="badge-${grade}-${classNum}" class="badge-placeholder"></span>
                         </h3>
-                        <div class="teacher-line">
+                        <div class="teacher-line" style="pointer-events: none;">
                             <div>        
-                                <a href="tel:${info.homeroomPhone}" style="color: ${light < 55 ? '#fff' : '#FF0000'};">📞</a>
-                                ${info.homeroom}
-                                <a href="sms:${info.homeroomPhone}" style="color: ${light < 55 ? '#fff' : '#00FF00'};">💬</a>
+                                <strong>${info.homeroom}</strong>
                             </div>
                             <div>
-                                <a href="tel:${info.subPhone}" style="color: ${light < 55 ? '#fff' : '#FF0000'};">📞</a>
-                                <span>${info.sub}</span>
-                                <a href="sms:${info.subPhone}" style="color: ${light < 55 ? '#fff' : '#00FF00'};">💬</a>
+                                <strong>${info.sub}</strong>
                             </div>
                         </div>
                     </section>
                 `;
+
+        // 클릭 이벤트 직접 등록 (전역 스코프 이슈 방지)
+        const section = box.querySelector(".class-section");
+        if (section) {
+          section.addEventListener("click", (e) => window.handleClassClick(e, grade, classNum));
+        }
       }
       col.appendChild(box);
     }
     container.appendChild(col);
   }
+
+  // 그려진 박스들에 롱프레스(Long Press) 이벤트 달기
+  attachLongPressEvents();
 }
 
 function updateClassBadges(classStats) {
@@ -100,4 +288,182 @@ function updateClassBadges(classStats) {
     }
   });
 }
+
+// ----------------------------------------------------
+// 연락처 롱프레스 및 모달 로직
+// ----------------------------------------------------
+
+let pressTimer;
+let isPressing = false;
+let startX = 0, startY = 0;
+let lastLongPressTime = 0;
+
+window.handleClassClick = function (e, g, c) {
+  // 모달이 열려있거나 롱프레스 직후라면 이동 방지
+  const modal = document.getElementById("contact-modal");
+  const isModalOpen = modal && (modal.style.display === "flex" || modal.style.display === "block");
+  const now = Date.now();
+  const justLongPressed = (now - lastLongPressTime < 500);
+
+  console.log("Class Click:", g, c, "ModalOpen:", isModalOpen, "JustPressed:", justLongPressed);
+
+  if (isModalOpen || justLongPressed) {
+    if (e) e.preventDefault();
+    return;
+  }
+
+  // stu-list.html이 기대하는 파라미터로 명시적 이동
+  const targetUrl = `stu-list.html?grade=${g}&class=${c}`;
+  console.log("Redirecting to:", targetUrl);
+  window.location.href = targetUrl;
+};
+
+function attachLongPressEvents() {
+  const boxes = document.querySelectorAll(".class-box");
+
+  boxes.forEach((box) => {
+    const classTitle = box.querySelector(".class-label");
+    if (!classTitle) return;
+    const text = classTitle.innerText; // "1-1반"
+
+    // 매치되는 선생님 정보 찾기
+    const match = text.match(/(\d)-(\d)반/);
+    if (!match) return;
+    const grade = parseInt(match[1], 10);
+    const classNum = parseInt(match[2], 10);
+    const info = classInfo.find(c => c.grade === grade && c.class === classNum);
+
+    if (!info) return;
+
+    // 터치/마우스 다운 (박스 전체)
+    const startPress = (e) => {
+      // 롱프레스 시 내부의 a 태그의 기본 이동을 막거나 제어하기 위한 플래그
+      const touch = e.touches ? e.touches[0] : e;
+      startX = touch.clientX;
+      startY = touch.clientY;
+
+      isPressing = true;
+      box.classList.add("pressing");
+
+      pressTimer = setTimeout(() => {
+        if (isPressing) {
+          e.preventDefault(); // 기본 동작 막기
+          if (navigator.vibrate) navigator.vibrate(50); // 햅틱 피드백
+          lastLongPressTime = Date.now();
+          openContactModal(info);
+        }
+      }, 600); // 0.6초 길게 누르면 발동
+    };
+
+    // 터치/마우스 업 및 취소
+    const endPress = (e) => {
+      clearTimeout(pressTimer);
+      isPressing = false;
+      box.classList.remove("pressing");
+    };
+
+    // 스크롤 시 취소
+    const cancelPress = (e) => {
+      if (!isPressing) return;
+
+      const touch = e.touches ? e.touches[0] : e;
+      const moveX = Math.abs(touch.clientX - startX);
+      const moveY = Math.abs(touch.clientY - startY);
+
+      // 조금만 움직여도 취소 (스크롤용)
+      if (moveX > 10 || moveY > 10) {
+        clearTimeout(pressTimer);
+        isPressing = false;
+        box.classList.remove("pressing");
+      }
+    };
+
+    // 박스 전체에 이벤트 리스너 등록
+    box.addEventListener("mousedown", startPress);
+    box.addEventListener("touchstart", startPress, { passive: false }); // preventDefault 사용을 위해 passive: false
+
+    box.addEventListener("mouseup", endPress);
+    box.addEventListener("mouseleave", endPress);
+    box.addEventListener("touchend", endPress);
+    box.addEventListener("touchcancel", endPress);
+
+    box.addEventListener("mousemove", cancelPress);
+    box.addEventListener("touchmove", cancelPress, { passive: true });
+
+    // 브라우저 기본 메뉴(복사, 공유 등) 방지
+    box.addEventListener("contextmenu", (e) => {
+      if (isPressing || (modal && modal.style.display === "flex")) {
+        e.preventDefault();
+      }
+    });
+
+
+  });
+}
+
+function openContactModal(info) {
+  const modal = document.getElementById("contact-modal");
+  const title = document.getElementById("contact-modal-title");
+  const body = document.getElementById("contact-modal-body");
+
+  if (!modal) return;
+
+  title.innerText = `${info.grade}학년 ${info.class}반 교사 연락처`;
+
+  // 담임/부담임 전화/문자 버튼 생성
+  body.innerHTML = `
+        <div class="teacher-contact-row">
+            <span>👤 담임: ${info.homeroom}</span>
+            <div class="teacher-contact-actions">
+                <a href="tel:${info.homeroomPhone}" style="color:#FF3B30">📞</a>
+                <a href="sms:${info.homeroomPhone}" style="color:#34C759">💬</a>
+            </div>
+        </div>
+        <div class="teacher-contact-row">
+            <span>👤 부담임: ${info.sub}</span>
+            <div class="teacher-contact-actions">
+                <a href="tel:${info.subPhone}" style="color:#FF3B30">📞</a>
+                <a href="sms:${info.subPhone}" style="color:#34C759">💬</a>
+            </div>
+        </div>
+    `;
+
+  modal.style.display = "flex";
+}
+
+function initContactModal() {
+  const modal = document.getElementById("contact-modal");
+  if (!modal) return;
+
+  const closeBtn = document.getElementById("close-contact-modal");
+
+  // 닫기 버튼으로 닫기
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+  }
+
+  // 배경 클릭 시 닫기
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+
+  // ESC 키로 닫기
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (modal.style.display === "flex") {
+        modal.style.display = "none";
+      }
+
+      const tipEl = document.getElementById("global-tip");
+      if (tipEl && tipEl.style.display !== "none") {
+        tipEl.style.display = "none";
+      }
+    }
+  });
+}
+
 

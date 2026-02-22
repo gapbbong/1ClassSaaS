@@ -95,7 +95,7 @@ async function loadRecords() {
     logBox.className = "loading-records"; // 애니메이션 클래스 추가
 
     try {
-        const data = await fetchStudentRecords(num, studentName);
+        const data = await fetchStudentRecords(num);
 
         logBox.className = ""; // 로딩 완료 후 클래스 제거
         logBox.innerHTML = ""; // 메시지 비우기

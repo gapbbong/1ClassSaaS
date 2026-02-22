@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>학급 목록</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#3399ff" />
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: clamp(28px, 6vw, 48px);
+      margin: 6px 0 16px;
+      font-weight: bold;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 30px;
+      top: 40%;
+      transform: translateY(-50%);
+      font-size: 30px;
+      text-decoration: none;
+    }
+
+    .calendar-widget {
+  width: 50px;
+  height: 60px;
+  background: #3399ff;
+  border-radius: 8px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.calendar-month {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.calendar-day {
+  font-size: 20px;
+}
+
+
+    .calendar-top {
+      background: #3399ff;
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 2px 0;
+      border-top-left-radius: 4px;
+      border-top-right-radius: 4px;
+    }
+
+    .calendar-date {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    @media (max-width: 480px) {
+      .calendar-widget {
+        width: 38px;
+        height: 44px;
+      }
+
+      .calendar-date {
+        font-size: 16px;
+      }
+    }
+
+    .class-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      padding-bottom: 40px;
+    }
+
+    .class-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .class-box {
+      flex: 1;
+      min-width: 100px;
+      max-width: 180px;
+    }
+
+    .class-inner {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .class-button {
+      display: block;
+      width: 100%;
+      padding: 8px 0;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .teacher-line {
+      font-size: clamp(14px, 1.8vw, 18px);
+      font-weight: 500;
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .teacher-line div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .teacher-line span {
+      margin: 0 4px;
+    }
+
+    .teacher-line a {
+      text-decoration: none;
+      font-size: inherit;
+    }
+  </style>
+</head>
+<body>
+    <div style="position: relative; padding: 10px 0;">
+  <!-- 왼쪽: 버튼 2개 -->
+  <div style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 10px;">
+    <!-- 📅 달력 버튼 -->
+    <a href="#" id="calendar-popup-btn" class="calendar-widget" title="Google 캘린더">
+      <div class="calendar-box">
+        <div id="calendar-month" class="calendar-month">JUL</div>
+        <div id="calendar-day" class="calendar-day">22</div>
+      </div>
+    </a>
+
+    <!-- 🎮 게임 버튼 -->
+    <a href="game.html" class="calendar-widget" title="학생 사진 게임">
+      <div class="calendar-box">
+        <div class="calendar-month">GAME</div>
+        <div class="calendar-day">🎮</div>
+      </div>
+    </a>
+  </div>
+
+  <!-- 중앙: 제목 -->
+  <h2>학급 목록</h2>
+
+  <!-- 오른쪽: 검색 아이콘 -->
+  <a href="search.html" class="search-icon">🔍</a>
+</div>
+
+
+
+<!-- <div id="calendar-overlay" style=" -->
+<!--   display: none; -->
+<!--   position: fixed; -->
+<!--   top: 0; left: 0; -->
+<!--   width: 100vw; -->
+<!--   height: 100vh; -->
+<!--   background: rgba(0,0,0,0.6); -->
+<!--   z-index: 9999; -->
+<!--   backdrop-filter: blur(2px); -->
+<!-- "> -->
+<!--   <div style=" -->
+<!--     position: relative; -->
+<!--     width: 95%; -->
+<!--     max-width: 800px; -->
+<!--     height: 90%; -->
+<!--     margin: 30px auto; -->
+<!--     background: white; -->
+<!--     border-radius: 12px; -->
+<!--     overflow: hidden; -->
+<!--   "> -->
+<!--     <button id="calendar-close-btn" style=" -->
+<!--       position: absolute; -->
+<!--       top: 10px; -->
+<!--       right: 10px; -->
+<!--       z-index: 99999; -->
+<!--       background: #ff4444; -->
+<!--       color: white; -->
+<!--       border: none; -->
+<!--       border-radius: 6px; -->
+<!--       padding: 6px 10px; -->
+<!--       font-weight: bold; -->
+<!--       cursor: pointer; -->
+<!--     ">닫기 ✕</button> -->
+<!--     <iframe -->
+<!--   src="https://calendar.google.com/calendar/embed?src=ks.cal153%40gmail.com&ctz=Asia%2FSeoul&mode=AGENDA" -->
+<!--   style="border: 0; width: 100%; height: 100%;" -->
+<!--   frameborder="0" -->
+<!--   scrolling="no"> -->
+<!-- </iframe> -->
+
+<!--   </div> -->
+<!-- </div> -->
+
+
+<!--     <h2>학급 목록</h2> -->
+
+        <a href="search.html" class="search-icon">🔍</a>
+  </div>
+
+    <div class="class-grid" id="class-list">불러오는 중...</div>
+
+ <script>
+let classInfo = []; // 담임 정보 배열
+
+// 📅 Google 캘린더 위젯 날짜 표시
+function updateCalendarWidget() {
+  const now = new Date();
+  const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  document.getElementById("calendar-month").textContent = monthNames[now.getMonth()];
+  document.getElementById("calendar-day").textContent = now.getDate();
+}
+
+// 📅 캘린더 팝업 열기/닫기 이벤트 처리
+document.addEventListener('DOMContentLoaded', () => {
+  updateCalendarWidget();
+
+  const calendarPopupBtn = document.getElementById('calendar-popup-btn');
+  const calendarOverlay = document.getElementById('calendar-overlay');
+  const calendarCloseBtn = document.getElementById('calendar-close-btn');
+
+  if (calendarPopupBtn) {
+    calendarPopupBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (calendarOverlay) {
+        // 이 줄만 남겨둡니다.
+        calendarOverlay.style.display = 'flex';
+        calendarOverlay.style.alignItems = 'center';
+        calendarOverlay.style.justifyContent = 'center';
+      }
+    });
+  }
+
+  if (calendarCloseBtn) {
+    calendarCloseBtn.addEventListener('click', () => {
+      if (calendarOverlay) {
+        calendarOverlay.style.display = 'none';
+      }
+    });
+  }
+
+  if (calendarOverlay) {
+    calendarOverlay.addEventListener('click', (e) => {
+      if (e.target === calendarOverlay) {
+        calendarOverlay.style.display = 'none';
+      }
+    });
+  }
+});
+
+// 👩‍🏫 담임 정보 fetch 후 학급 목록 구성
+fetch("get-teachers.php")
+  .then(res => {
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    return res.json();
+  })
+  .then(data => {
+    classInfo = data;
+    buildClassGrid();
+  })
+  .catch(err => {
+    console.error("교사 정보 불러오기 실패:", err);
+    document.getElementById("class-list").innerHTML = "불러오기 실패";
+  });
+
+// 🧱 학급 카드 생성 함수
+function buildClassGrid() {
+  const colorPalette = [
+    "#f94144", "#f3722c", "#f8961e", "#f9844a", "#f9c74f", "#90be6d",
+    "#43aa8b", "#577590", "#277da1", "#4d908e", "#577590", "#f94144",
+    "#f3722c", "#f8961e", "#f9844a", "#f9c74f", "#90be6d", "#43aa8b"
+  ];
+
+  const container = document.getElementById("class-list");
+  container.innerHTML = "";
+
+  for (let classNum = 1; classNum <= 6; classNum++) {
+    const row = document.createElement("div");
+    row.className = "class-row";
+
+    for (let grade = 1; grade <= 3; grade++) {
+      const info = classInfo.find(item => Number(item.grade) === grade && Number(item.class) === classNum);
+      const col = document.createElement("div");
+      col.className = "class-box";
+
+      if (info) {
+        const paletteIndex = (Number(info.grade) - 1) * 6 + (Number(info.class) - 1);
+        const bgColor = colorPalette[paletteIndex] || '#ccc';
+        const fontColor = isLightColor(bgColor) ? '#000' : '#fff';
+
+        col.innerHTML = `
+          <div class="class-inner">
+            <a class="class-button"
+              href="stu-list.html?grade=${info.grade}&class=${info.class}"
+              style="background-color: ${bgColor}; color: ${fontColor};">
+              ${info.grade} - ${info.class}
+            </a>
+            <div class="teacher-line">
+              <div>
+                <a href="tel:${info.homeroomPhone}">📞</a>
+                <span>${info.homeroom}</span>
+                <a href="sms:${info.homeroomPhone}">💬</a>
+              </div>
+              <div>
+                <a href="tel:${info.subPhone}">📞</a>
+                <span>${info.sub}</span>
+                <a href="sms:${info.subPhone}">💬</a>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      row.appendChild(col);
+    }
+
+    container.appendChild(row);
+  }
+
+  // 색상 밝기에 따라 폰트 색상 결정
+  function isLightColor(hex) {
+    const c = hex.substring(1);
+    const rgb = parseInt(c, 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = rgb & 0xff;
+    const yiq = (r * 299 + g * 587 + b * 114) / 1000;
+    return yiq >= 160;
+  }
+}
+</script>
+
+</body>
+</html>

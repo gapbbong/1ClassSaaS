@@ -1,6 +1,6 @@
 // ✅ service-worker.js (v6)
 
-const CACHE_NAME = "photo-cache-v7";
+const CACHE_NAME = "photo-cache-v8";
 const urlsToCache = [
   "/",
   "/index.html",
@@ -56,8 +56,8 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // HTML 파일: 네트워크 우선
-  if (request.mode === 'navigate' || request.url.endsWith('.html')) {
+  // HTML 및 JS 파일: 네트워크 우선 (개발 중 캐시 꼬임 방지)
+  if (request.mode === 'navigate' || request.url.endsWith('.html') || request.url.endsWith('.js')) {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
     );

@@ -1,4 +1,4 @@
-import { fetchAllStudents } from './api.js';
+import { fetchAllStudents, bulkSaveRecords } from './api.js';
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
 
@@ -231,28 +231,24 @@ async function handleSaveAll() {
     btn.textContent = "저장 중...";
 
     // 전송 데이터 구성
-    const formData = new FormData();
-    formData.append("action", "bulkRecord");
-    formData.append("good", good);
-    formData.append("bad", bad);
-    formData.append("detail", detail);
-    formData.append("teacher", teacher);
-    // 선택된 학생들의 학번과 이름 리스트를 JSON으로 전달
+    const recordData = {
+        good,
+        bad,
+        detail,
+        teacher
+    };
+
+    // 선택된 학생 리스트
     const targets = selectedStudents.map(s => ({ num: s["학번"], name: s["이름"] }));
-    formData.append("targets", JSON.stringify(targets));
 
     try {
-        const response = await fetch(API_CONFIG.SCRIPT_URL, {
-            method: "POST",
-            body: formData
-        });
-        const result = await response.json();
+        const result = await bulkSaveRecords(targets, recordData);
 
         if (result.result === "success") {
             alert(`✅ ${result.count}명의 기록이 저장되었습니다.`);
             location.href = "index.html"; // 메인으로 이동
         } else {
-            alert("저장 실패: " + result.message);
+            alert("저장 실패");
         }
     } catch (error) {
         console.error("Bulk save error:", error);

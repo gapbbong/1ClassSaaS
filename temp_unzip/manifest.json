@@ -1,0 +1,9 @@
+{
+  "name": "OneClass App",
+  "short_name": "OneClass",
+  "start_url": "/student25/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3399ff",
+  "icons": []
+}
