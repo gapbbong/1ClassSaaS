@@ -239,12 +239,6 @@ function renderInitialGrid(container) {
         let light = 90 - (classNum * 12);
         const bgColor = `hsl(${hue}, 60%, ${light}%)`;
 
-        // 2-6반 담임 강제 보정 (DB 동기화 지연 대비)
-        if (grade === 2 && classNum === 6 && info.homeroom === "미정") {
-          info.homeroom = "장효윤";
-          info.homeroomPhone = "010-8713-2882";
-        }
-
         box.innerHTML = `
                     <section class="class-section" 
                              style="background-color: ${bgColor}; ${light < 55 ? 'color: #fff;' : ''}; cursor: pointer; -webkit-tap-highlight-color: transparent;">
