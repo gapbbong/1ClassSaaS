@@ -115,23 +115,30 @@ function appendStudentCard(student) {
     card.className = "student-card";
     card.setAttribute("data-num", student["학번"]);
 
-    const fileId = extractDriveId(student["사진저장링크"]);
-    const imgSrc = getThumbnailUrl(fileId);
+    // 이미지 설정 (Supabase photo_url 우선, 구글 드라이브 하위 호환)
+    const supabasePhotoUrl = student.photo_url || student["사진저장링크"];
+    const driveLink = student["사진저장링크"] || "";
+    const fileId = extractDriveId(driveLink || supabasePhotoUrl);
+
+    let imgSrc = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+    if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
+        imgSrc = supabasePhotoUrl;
+    } else if (fileId) {
+        imgSrc = getThumbnailUrl(fileId);
+    }
 
     const img = document.createElement("img");
     img.src = imgSrc;
     img.loading = "lazy";
 
-    // [개선] 이미지 로드 실패 시 재시도 로직 보강
+    // 이미지 로드 실패 시 재시도 로직 보강 (Google Drive 폴백)
     img.onerror = function () {
         if (this.getAttribute("data-retry")) {
-            // 외부 사이트(placeholder)마저 안 나올 경우를 대비해 1x1 투명 이미지로 대체
             this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
             return;
         }
         this.setAttribute("data-retry", "true");
         if (fileId) {
-            // 1차(lh3) 실패 시 -> 2차: drive.google.com 썸네일 API로 재시도
             this.src = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
         }
     };

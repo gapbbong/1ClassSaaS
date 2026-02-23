@@ -447,7 +447,6 @@ async function showPopup(student) {
             <span class="detail-value">
                 ${displayVal} 
                 ${isPhone ? `<a href="tel:${valStr}" class="contact-icon">📞</a><a href="sms:${valStr}" class="contact-icon">💬</a>` : ''} 
-                ${isInsta ? `<a href="https://instagram.com/${valStr.replace('@', '').trim()}" target="_blank" class="contact-icon">📸</a>` : ''}
             </span>
         </div>`;
     };

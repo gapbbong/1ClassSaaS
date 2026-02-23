@@ -602,12 +602,14 @@ body {
 .popup-header {
     position: relative !important;
     display: flex !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     align-items: center !important;
+    gap: 16px !important;
     border-bottom: 2px solid #f1f5f9 !important;
-    padding: 0 40px 16px 0 !important;
-    /* Space for close button on right */
+    padding: 0 50px 16px 0 !important;
+    /* Extra padding on right for absolute close button */
     flex-shrink: 0 !important;
+    flex-wrap: wrap !important;
 }
 
 .popup-header h3 {
@@ -637,7 +639,7 @@ body {
     background: #007aff !important;
     color: white !important;
     border: none !important;
-    padding: 8px 18px !important;
+    padding: 8px 16px !important;
     border-radius: 12px !important;
     font-weight: 700 !important;
     cursor: pointer !important;
@@ -645,18 +647,16 @@ body {
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 40% !important;
-    transform: translate(-50%, -50%) !important;
+    position: relative !important;
     white-space: nowrap !important;
     z-index: 10 !important;
     box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2) !important;
+    font-size: 0.9em !important;
 }
 
 .popup-record-btn:hover {
     background: #0056b3 !important;
-    transform: translate(-50%, -52%) !important;
+    transform: translateY(-2px) !important;
     box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3) !important;
 }
 
@@ -690,8 +690,8 @@ body {
 .popup-quadrants-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: 40% 60% !important;
-    /* Adjusted top row height to 40% */
+    grid-template-rows: 30% 70% !important;
+    /* Reduced top row height to 30% */
     gap: 16px !important;
     flex: 1 !important;
     min-height: 0 !important;
@@ -814,12 +814,14 @@ body {
     font-size: 0.75em !important;
     font-weight: 800 !important;
     color: #000000 !important;
-    /* Fully black for visibility */
-    flex-shrink: 0 !important;
-    width: 90px !important;
-    /* Fixed width for labels to align values */
+    flex: 1 !important;
     border-right: 1px solid #e2e8f0;
     padding-right: 8px;
+    margin-right: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
 }
 
 .detail-value {
@@ -827,7 +829,8 @@ body {
     font-weight: 600 !important;
     color: #1e293b !important;
     word-break: break-word !important;
-    flex: 1 !important;
+    flex: 3 !important;
+    padding-left: 4px;
 }
 
 .contact-icon {
@@ -870,7 +873,7 @@ body {
     .popup-quadrants-container {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: 40% 60% !important;
+        grid-template-rows: 30% 70% !important;
         gap: 8px !important;
         overflow: hidden !important;
         /* Keep it non-scrolling at container level */
