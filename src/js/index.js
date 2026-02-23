@@ -12,35 +12,48 @@ console.log("index.js loaded successfully");
 const SECRET_KEY = 'oneclass25-secret-auth-key';
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // 인증 체크 (인증 완료 전에는 화면 안보이게/클릭 못하게 함)
-  const isAuthenticated = await initAuth();
-  if (!isAuthenticated) return;
-
-  const container = document.getElementById("class-list");
-  container.innerHTML = "";
-  container.classList.add("loading-records");
-
-  const recordCountVal = document.getElementById("record-count-val");
-  if (recordCountVal) {
-    recordCountVal.innerText = "";
-    recordCountVal.classList.add("loading-dots");
-  }
-
+  console.log("DOMContentLoaded triggered");
   try {
+    // 인증 체크
+    console.log("Starting authentication check...");
+    const isAuthenticated = await initAuth();
+    console.log("Authentication result:", isAuthenticated);
+    if (!isAuthenticated) return;
+
+    const container = document.getElementById("class-list");
+    if (!container) {
+      console.error("class-list container not found");
+      return;
+    }
+    container.innerHTML = "";
+    container.classList.add("loading-records");
+
+    const recordCountVal = document.getElementById("record-count-val");
+    if (recordCountVal) {
+      recordCountVal.innerText = "";
+      recordCountVal.classList.add("loading-dots");
+    }
+
     console.log("Starting data fetch...");
     // 1. 교사 정보(DB) 및 통계 데이터 병렬 조회
     const [infoData, stats] = await Promise.all([
-      fetchClassInfo(),
-      fetchClassStats()
+      fetchClassInfo().catch(e => {
+        console.error("fetchClassInfo failed:", e);
+        return [];
+      }),
+      fetchClassStats().catch(e => {
+        console.error("fetchClassStats failed:", e);
+        return { grandTotal: 0, classStats: {} };
+      })
     ]);
 
-    console.log("Data fetched. infoData:", infoData, "stats:", stats);
+    console.log("Data fetch finished. infoData:", infoData, "stats:", stats);
     classInfo = infoData;
 
     // 2. DB 정보를 바탕으로 기본 레이아웃을 그립니다.
     console.log("Rendering initial grid...");
     renderInitialGrid(container);
-    console.log("Grid rendered.");
+    console.log("Grid rendering finished.");
 
     // 3. 상단 총 건수 업데이트
     if (recordCountVal && stats) {
@@ -51,20 +64,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // 4. 각 반 박스의 배지 업데이트
     if (stats && stats.classStats) {
-      console.log("Updating class badges...");
+      console.log("Updating badges...");
       updateClassBadges(stats.classStats);
     }
 
     container.classList.remove("loading-records");
-    console.log("Startup complete.");
+    console.log("Startup process finished successfully.");
 
   } catch (error) {
-    console.error("Index load error:", error);
-    if (recordCountVal) {
-      recordCountVal.classList.remove("loading-dots");
-      recordCountVal.innerText = "0";
+    console.error("CRITICAL ERROR during index load:", error);
+    window.alert("화면을 불러오는 중 오류가 발생했습니다: " + error.message);
+    const container = document.getElementById("class-list");
+    if (container) {
+      container.innerHTML = `<div style="padding:20px; color:red;">❌ 오류 발생: ${error.message}<br>콘솔 로그를 확인해주세요.</div>`;
+      container.classList.remove("loading-records");
     }
-    container.classList.remove("loading-records");
   }
 
   // 5. 모달 이벤트 등록
@@ -72,6 +86,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   initGlobalTip();
   initHeaderMenu();
 });
+
 
 // ----------------------------------------------------
 // 헤더 메뉴 및 로그아웃 로직

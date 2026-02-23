@@ -362,7 +362,8 @@ function loadStudents() {
 }
 
 // 팝업 관련 함수
-function showPopup(student) {
+// 팝업 관련 함수
+async function showPopup(student) {
     const popup = document.getElementById("popup");
     const overlay = document.getElementById("overlay");
     if (!popup || !overlay) return;
@@ -370,6 +371,22 @@ function showPopup(student) {
     overlay.style.display = "block";
     popup.style.display = "block";
     popup.className = "student-detail-popup";
+
+    // 팝업 열 때 기초조사 데이터 추가 로딩
+    let surveyData = {};
+    try {
+        const { data, error } = await supabase
+            .from('surveys')
+            .select('data')
+            .eq('student_pid', student.pid)
+            .maybeSingle();
+
+        if (!error && data) {
+            surveyData = data.data; // JSONB 데이터
+        }
+    } catch (e) {
+        console.warn("Survey fetch error:", e);
+    }
 
     // 이미지 소스 결정
     const supabasePhotoUrl = student.photo_url;
@@ -384,39 +401,62 @@ function showPopup(student) {
 
     const fallbackImgSrc = driveFileId ? `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000` : '';
 
-    // 보여주지 않을 키 목록
+    // 보여주지 않을 키 목록 (영문 필드명 및 인덱스용 필드 제외)
     const exclude = [
-        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크",
-        "주보호자성명", "보조보호자성명", "주보호자연락처", "보조보호자연락처",
-        "주보호자관계", "보조보호자관계", "주보호자친밀도", "보조보호자친밀도",
-        "우편번호", "집주소", "상세주소", "입력시간",
-        "pid", "student_id", "photo_url", "photo_path", "created_at", "updated_at", "class_info", "academic_year"
+        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크", "입력시간",
+        "pid", "student_id", "photo_url", "photo_path", "created_at", "updated_at",
+        "class_info", "academic_year", "name", "gender", "status", "contact",
+        "parent_contact", "parent_relation", "address", "birth_date"
     ];
 
-    let infoHtml = "";
+    // Q2: 기본 정보 분류
+    const basicKeys = ["생년월일", "성별", "학적", "번호", "학번"];
+    // Q3: 연락처 및 가족 분류
+    const contactKeys = ["연락처", "학생폰", "보호자", "가족", "주소", "관계", "이메일", "인스타", "폰"];
+
+    let infoHtml2 = ""; // Q2
+    let infoHtml3 = ""; // Q3
+    let infoHtml4 = ""; // Q4
+
+    // 1. 학생 기본 테이블(students) 데이터 분류
     for (let key in student) {
-        if (!exclude.includes(key) && student[key] && key !== "이름" && key !== "학번") {
-            const val = student[key];
-            const isPhone = key.includes("전화") || key.includes("연락처") || key.includes("번호") || key.includes("폰");
-            const isInsta = key.toLowerCase().includes("인스타");
+        if (exclude.includes(key) || !student[key] || key === "이름" || key === "학번") continue;
 
-            infoHtml += `<div class="detail-info-row">`;
-            infoHtml += `<span class="detail-label">${key}</span>`;
+        const val = student[key];
+        const isPhone = key.includes("전화") || key.includes("연락처") || key.includes("번호") || key.includes("폰");
+        const isInsta = key.toLowerCase().includes("인스타");
 
-            if (isPhone) {
-                infoHtml += `<span class="detail-value">${val} 
-                    <a href="tel:${val}" class="contact-icon" title="전화걸기">📞</a>
-                    <a href="sms:${val}" class="contact-icon" title="문자보내기">💬</a>
-                </span>`;
-            } else if (isInsta) {
-                const instaId = String(val).replace('@', '').trim();
-                infoHtml += `<span class="detail-value">${val} 
-                    <a href="instagram://user?username=${instaId}" class="contact-icon insta-link" title="인스타 앱 열기">📸</a>
-                </span>`;
-            } else {
-                infoHtml += `<span class="detail-value">${val}</span>`;
-            }
-            infoHtml += `</div>`;
+        let rowHtml = `<div class="detail-info-row">
+            <span class="detail-label">${key}</span>
+            <span class="detail-value">${val} ${isPhone ? `<a href="tel:${val}" class="contact-icon">📞</a><a href="sms:${val}" class="contact-icon">💬</a>` : ''} 
+            ${isInsta ? `<a href="instagram://user?username=${String(val).replace('@', '').trim()}" class="contact-icon">📸</a>` : ''}</span>
+        </div>`;
+
+        if (basicKeys.includes(key)) {
+            infoHtml2 += rowHtml;
+        } else if (contactKeys.some(ck => key.includes(ck))) {
+            infoHtml3 += rowHtml;
+        } else {
+            infoHtml4 += rowHtml;
+        }
+    }
+
+    // 2. 기초조사(surveys) 데이터 분류 (주로 Q4로)
+    const surveyExclude = ["학년", "반", "번호", "이름", "학번", "비밀번호", "PID", "연번"];
+    for (let key in surveyData) {
+        if (surveyExclude.includes(key) || !surveyData[key]) continue;
+
+        let rowHtml = `<div class="detail-info-row">
+            <span class="detail-label">${key}</span>
+            <span class="detail-value">${surveyData[key]}</span>
+        </div>`;
+
+        // 설문 데이터 중 연락처 관련이 있다면 Q3로, 나머지는 Q4
+        if (contactKeys.some(ck => key.includes(ck))) {
+            // 중복 방지 (이미 student 테이블 데이터로 분류된 경우 제외)
+            if (!infoHtml3.includes(`>${surveyData[key]}<`)) infoHtml3 += rowHtml;
+        } else {
+            infoHtml4 += rowHtml;
         }
     }
 
@@ -428,19 +468,44 @@ function showPopup(student) {
             <h3><span class="popup-num">${student["학번"]}</span> ${student["이름"]}</h3>
             <div class="popup-header-actions">
                 <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
+                <button class="popup-close-btn" onclick="closePopup()">✕</button>
             </div>
         </div>
-        <div class="popup-grid">
-            <div class="popup-photo-section">
-                ${photoImg}
+        <div class="popup-quadrants-container">
+            <div class="popup-quadrant quad-1">
+                <div class="quad-inner">
+                    <div class="quad-label">사진</div>
+                    <div class="photo-wrapper">${photoImg}</div>
+                </div>
             </div>
-            <div class="popup-info-section">
-                <div class="popup-info-scroll">
-                    ${infoHtml || '<div class="no-data-msg">추가 정보가 없습니다.</div>'}
+            <div class="popup-quadrant quad-2">
+                <div class="quad-inner">
+                    <div class="quad-label">기본 정보</div>
+                    <div class="quad-scroll">
+                        ${infoHtml2 || '<div class="no-data-msg">-</div>'}
+                    </div>
+                </div>
+            </div>
+            <div class="popup-quadrant quad-3">
+                <div class="quad-inner">
+                    <div class="quad-label">연락처 및 가족</div>
+                    <div class="quad-scroll">
+                        ${infoHtml3 || '<div class="no-data-msg">-</div>'}
+                    </div>
+                </div>
+            </div>
+            <div class="popup-quadrant quad-4">
+                <div class="quad-inner">
+                    <div class="quad-label">상세 기초조사</div>
+                    <div class="quad-scroll">
+                        ${infoHtml4 || '<div class="no-data-msg">정보 없음</div>'}
+                    </div>
                 </div>
             </div>
         </div>
     `;
+
+
 
     // 팝업 열릴 때 전역 키보드 이벤트 리스너 등록
     window._popupKeyHandler = function (e) {
