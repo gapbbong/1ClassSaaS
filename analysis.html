@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Omni-Perspective | AI 학생 분석</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <link rel="stylesheet" href="src/css/analysis.css">
+</head>
+
+<body>
+    <div class="title-bar">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="back-btn" onclick="location.href='index.html'">◀</button>
+            <h1 class="school-name">AI 학생 분석</h1>
+        </div>
+        <div class="lens-selector-container">
+            <select id="lens-selector" class="lens-select">
+                <option value="summary">⭐ 종합 요약</option>
+                <option value="stats">📊 육각형/사분면</option>
+                <option value="rpg">🎮 RPG 캐릭터</option>
+                <option value="detective">🕵️ 탐정 추론</option>
+                <option value="garden">🌿 성장 정원</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="student-search" placeholder="학생 이름 또는 학번 검색..." class="search-input">
+        <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
+    </div>
+
+    <main id="analysis-content" class="analysis-main">
+        <!-- 초기 안내 화면 -->
+        <div id="welcome-view" class="empty-state">
+            <div class="empty-icon">🧠</div>
+            <h2>학생을 선택하여 분석을 시작하세요</h2>
+            <p>다양한 AI 렌즈를 통해 학생의 숨겨진 잠재력을 발견할 수 있습니다.</p>
+        </div>
+
+        <!-- 분석 로딩 화면 -->
+        <div id="loading-view" class="loading-container" style="display: none;">
+            <div class="ai-spinner"></div>
+            <p>제미나이가 다각도로 분석 중입니다...</p>
+        </div>
+
+        <!-- 실제 분석 결과가 들어갈 영역 -->
+        <div id="result-view" class="result-container" style="display: none;">
+            <!-- 상단 학생 프로필 요약 -->
+            <section class="student-header-card">
+                <div id="student-photo-mini" class="student-photo-mini"></div>
+                <div class="student-meta">
+                    <h2 id="view-student-name">김경성</h2>
+                    <p id="view-student-info">1학년 1반 1번</p>
+                </div>
+                <div class="ai-badge">AI INSIGHT</div>
+            </section>
+
+            <!-- 렌즈별 결과 영역 (JS에서 전환함) -->
+            <div id="lens-content" class="lens-content-area"></div>
+        </div>
+    </main>
+
+    <script type="module" src="src/js/analysis.js"></script>
+</body>
+
+</html>

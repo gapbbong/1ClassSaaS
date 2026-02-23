@@ -1,0 +1,185 @@
+/* analysis.css - Omni-Perspective AI Dashboard Styles */
+
+:root {
+    --ai-primary: #4A90E2;
+    --ai-accent: #6C5CE7;
+    --ai-bg: #F8F9FA;
+    --ai-card-bg: rgba(255, 255, 255, 0.9);
+    --ai-text: #2D3436;
+    --ai-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    background-color: var(--ai-bg);
+    margin: 0;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    color: var(--ai-text);
+}
+
+.analysis-main {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+/* Header & Lens Selector */
+.back-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+}
+
+.lens-select {
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 2px solid var(--ai-primary);
+    background: white;
+    font-weight: bold;
+    color: var(--ai-primary);
+    outline: none;
+    cursor: pointer;
+}
+
+/* Search Bar */
+.search-container {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 30px;
+    border: none;
+    box-shadow: var(--ai-shadow);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--ai-shadow);
+    margin-top: 8px;
+    z-index: 100;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background 0.2s;
+}
+
+.search-item:hover {
+    background: #f1f7ff;
+}
+
+/* Empty State & Loading */
+.empty-state,
+.loading-container {
+    text-align: center;
+    padding: 60px 20px;
+    background: var(--ai-card-bg);
+    border-radius: 24px;
+    box-shadow: var(--ai-shadow);
+}
+
+.empty-icon {
+    font-size: 5rem;
+    margin-bottom: 20px;
+}
+
+.ai-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--ai-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Result Cards */
+.student-header-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, var(--ai-primary), var(--ai-accent));
+    color: white;
+    padding: 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    position: relative;
+}
+
+.student-photo-mini {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.ai-badge {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+/* Analysis Content Areas */
+.lens-content-area {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: var(--ai-shadow);
+    min-height: 400px;
+}
+
+/* Animations */
+.fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

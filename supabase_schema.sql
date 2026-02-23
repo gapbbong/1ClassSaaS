@@ -143,3 +143,25 @@ CREATE POLICY "Teachers can upload student photos"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK ( bucket_id = 'student-photos' );
+
+-- 10. AI 학생 통합 인사이트 테이블
+CREATE TABLE public.student_insights (
+    id BIGSERIAL PRIMARY KEY,
+    student_pid UUID REFERENCES public.students(pid) ON DELETE CASCADE,
+    insight_type TEXT NOT NULL, -- 'total', 'summary', etc.
+    content JSONB NOT NULL,     -- 통합 분석 결과 전문
+    analyzed_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS 설정 및 정책 (분석 리포트 조회/생성)
+ALTER TABLE public.student_insights ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Insight select policy" ON public.student_insights
+    FOR SELECT USING (
+        (SELECT role FROM public.teachers WHERE id = auth.uid()) IN ('admin', 'counselor', 'homeroom_teacher', 'subject_teacher', 'nurse')
+    );
+
+CREATE POLICY "Insight insert policy" ON public.student_insights
+    FOR INSERT WITH CHECK (
+        (SELECT role FROM public.teachers WHERE id = auth.uid()) IN ('admin', 'counselor', 'homeroom_teacher', 'subject_teacher')
+    );
