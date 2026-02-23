@@ -228,42 +228,44 @@ textarea {
     }
 
     .container {
-        padding: 10px 12px 100px 12px;
-        /* 좌우 여백 확보 */
+        padding: 10px 12px 100px 12px !important;
         width: 100% !important;
-        margin: 0;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        overflow-x: hidden !important;
     }
 
     .section {
-        padding: 15px;
-        border-radius: 12px;
-        width: 100%;
+        padding: 15px !important;
+        border-radius: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
 
     /* 검색창 수평 유지 및 너비 최적화 */
     .search-box {
-        flex-direction: row;
-        /* 다시 수평으로 */
-        gap: 6px;
-        width: 100%;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin: 0 !important;
     }
 
     #student-input {
-        flex: 2;
-        /* 비율 축소 */
-        width: auto;
-        padding: 12px 10px;
-        font-size: 0.95em;
+        flex: 1 !important;
+        /* Take remaining space */
+        min-width: 0 !important;
+        /* Allow shrinking below content width */
+        padding: 12px !important;
+        font-size: 1em !important;
     }
 
     .search-btn {
-        flex: 1;
-        /* 버튼 비중 확대 */
-        padding: 12px 10px;
-        font-size: 0.95em;
-        text-align: center;
-        flex-shrink: 0;
-        /* 버튼 크기 유지 */
+        flex-shrink: 0 !important;
+        /* Don't shrink the button */
+        padding: 12px 20px !important;
+        font-size: 1em !important;
+        width: auto !important;
     }
 
     .student-grid {

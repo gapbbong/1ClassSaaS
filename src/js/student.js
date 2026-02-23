@@ -377,12 +377,13 @@ async function showPopup(student) {
     try {
         const { data, error } = await supabase
             .from('surveys')
-            .select('data')
+            .select('*')
             .eq('student_pid', student.pid)
             .maybeSingle();
 
         if (!error && data) {
-            surveyData = data.data; // JSONB 데이터
+            // 전체 컬럼과 JSONB 'data' 필드를 모두 병합하여 누락 방지
+            surveyData = { ...data, ...(data.data || {}) };
         }
     } catch (e) {
         console.warn("Survey fetch error:", e);
@@ -401,64 +402,102 @@ async function showPopup(student) {
 
     const fallbackImgSrc = driveFileId ? `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000` : '';
 
-    // 보여주지 않을 키 목록 (영문 필드명 및 인덱스용 필드 제외)
-    const exclude = [
-        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크", "입력시간",
+    // 보여주지 않을 키 목록 (영문 기술용 필드 및 이미 매핑된 필드 제외)
+    // 인스타 등은 api.js에서 한글로 매핑했으므로 원본 영문 필드는 숨김
+    const technicalKeys = [
+        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크", "입력시간", "submitted_at",
         "pid", "student_id", "photo_url", "photo_path", "created_at", "updated_at",
         "class_info", "academic_year", "name", "gender", "status", "contact",
-        "parent_contact", "parent_relation", "address", "birth_date"
+        "birth_date", "parent_contact", "parent_relation", "email", "data", "id", "student_pid",
+        "instagram", "insta", "sns", "social", "학생폰"
     ];
 
-    // Q2: 기본 정보 분류
-    const basicKeys = ["생년월일", "성별", "학적", "번호", "학번"];
-    // Q3: 연락처 및 가족 분류
-    const contactKeys = ["연락처", "학생폰", "보호자", "가족", "주소", "관계", "이메일", "인스타", "폰"];
+    // Q2: 기본 정보 분류 (인스타, 주소 포함)
+    const basicKeys = ["번호", "성별", "학적", "연락처", "인스타", "인스타 아이디", "주소", "집주소", "학번", "생년월일", "SNS"];
+    // Q3: 연락처 및 가족 분류 (보호자 중심)
+    const contactKeys = ["보호자", "가족", "관계", "이메일", "폰", "전화"];
 
     let infoHtml2 = ""; // Q2
     let infoHtml3 = ""; // Q3
     let infoHtml4 = ""; // Q4
 
+    const displayedKeys = new Set(); // 중복 항목(키 기준) 방지용
+
+    const createInfoRow = (key, val) => {
+        const valStr = String(val).trim();
+        const lowKey = key.toLowerCase();
+
+        // 전화번호/연락처 판단 ('번호' 필드는 통화 아이콘 제외)
+        const isPhone = (key.includes("전화") || key.includes("연락처") || (key.includes("번호") && key !== "번호") || key.includes("폰"));
+        // 인스타그램 판단 (insta, instagram, 인스타 포함 시)
+        const isInsta = lowKey.includes("인스타") || lowKey.includes("insta");
+
+        let displayVal = valStr;
+        let displayKey = key;
+
+        // 인스타용 특수 처리
+        if (isInsta) {
+            const cleanId = valStr.replace('@', '').trim();
+            displayVal = `<a href="https://instagram.com/${cleanId}" target="_blank" style="color: #c13584; text-decoration: underline; font-weight: 800;">${valStr}</a>`;
+            if (lowKey === "insta" || lowKey === "instagram") displayKey = "인스타 아이디";
+        }
+
+        return `<div class="detail-info-row">
+            <span class="detail-label">${displayKey}</span>
+            <span class="detail-value">
+                ${displayVal} 
+                ${isPhone ? `<a href="tel:${valStr}" class="contact-icon">📞</a><a href="sms:${valStr}" class="contact-icon">💬</a>` : ''} 
+                ${isInsta ? `<a href="https://instagram.com/${valStr.replace('@', '').trim()}" target="_blank" class="contact-icon">📸</a>` : ''}
+            </span>
+        </div>`;
+    };
+
+
     // 1. 학생 기본 테이블(students) 데이터 분류
     for (let key in student) {
-        if (exclude.includes(key) || !student[key] || key === "이름" || key === "학번") continue;
+        if (technicalKeys.includes(key) || key === "이름" || key === "학번") continue;
 
         const val = student[key];
-        const isPhone = key.includes("전화") || key.includes("연락처") || key.includes("번호") || key.includes("폰");
-        const isInsta = key.toLowerCase().includes("인스타");
+        if (val === null || val === undefined || val === "") continue;
 
-        let rowHtml = `<div class="detail-info-row">
-            <span class="detail-label">${key}</span>
-            <span class="detail-value">${val} ${isPhone ? `<a href="tel:${val}" class="contact-icon">📞</a><a href="sms:${val}" class="contact-icon">💬</a>` : ''} 
-            ${isInsta ? `<a href="instagram://user?username=${String(val).replace('@', '').trim()}" class="contact-icon">📸</a>` : ''}</span>
-        </div>`;
+        const rowHtml = createInfoRow(key, val);
 
-        if (basicKeys.includes(key)) {
+        // 분류 로직 (인스타/주소는 무조건 Q2)
+        if (basicKeys.includes(key) || key.includes("인스타") || key.includes("주소")) {
             infoHtml2 += rowHtml;
         } else if (contactKeys.some(ck => key.includes(ck))) {
             infoHtml3 += rowHtml;
         } else {
             infoHtml4 += rowHtml;
         }
+        displayedKeys.add(key);
     }
 
-    // 2. 기초조사(surveys) 데이터 분류 (주로 Q4로)
-    const surveyExclude = ["학년", "반", "번호", "이름", "학번", "비밀번호", "PID", "연번"];
+    // 2. 기초조사(surveys) 데이터 분류
     for (let key in surveyData) {
-        if (surveyExclude.includes(key) || !surveyData[key]) continue;
+        // 이미 보여줬거나 기술용 키면 제외
+        if (technicalKeys.includes(key) || displayedKeys.has(key)) continue;
 
-        let rowHtml = `<div class="detail-info-row">
-            <span class="detail-label">${key}</span>
-            <span class="detail-value">${surveyData[key]}</span>
-        </div>`;
+        // 설문 조사용 공통 제외 키
+        const surveyTechKeys = ["학년", "반", "번호", "이름", "학번", "비밀번호", "PID", "연번"];
+        if (surveyTechKeys.includes(key)) continue;
 
-        // 설문 데이터 중 연락처 관련이 있다면 Q3로, 나머지는 Q4
-        if (contactKeys.some(ck => key.includes(ck))) {
-            // 중복 방지 (이미 student 테이블 데이터로 분류된 경우 제외)
-            if (!infoHtml3.includes(`>${surveyData[key]}<`)) infoHtml3 += rowHtml;
+        const val = surveyData[key];
+        if (val === null || val === undefined || val === "") continue;
+
+        const rowHtml = createInfoRow(key, val);
+
+        // 인스타/주소 포함 항목은 무조건 Q2(기본정보)로 이동
+        if (basicKeys.includes(key) || key.includes("인스타") || key.includes("주소")) {
+            infoHtml2 += rowHtml;
+        } else if (contactKeys.some(ck => key.includes(ck))) {
+            infoHtml3 += rowHtml;
         } else {
             infoHtml4 += rowHtml;
         }
+        displayedKeys.add(key);
     }
+
 
     const escapedStudent = JSON.stringify(student).replace(/"/g, '&quot;');
     const photoImg = imgSrc ? `<img src="${imgSrc}" onerror="this.src='${fallbackImgSrc}'" alt="${student["이름"]} 사진">` : `<div class="no-photo-placeholder">📷<br>사진 없음</div>`;
@@ -466,10 +505,8 @@ async function showPopup(student) {
     popup.innerHTML = `
         <div class="popup-header">
             <h3><span class="popup-num">${student["학번"]}</span> ${student["이름"]}</h3>
-            <div class="popup-header-actions">
-                <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
-                <button class="popup-close-btn" onclick="closePopup()">✕</button>
-            </div>
+            <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
+            <button class="popup-close-btn" onclick="closePopup()">✕</button>
         </div>
         <div class="popup-quadrants-container">
             <div class="popup-quadrant quad-1">
@@ -519,12 +556,13 @@ async function showPopup(student) {
     document.addEventListener("keydown", window._popupKeyHandler);
 }
 
-function closePopup() {
+window.closePopup = function () {
+    console.log("Close popup button clicked");
     const popup = document.getElementById("popup");
     const overlay = document.getElementById("overlay");
     if (popup) {
         popup.style.display = "none";
-        popup.className = ""; // Reset class for backward compat
+        popup.className = "";
     }
     if (overlay) overlay.style.display = "none";
 

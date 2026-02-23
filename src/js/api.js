@@ -58,6 +58,12 @@ function mapStudentData(s) {
         "번호": s.student_id ? parseInt(s.student_id.slice(-2)) : 0,
         "사진저장링크": s.photo_url,
         "연락처": s.contact || "",
+        "인스타": s.instagram || s.insta || "",
+        "이메일": s.email || "",
+        "생년월일": s.birth_date || "",
+        "주소": s.address || "",
+        "보호자연락처": s.parent_contact || "",
+        "보호자관계": s.parent_relation || "",
         "학적": s.status === 'active' ? '재학' : (s.status === 'transferred' ? '전출' : (s.status === 'withdrawn' ? '자퇴' : s.status)),
     };
 }
