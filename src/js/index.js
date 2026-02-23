@@ -1,5 +1,6 @@
 import { isLightColor } from './utils.js';
 import { fetchClassStats, fetchClassInfo } from './api.js';
+import { API_CONFIG } from './config.js';
 
 // CryptoJS 임포트 (Vite 환경)
 import CryptoJS from 'crypto-js';
@@ -7,9 +8,6 @@ import CryptoJS from 'crypto-js';
 let classInfo = [];
 
 console.log("index.js loaded successfully");
-
-// 고정된 암호화 키 (로컬 스토리지에 평문 저장 방지용)
-const SECRET_KEY = 'oneclass25-secret-auth-key';
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOMContentLoaded triggered");
@@ -136,7 +134,7 @@ async function initAuth() {
     const encrypted = localStorage.getItem('teacher_auth_token');
     if (!encrypted) return null;
     try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+      const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
     } catch (e) {
       return null; // 복호화 에러 시 null 반환
@@ -145,7 +143,7 @@ async function initAuth() {
 
   // 암호화하여 저장
   function setStoredEmail(email) {
-    const encrypted = CryptoJS.AES.encrypt(email, SECRET_KEY).toString();
+    const encrypted = CryptoJS.AES.encrypt(email, API_CONFIG.SECRET_KEY).toString();
     localStorage.setItem('teacher_auth_token', encrypted);
   }
 

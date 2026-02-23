@@ -66,20 +66,56 @@ ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.life_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
 
--- [정책 1] 담임 교사는 본인 학급 학생만 조회/기록 가능
-CREATE POLICY "Homeroom access" ON public.students
-    FOR ALL USING (
+-- [정책 1] 학생 정보 조회 정책 (모든 교사는 기본 정보 열람 가능, 상세는 권한별 상이)
+CREATE POLICY "Student access policy" ON public.students
+    FOR SELECT USING (
         auth.jwt() ->> 'role' = 'admin' OR 
-        class_info = (SELECT assigned_class FROM public.teachers WHERE id = auth.uid())
+        class_info = (SELECT assigned_class FROM public.teachers WHERE id = auth.uid()) OR
+        EXISTS (SELECT 1 FROM public.teachers WHERE id = auth.uid() AND role IN ('gatekeeper', 'nurse', 'counselor'))
     );
 
--- [정책 2] 생활기록은 본인이 작성한 것이거나 관리 대상 학생 것만 조회 가능
-CREATE POLICY "Record access" ON public.life_records
+-- [정책 2] 생활기록 조회/작성 정책
+CREATE POLICY "Record access policy" ON public.life_records
     FOR ALL USING (
-        auth.jwt() ->> 'role' = 'admin' OR 
+        -- 1. 관리자 및 상담교사는 모든 기록 접근
+        (SELECT role FROM public.teachers WHERE id = auth.uid()) IN ('admin', 'counselor') OR 
+        -- 2. 본인이 작성한 기록
         teacher_id = auth.uid() OR
+        -- 3. 담임 학급 학생의 기록
+        student_pid IN (SELECT pid FROM public.students WHERE class_info = (SELECT assigned_class FROM public.teachers WHERE id = auth.uid())) OR
+        -- 4. 지킴이 선생님은 '지각', '외출', '복장', '태도' 등 출결/생활지도 카테고리만 접근
+        (
+            (SELECT role FROM public.teachers WHERE id = auth.uid()) = 'gatekeeper' AND
+            category IN ('지각', '외출', '결석', '복장', '태도', '생활지도')
+        )
+    );
+
+-- [정책 3] 설문 데이터 조회 정책 (보건교사 필터링은 보안 뷰/함수 권장, 여기서는 기본 담임/관리자 위주)
+CREATE POLICY "Survey access policy" ON public.surveys
+    FOR SELECT USING (
+        (SELECT role FROM public.teachers WHERE id = auth.uid()) IN ('admin', 'counselor') OR 
         student_pid IN (SELECT pid FROM public.students WHERE class_info = (SELECT assigned_class FROM public.teachers WHERE id = auth.uid()))
     );
+
+-- [정책 4] 보건교사용 알레르기 정보 반환을 위한 보안 함수 (필드 제한)
+CREATE OR REPLACE FUNCTION get_allergy_info()
+RETURNS TABLE (student_name TEXT, class_info TEXT, allergy TEXT, health_note TEXT, blood_type TEXT) 
+SECURITY DEFINER
+AS $$
+BEGIN
+  IF (SELECT role FROM public.teachers WHERE id = auth.uid()) IN ('admin', 'counselor', 'nurse') THEN
+    RETURN QUERY 
+    SELECT s.name, s.class_info, 
+           (sur.data->>'알레르기')::TEXT, 
+           (sur.data->>'건강특이사항')::TEXT,
+           (sur.data->>'혈액형')::TEXT
+    FROM public.students s
+    JOIN public.surveys sur ON s.pid = sur.student_pid;
+  ELSE
+    RAISE EXCEPTION '권한이 없습니다.';
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
 
 -- 8. Auth 가입 시 자동 Teacher 프로필 생성 트리거
 CREATE OR REPLACE FUNCTION public.handle_new_user()

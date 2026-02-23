@@ -9,9 +9,9 @@ const roleUpdates = [
     { name: '이갑종', role: 'admin', newEmail: 'gapbbong@naver.com' }, // 소유자
     { name: '이경원', role: 'admin' }, // 관리자
     { name: '류기현', role: 'admin' }, // 관리자
-    { name: '이경미', role: 'counselor' }, // 상담
-    { name: '김변정', role: 'nurse' }, // 보건
-    { name: '이상수', role: 'admin' } // 생활지도부장 (관리자로 권한 부여)
+    { name: '이상수', role: 'admin' }, // 생활지도부장 (관리자)
+    { name: '이경미', role: 'counselor' }, // 상담 (상담은 모든 정보 열람 가능)
+    { name: '김변정', role: 'nurse' } // 보건 (알레르기만 열람하도록 위 SQL에서 처리)
 ];
 
 async function updateRoles() {

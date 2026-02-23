@@ -10,9 +10,10 @@
 </head>
 
 <body>
-    <header class="top-bar">
-        <h1>일괄 생활기록</h1>
-    </header>
+    <div class="header-row">
+        <button type="button" class="btn-back" aria-label="뒤로가기" onclick="location.href='index.html'"></button>
+        <h2 id="pageTitle">일괄 생활기록</h2>
+    </div>
 
     <div class="container">
         <!-- 1. 학생 검색 및 리스트 -->
@@ -22,6 +23,16 @@
                 <button id="search-btn" class="search-btn">조회</button>
             </div>
             <p class="help-text">학번을 입력하고 [조회]를 누르거나 Enter를 치세요.</p>
+
+            <!-- 사진 크기 조절 버튼 그룹 추가 -->
+            <div class="size-control">
+                <span class="label">📸 사진 크기</span>
+                <div class="size-btn-group">
+                    <button type="button" class="btn-size" data-size="140">작게</button>
+                    <button type="button" class="btn-size" data-size="200">보통</button>
+                    <button type="button" class="btn-size" data-size="260">크게</button>
+                </div>
+            </div>
 
             <div id="selected-students" class="student-grid">
                 <!-- 추가된 학생 카드가 여기에 표시됨 -->
@@ -53,12 +64,25 @@
                 <textarea id="detail-input" placeholder="상세 내용을 입력하세요..." rows="3"></textarea>
             </div>
 
-            <div class="form-group">
-                <label>기록 교사 (선택)</label>
-                <input type="text" id="teacher-input" placeholder="선생님 성함">
-            </div>
 
             <button id="save-all-btn" class="save-btn">일괄 저장하기 (0명)</button>
+        </div>
+    </div>
+
+    <!-- 커스텀 확인 모달 추가 -->
+    <div id="custom-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-icon">⚠️</span>
+                <h3>학적 변동 안내</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modal-msg">안내 메시지가 여기에 표시됩니다.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-cancel" class="btn-cancel">취소</button>
+                <button id="modal-confirm" class="btn-confirm">추가하기</button>
+            </div>
         </div>
     </div>
 

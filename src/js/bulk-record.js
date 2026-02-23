@@ -27,6 +27,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 4. 설정 항목 로드 (칭찬/벌점)
     loadSettings();
 
+    // 5. 사진 크기 조절 초기화
+    initSizeControl();
+
     // [추가] 폰/브라우저 뒤로가기 버튼과 연결 (데이터 유실 방지)
     window.addEventListener("beforeunload", (e) => {
         if (selectedStudents.length > 0) {
@@ -35,6 +38,41 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     });
 });
+
+function initSizeControl() {
+    const btns = document.querySelectorAll(".btn-size");
+    const grid = document.getElementById("selected-students");
+
+    // 로컬 스토리지에서 저장된 크기 불러오기 (기본값 보통: 200)
+    const savedSize = localStorage.getItem("bulk-photo-size") || "200";
+    applyPhotoSize(savedSize);
+
+    btns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const size = btn.getAttribute("data-size");
+            applyPhotoSize(size);
+            localStorage.setItem("bulk-photo-size", size);
+        });
+    });
+
+    function applyPhotoSize(size) {
+        // 활성화 버튼 표시
+        btns.forEach(btn => {
+            if (btn.getAttribute("data-size") === String(size)) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+
+        // CSS 변수 수정을 통해 그리드 크기 및 폰트 크기 동적 조절
+        grid.style.setProperty('--card-width', `${size}px`);
+
+        // 크기에 비례하여 폰트 크기 계산 (기준 150px -> 1.2em)
+        const fontSize = (size / 150) * 1.2;
+        grid.style.setProperty('--font-size', `${fontSize.toFixed(2)}em`);
+    }
+}
 
 async function initData() {
     try {
@@ -46,7 +84,7 @@ async function initData() {
     }
 }
 
-function handleSearch(value) {
+async function handleSearch(value) {
     const query = value.trim();
 
     if (!query) return;
@@ -54,12 +92,62 @@ function handleSearch(value) {
     const student = allStudents.find(s => String(s["학번"]) === query);
 
     if (student) {
+        // [수정] 학적 상태 확인 및 알림 (커스텀 팝업)
+        const status = student["학적"];
+        if (status && status !== "재학") {
+            const confirmed = await showModal(
+                `⚠️ ${student["이름"]} 학생은 [${status}] 상태입니다.\n생활기록을 계속 추가할까요?`
+            );
+
+            if (!confirmed) {
+                document.getElementById("student-input").value = "";
+                document.getElementById("student-input").focus();
+                return;
+            }
+        }
+
         addStudent(student);
         document.getElementById("student-input").value = ""; // 입력창 초기화
         document.getElementById("student-input").focus(); // 다시 포커스
     } else {
         alert("학생을 찾을 수 없습니다: " + query);
     }
+}
+
+/**
+ * 커스텀 모달 팝업 표시
+ * @param {string} message - 표시할 메시지
+ * @returns {Promise<boolean>} 확인/취소 결과
+ */
+function showModal(message) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById("custom-modal");
+        const msgEl = document.getElementById("modal-msg");
+        const confirmBtn = document.getElementById("modal-confirm");
+        const cancelBtn = document.getElementById("modal-cancel");
+
+        msgEl.innerText = message;
+        modal.style.display = "flex";
+
+        const handleConfirm = () => {
+            cleanup();
+            resolve(true);
+        };
+
+        const handleCancel = () => {
+            cleanup();
+            resolve(false);
+        };
+
+        const cleanup = () => {
+            modal.style.display = "none";
+            confirmBtn.removeEventListener("click", handleConfirm);
+            cancelBtn.removeEventListener("click", handleCancel);
+        };
+
+        confirmBtn.addEventListener("click", handleConfirm);
+        cancelBtn.addEventListener("click", handleCancel);
+    });
 }
 
 function addStudent(student) {
@@ -113,6 +201,9 @@ function appendStudentCard(student) {
 
     const card = document.createElement("div");
     card.className = "student-card";
+    if (student["학적"] && student["학적"] !== "재학") {
+        card.classList.add("not-active");
+    }
     card.setAttribute("data-num", student["학번"]);
 
     // 이미지 설정 (Supabase photo_url 우선, 구글 드라이브 하위 호환)
@@ -145,7 +236,7 @@ function appendStudentCard(student) {
 
     const info = document.createElement("div");
     info.className = "info";
-    info.textContent = student["이름"];
+    info.textContent = `${student["학번"]} ${student["이름"]}`;
 
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-btn";
@@ -154,6 +245,14 @@ function appendStudentCard(student) {
         e.stopPropagation();
         removeStudent(student["학번"]);
     };
+
+    // [추가] 학적 표시 (재학이 아닌 경우에만)
+    if (student["학적"] && student["학적"] !== "재학") {
+        const statusBadge = document.createElement("span");
+        statusBadge.className = "status-badge";
+        statusBadge.textContent = student["학적"];
+        card.appendChild(statusBadge);
+    }
 
     card.appendChild(img);
     card.appendChild(info);
@@ -218,11 +317,27 @@ async function loadSettings() {
     }
 }
 
+/**
+ * 로그인된 교사의 이메일 아이디를 추출합니다.
+ */
+function getTeacherId() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "미인증";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+        const email = bytes.toString(CryptoJS.enc.Utf8);
+        return email ? email.split('@')[0] : "알수없음";
+    } catch (e) {
+        console.error("Teacher ID extraction error:", e);
+        return "오류";
+    }
+}
+
 async function handleSaveAll() {
     const good = document.getElementById("good-select").value;
     const bad = document.getElementById("bad-select").value;
     const detail = document.getElementById("detail-input").value;
-    const teacher = document.getElementById("teacher-input").value;
+    const teacher = getTeacherId(); // 자동으로 아이디 추출
 
     if (!good && !bad && !detail) {
         alert("기록할 내용을 입력해주세요.");

@@ -13,7 +13,7 @@
 
   <!-- 상단 헤더 -->
   <div class="header-row">
-    <button type="button" class="btn btn-back">← 뒤로</button>
+    <button type="button" class="btn btn-back" aria-label="뒤로가기"></button>
     <h2 id="pageTitle">...</h2>
     <button type="submit" form="recordForm" class="btn btn-save" id="submitBtn">기록 저장</button>
   </div>
@@ -42,9 +42,15 @@
     <label for="detail">자세히</label>
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
 
-    <!-- 기록 교사 -->
-    <label for="teacherName">기록 교사(선택)</label>
-    <input type="text" id="teacherName" placeholder="선생님 성함">
+
+    <!-- 반성문 / 사진 첨부 -->
+    <div class="photo-attachment-section">
+      <label for="photoInput">📸 반성문/사진 첨부</label>
+      <input type="file" id="photoInput" accept="image/*" capture="environment">
+      <div id="photoPreviewContainer" class="photo-preview-container">
+        <!-- 사진 미리보기가 여기에 표시됩니다 -->
+      </div>
+    </div>
   </form>
 
   <div class="record-log">

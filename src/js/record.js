@@ -1,6 +1,7 @@
-import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord } from './api.js';
+import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto } from './api.js';
 import { formatDate } from './utils.js';
 import { API_CONFIG } from './config.js';
+import CryptoJS from 'crypto-js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const studentName = urlParams.get("name") || "";
@@ -26,6 +27,9 @@ function setupHeader() {
 }
 
 function setupForm() {
+    const form = document.getElementById("recordForm");
+    const btn = document.getElementById("submitBtn");
+
     // 현재 시간 설정
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
@@ -33,9 +37,26 @@ function setupForm() {
     const recordTimeInput = document.getElementById("recordTime");
     if (recordTimeInput) recordTimeInput.value = localISOTime;
 
-    // 폼 및 버튼 설정
-    const form = document.getElementById("recordForm");
-    const btn = document.getElementById("submitBtn");
+    // 사진 입력 및 미리보기 설정
+    const photoInput = document.getElementById("photoInput");
+    const photoPreviewContainer = document.getElementById("photoPreviewContainer");
+    let selectedFile = null;
+
+    if (photoInput) {
+        photoInput.addEventListener("change", async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            selectedFile = await resizeImage(file, 1200); // 가로 1200px로 리사이징
+
+            // 미리보기 표시
+            const reader = new FileReader();
+            reader.onload = (re) => {
+                photoPreviewContainer.innerHTML = `<img src="${re.target.result}" style="max-width:100%; border-radius:8px; margin-top:10px; cursor:pointer;" onclick="window.open(this.src)">`;
+            };
+            reader.readAsDataURL(selectedFile);
+        });
+    }
 
     if (form) {
         form.addEventListener("submit", async (event) => {
@@ -43,35 +64,57 @@ function setupForm() {
             btn.disabled = true;
             btn.textContent = "저장 중...";
 
-            const formData = new FormData();
-            formData.append("num", num);
-            formData.append("name", studentName);
-            formData.append("time", recordTimeInput.value);
-
-            // 셀렉트 박스에서 값 수집
-            const goodVal = document.getElementById("good").value;
-            const badVal = document.getElementById("bad").value;
-            if (goodVal) formData.append("good", goodVal);
-            if (badVal) formData.append("bad", badVal);
-            // 텍스트상자
-            formData.append("detail", document.getElementById("detail").value);
-            formData.append("teacher", document.getElementById("teacherName").value);
-            formData.append("action", "addRecord");
-
             try {
+                let photoUrls = [];
+                if (selectedFile) {
+                    btn.textContent = "사진 업로드 중...";
+                    const url = await uploadEvidencePhoto(selectedFile, num);
+                    photoUrls.push(url);
+                }
+
+                const formData = new FormData();
+                formData.append("num", num);
+                formData.append("name", studentName);
+                formData.append("time", recordTimeInput.value);
+
+                // 셀렉트 박스에서 값 수집
+                const goodVal = document.getElementById("good").value;
+                const badVal = document.getElementById("bad").value;
+                if (goodVal) formData.append("good", goodVal);
+                if (badVal) formData.append("bad", badVal);
+
+                formData.append("detail", document.getElementById("detail").value);
+
+                // 교사 이름 자동 추출 및 추가
+                const encrypted = localStorage.getItem('teacher_auth_token');
+                if (encrypted) {
+                    const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+                    const email = bytes.toString(CryptoJS.enc.Utf8);
+                    if (email) {
+                        formData.append("teacher", email.split('@')[0]);
+                    }
+                }
+
+                formData.append("action", "addRecord");
+
+                if (photoUrls.length > 0) {
+                    formData.append("photos", JSON.stringify(photoUrls));
+                }
+
                 const data = await saveRecord(formData);
                 if (data.result === "success") {
                     alert("✅ 저장되었습니다.");
-                    // 폼 초기화 (체크박스 해제 등)
                     form.reset();
-                    // 시간 재설정
+                    photoPreviewContainer.innerHTML = "";
+                    selectedFile = null;
+
                     const now2 = new Date();
                     const localISO2 = new Date(now2 - offset).toISOString().slice(0, 16);
                     recordTimeInput.value = localISO2;
 
                     btn.disabled = false;
                     btn.textContent = "기록 저장";
-                    loadRecords(); // 목록 갱신
+                    loadRecords();
                 } else {
                     alert("저장 실패: " + data.message);
                     btn.disabled = false;
@@ -79,12 +122,45 @@ function setupForm() {
                 }
             } catch (error) {
                 console.error("Save Error:", error);
-                alert("통신 오류가 발생했습니다.");
+                alert("처리 중 오류가 발생했습니다: " + error.message);
                 btn.disabled = false;
                 btn.textContent = "기록 저장";
             }
         });
     }
+}
+
+/**
+ * 이미지 리사이징 함수
+ */
+function resizeImage(file, maxWidth) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = height * (maxWidth / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+                }, 'image/jpeg', 0.8);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
 }
 
 async function loadRecords() {
@@ -159,6 +235,32 @@ async function loadRecords() {
                 itemDiv.appendChild(detailDiv);
             }
 
+            // [추가] 사진/반성문 표시
+            if (r.photos && r.photos.length > 0) {
+                const photoDiv = document.createElement("div");
+                photoDiv.style.marginTop = "10px";
+                r.photos.forEach(photoUrl => {
+                    const img = document.createElement("img");
+                    img.src = photoUrl;
+                    img.className = "record-photo-thumb";
+                    img.style.width = "80px";
+                    img.style.height = "80px";
+                    img.style.objectFit = "cover";
+                    img.style.borderRadius = "4px";
+                    img.style.cursor = "pointer";
+                    img.style.border = "1px solid #ddd";
+                    img.onclick = () => window.open(photoUrl);
+                    photoDiv.appendChild(img);
+
+                    const label = document.createElement("span");
+                    label.textContent = " 📷 반성문 있음 (클릭 시 확대)";
+                    label.style.fontSize = "0.8em";
+                    label.style.color = "#666";
+                    photoDiv.appendChild(label);
+                });
+                itemDiv.appendChild(photoDiv);
+            }
+
             // 삭제 버튼
             const delBtn = document.createElement("button");
             delBtn.className = "btn-delete";
@@ -172,6 +274,8 @@ async function loadRecords() {
     } catch (error) {
         console.error("Load Error:", error);
         logBox.innerHTML = "<p>기록을 불러오지 못했습니다.</p>";
+    } finally {
+        logBox.className = ""; // 로딩 애니메이션 제거 (성공/실패 공통)
     }
 }
 
@@ -206,35 +310,43 @@ function goBack() {
  * Settings 시트의 설정 항목을 불러와서 셀렉트 박스를 채웁니다.
  */
 async function loadSettings() {
+    const goodSelect = document.getElementById("good");
+    const badSelect = document.getElementById("bad");
+
     try {
+        if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
+        if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
+
         const response = await fetch(`${API_CONFIG.SCRIPT_URL}?action=getSettings`);
+        if (!response.ok) throw new Error("Network response was not ok");
         const settings = await response.json();
 
-        const goodSelect = document.getElementById("good");
-        const badSelect = document.getElementById("bad");
-
-        // 초기화 (기존 하드코딩된 내용이 있을 수 있으므로)
-        if (goodSelect) goodSelect.innerHTML = '<option value="">선택</option>';
-        if (badSelect) badSelect.innerHTML = '<option value="">선택</option>';
-
-        if (goodSelect && settings.good) {
-            settings.good.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = item;
-                opt.textContent = item;
-                goodSelect.appendChild(opt);
-            });
+        if (goodSelect) {
+            goodSelect.innerHTML = '<option value="">선택</option>';
+            if (settings.good && Array.isArray(settings.good)) {
+                settings.good.forEach(item => {
+                    const opt = document.createElement("option");
+                    opt.value = item;
+                    opt.textContent = item;
+                    goodSelect.appendChild(opt);
+                });
+            }
         }
 
-        if (badSelect && settings.bad) {
-            settings.bad.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = item;
-                opt.textContent = item;
-                badSelect.appendChild(opt);
-            });
+        if (badSelect) {
+            badSelect.innerHTML = '<option value="">선택</option>';
+            if (settings.bad && Array.isArray(settings.bad)) {
+                settings.bad.forEach(item => {
+                    const opt = document.createElement("option");
+                    opt.value = item;
+                    opt.textContent = item;
+                    badSelect.appendChild(opt);
+                });
+            }
         }
     } catch (error) {
         console.error("Settings Load Error:", error);
+        if (goodSelect) goodSelect.innerHTML = '<option value="">데이터 로드 실패</option>';
+        if (badSelect) badSelect.innerHTML = '<option value="">데이터 로드 실패</option>';
     }
 }

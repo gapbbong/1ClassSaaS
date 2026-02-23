@@ -1,7 +1,7 @@
-// API 설정
 export const API_CONFIG = {
     SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyfadmRNyOpRww3m13PVnx_E_6ft9gzrqleOx2q_8X9WXFpom31vYpgjzZg9MK01hcZ3Q/exec",
-    SEARCH_URL: "https://script.google.com/macros/s/AKfycbyfadmRNyOpRww3m13PVnx_E_6ft9gzrqleOx2q_8X9WXFpom31vYpgjzZg9MK01hcZ3Q/exec"
+    SEARCH_URL: "https://script.google.com/macros/s/AKfycbyfadmRNyOpRww3m13PVnx_E_6ft9gzrqleOx2q_8X9WXFpom31vYpgjzZg9MK01hcZ3Q/exec",
+    SECRET_KEY: 'oneclass25-secret-auth-key'
 };
 
 // 학생 목록용 URL과 기록용 URL이 다른 것으로 보임. 확인 필요.

@@ -1,28 +1,60 @@
-.top-bar {
+/* 상단 헤더 스타일 (다른 페이지와 통일) */
+.header-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 70px;
+    padding: 0 20px;
+    background-color: white;
+    border-bottom: 1px solid #f0f0f0;
     position: sticky;
     top: 0;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 14px 20px;
-    background: #fff;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     z-index: 1000;
 }
 
-.back-link {
-    position: absolute;
-    left: 20px;
-    text-decoration: none;
-    color: #4A90E2;
-    font-weight: 700;
+.header-row h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #222;
+    text-align: center;
 }
 
-.top-bar h1 {
-    font-size: 1.1em;
-    margin: 0;
-    font-weight: 800;
+.btn-back {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background-color: white;
+    color: #555;
+    border: 1px solid #e0e0e0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: pointer;
+    z-index: 1100;
+}
+
+.btn-back:hover {
+    background-color: #f8f9fa;
+    color: #1a73e8;
+    border-color: #1a73e8;
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 4px 12px rgba(26, 115, 232, 0.2);
+}
+
+.btn-back::before {
+    content: "←";
+    font-size: 20px;
+    font-weight: normal;
 }
 
 .container {
@@ -85,10 +117,16 @@
 
 .log-card {
     background: #fff;
-    border-radius: 12px;
-    padding: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    border-left: 4px solid #4A90E2;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.log-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 .card-inner {

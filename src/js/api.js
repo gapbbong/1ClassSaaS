@@ -110,6 +110,8 @@ export async function saveRecord(formData) {
 
         if (sError || !student) throw new Error("학생을 찾을 수 없습니다.");
 
+        const photos = formData.get("photos"); // JSON string of array
+
         // 2. life_records에 삽입합니다.
         const { error } = await supabase
             .from('life_records')
@@ -119,6 +121,7 @@ export async function saveRecord(formData) {
                 content: detail || "",
                 is_positive: !!good,
                 teacher_email_prefix: teacher,
+                photos: photos ? JSON.parse(photos) : null,
                 created_at: time ? new Date(time).toISOString() : new Date().toISOString()
             });
 
@@ -258,8 +261,10 @@ export async function fetchClassInfo() {
                     class: c,
                     homeroom: '미정',
                     homeroomPhone: '',
+                    homeroomEmail: '',
                     sub: '미정',
-                    subPhone: ''
+                    subPhone: '',
+                    subEmail: ''
                 };
             }
         }
@@ -270,6 +275,7 @@ export async function fetchClassInfo() {
                 if (infoMap[t.assigned_class]) {
                     infoMap[t.assigned_class].homeroom = t.name;
                     infoMap[t.assigned_class].homeroomPhone = t.phone || '';
+                    infoMap[t.assigned_class].homeroomEmail = t.email || '';
                 }
             }
         });
@@ -281,6 +287,7 @@ export async function fetchClassInfo() {
                 if (infoMap[key]) {
                     infoMap[key].sub = t.name;
                     infoMap[key].subPhone = t.phone || '';
+                    infoMap[key].subEmail = t.email || '';
                 }
             }
         });
@@ -358,5 +365,38 @@ export async function bulkSaveRecords(targets, recordData) {
     } catch (error) {
         console.error("Supabase Bulk Save Error:", error);
         throw new Error("일괄 저장에 실패했습니다.");
+    }
+}
+
+/**
+ * 증빙 사진(반성문 등)을 업로드합니다.
+ * @param {File} file - 업로드할 파일 객체
+ * @param {string} studentId - 학번 (파일명 구성용)
+ * @returns {Promise<string>} 업로드된 파일의 Public URL
+ */
+export async function uploadEvidencePhoto(file, studentId) {
+    try {
+        const timestamp = new Date().getTime();
+        const extension = file.name.split('.').pop();
+        const fileName = `${studentId}_${timestamp}.${extension}`;
+        const filePath = `2025/${fileName}`;
+
+        const { data, error } = await supabase.storage
+            .from('evidence-photos')
+            .upload(filePath, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('evidence-photos')
+            .getPublicUrl(filePath);
+
+        return publicUrl;
+    } catch (error) {
+        console.error("Upload Error:", error);
+        throw new Error("사진 업로드에 실패했습니다.");
     }
 }

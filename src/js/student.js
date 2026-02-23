@@ -34,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadStudents();
 
     // 3. 이벤트 리스너 설정 (플로팅 버튼 등)
-    setupEventListeners();
+    setupEventListeners(classInfo);
 
     // 4. 안내 메시지 추가
     setupGuidance();
@@ -161,7 +161,18 @@ window.showTeacherModal = function (info, showSub = false) {
 };
 
 
-function setupEventListeners() {
+function getFullStoredEmail() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+        return "";
+    }
+}
+
+function setupEventListeners(classInfo) {
     // 플로팅 컨트롤 (네비게이션)
     const prevBtn = document.getElementById("prev-btn");
     const homeBtn = document.getElementById("home-btn");
@@ -171,10 +182,22 @@ function setupEventListeners() {
     if (prevBtn) prevBtn.addEventListener("click", () => goToRelativeClass(-1));
     if (homeBtn) homeBtn.addEventListener("click", goHome);
     if (nextBtn) nextBtn.addEventListener("click", () => goToRelativeClass(1));
+
+    // [수정] 본인 담임반일 때만 기초조사 모아보기 버튼 노출
     if (surveyBtn) {
-        surveyBtn.addEventListener("click", () => {
-            window.location.href = `class-survey.html?grade=${grade || 1}&class=${classNum || 1}`;
-        });
+        const myEmail = getFullStoredEmail();
+        const currentClassInfo = classInfo ? classInfo.find(c => c.grade === grade && c.class === classNum) : null;
+
+        const isMyClass = currentClassInfo && (currentClassInfo.homeroomEmail === myEmail || currentClassInfo.subEmail === myEmail);
+
+        if (isMyClass) {
+            surveyBtn.style.display = "flex";
+            surveyBtn.addEventListener("click", () => {
+                window.location.href = `class-survey.html?grade=${grade || 1}&class=${classNum || 1}`;
+            });
+        } else {
+            surveyBtn.style.display = "none";
+        }
     }
 
     // 팝업 오버레이 클릭 시 닫기
@@ -361,7 +384,36 @@ function loadStudents() {
         });
 }
 
-// 팝업 관련 함수
+// 최적의 값을 찾기 위한 헬퍼 함수 (다양한 키 형태 지원)
+function getValue(obj1, obj2, ...keys) {
+    const combined = { ...obj1, ...obj2 };
+    for (let key of keys) {
+        if (combined[key] !== undefined && combined[key] !== null && String(combined[key]).trim() !== "") {
+            return String(combined[key]).trim();
+        }
+        // 대문자 체크
+        const upper = key.toUpperCase();
+        if (combined[upper] !== undefined && combined[upper] !== null && String(combined[upper]).trim() !== "") {
+            return String(combined[upper]).trim();
+        }
+        // 공백 제거 버전 체크
+        const noSpace = key.replace(/\s/g, "");
+        if (combined[noSpace] !== undefined && combined[noSpace] !== null && String(combined[noSpace]).trim() !== "") {
+            return String(combined[noSpace]).trim();
+        }
+    }
+    return "";
+}
+
+// 친밀도 수치 -> 한글 텍스트 매핑
+const intimacyMap = {
+    "1": "매우 소원함",
+    "2": "소원함",
+    "3": "보통",
+    "4": "친밀함",
+    "5": "매우 친밀함"
+};
+
 // 팝업 관련 함수
 async function showPopup(student) {
     const popup = document.getElementById("popup");
@@ -373,7 +425,7 @@ async function showPopup(student) {
     popup.className = "student-detail-popup";
 
     // 팝업 열 때 기초조사 데이터 추가 로딩
-    let surveyData = {};
+    let surveyRaw = {};
     try {
         const { data, error } = await supabase
             .from('surveys')
@@ -382,121 +434,102 @@ async function showPopup(student) {
             .maybeSingle();
 
         if (!error && data) {
-            // 전체 컬럼과 JSONB 'data' 필드를 모두 병합하여 누락 방지
-            surveyData = { ...data, ...(data.data || {}) };
+            surveyRaw = { ...data, ...(data.data || {}) };
         }
     } catch (e) {
         console.warn("Survey fetch error:", e);
     }
 
-    // 이미지 소스 결정
+    const surveyData = {};
+    // 모든 키를 대문자로 정규화한 객체도 준비 (매칭 확률 높임)
+    for (let k in surveyRaw) {
+        surveyData[k] = surveyRaw[k];
+        surveyData[k.toUpperCase()] = surveyRaw[k];
+    }
+
     const supabasePhotoUrl = student.photo_url;
     const driveFileId = extractDriveId(student["사진저장링크"] || student.photo_url);
-
     let imgSrc = "";
     if (supabasePhotoUrl && supabasePhotoUrl.startsWith('http')) {
         imgSrc = supabasePhotoUrl;
     } else if (driveFileId) {
         imgSrc = getThumbnailUrl(driveFileId);
     }
-
     const fallbackImgSrc = driveFileId ? `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000` : '';
 
-    // 보여주지 않을 키 목록 (영문 기술용 필드 및 이미 매핑된 필드 제외)
-    // 인스타 등은 api.js에서 한글로 매핑했으므로 원본 영문 필드는 숨김
-    const technicalKeys = [
-        "PID", "연번", "학년", "반", "파일명", "학생별시트", "사진저장링크", "입력시간", "submitted_at",
-        "pid", "student_id", "photo_url", "photo_path", "created_at", "updated_at",
-        "class_info", "academic_year", "name", "gender", "status", "contact",
-        "birth_date", "parent_contact", "parent_relation", "email", "data", "id", "student_pid",
-        "instagram", "insta", "sns", "social", "학생폰"
-    ];
+    const createInfoRow = (label, val) => {
+        let valStr = String(val || "").trim();
+        if (valStr === "" || valStr === "null" || valStr === "undefined" || valStr === "없음") {
+            valStr = ".";
+        }
 
-    // Q2: 기본 정보 분류 (인스타, 주소 포함)
-    const basicKeys = ["번호", "성별", "학적", "연락처", "인스타", "인스타 아이디", "주소", "집주소", "학번", "생년월일", "SNS"];
-    // Q3: 연락처 및 가족 분류 (보호자 중심)
-    const contactKeys = ["보호자", "가족", "관계", "이메일", "폰", "전화"];
+        const lowLabel = label.toLowerCase();
 
-    let infoHtml2 = ""; // Q2
-    let infoHtml3 = ""; // Q3
-    let infoHtml4 = ""; // Q4
-
-    const displayedKeys = new Set(); // 중복 항목(키 기준) 방지용
-
-    const createInfoRow = (key, val) => {
-        const valStr = String(val).trim();
-        const lowKey = key.toLowerCase();
-
-        // 전화번호/연락처 판단 ('번호' 필드는 통화 아이콘 제외)
-        const isPhone = (key.includes("전화") || key.includes("연락처") || (key.includes("번호") && key !== "번호") || key.includes("폰"));
-        // 인스타그램 판단 (insta, instagram, 인스타 포함 시)
-        const isInsta = lowKey.includes("인스타") || lowKey.includes("insta");
-
+        // 친밀도 수치 -> 텍스트 변환
         let displayVal = valStr;
-        let displayKey = key;
+        if (label.includes("친밀도") && intimacyMap[valStr]) {
+            displayVal = intimacyMap[valStr];
+        }
 
-        // 인스타용 특수 처리
-        if (isInsta) {
+        const isPhone = (label.includes("전화") || label.includes("연락처") || (label.includes("번호") && label !== "번호" && label !== "학번") || label.includes("폰"));
+        const isInsta = lowLabel.includes("인스타") || lowLabel.includes("insta");
+
+        if (isInsta && valStr !== ".") {
             const cleanId = valStr.replace('@', '').trim();
             displayVal = `<a href="https://instagram.com/${cleanId}" target="_blank" style="color: #c13584; text-decoration: underline; font-weight: 800;">${valStr}</a>`;
-            if (lowKey === "insta" || lowKey === "instagram") displayKey = "인스타 아이디";
         }
 
         return `<div class="detail-info-row">
-            <span class="detail-label">${displayKey}</span>
+            <span class="detail-label">${label}</span>
             <span class="detail-value">
                 ${displayVal} 
-                ${isPhone ? `<a href="tel:${valStr}" class="contact-icon">📞</a><a href="sms:${valStr}" class="contact-icon">💬</a>` : ''} 
+                ${(isPhone && valStr !== ".") ? `<a href="tel:${valStr}" class="contact-icon">📞</a><a href="sms:${valStr}" class="contact-icon">💬</a>` : ''} 
             </span>
         </div>`;
     };
 
+    // 2사분면: 기본 정보 (순서: 연락처, 인스타, 집주소, 학적, 성별)
+    let infoHtml2 = "";
+    infoHtml2 += createInfoRow("연락처", getValue(student, surveyData, "연락처", "contact", "학생폰", "학생 연락처"));
+    infoHtml2 += createInfoRow("인스타", getValue(student, surveyData, "인스타", "instagram", "insta", "인스타 아이디", "SNS"));
+    infoHtml2 += createInfoRow("집주소", getValue(student, surveyData, "주소", "집주소", "address"));
+    infoHtml2 += createInfoRow("학적", getValue(student, surveyData, "학적", "status"));
+    infoHtml2 += createInfoRow("성별", getValue(student, surveyData, "성별", "gender"));
 
-    // 1. 학생 기본 테이블(students) 데이터 분류
-    for (let key in student) {
-        if (technicalKeys.includes(key) || key === "이름" || key === "학번") continue;
+    // 3사분면: 연락처 및 가족 (순서: 주보호자 관계, 주보호자 연락처, 주보호자 친밀도, 보조보호자 관계, 보조보호자 연락처, 보조보호자 친밀도, 거주가족)
+    let infoHtml3 = "";
+    infoHtml3 += createInfoRow("주보호자 관계", getValue(surveyData, {}, "주보호자 관계", "보호자관계", "PARENT_RELATION"));
+    infoHtml3 += createInfoRow("주보호자 연락처", getValue(surveyData, {}, "주보호자 연락처", "보호자연락처", "PARENT_CONTACT"));
+    infoHtml3 += createInfoRow("주보호자 친밀도", getValue(surveyData, {}, "주보호자 친밀도", "친밀도"));
+    infoHtml3 += createInfoRow("보조보호자 관계", getValue(surveyData, {}, "보조보호자 관계"));
+    infoHtml3 += createInfoRow("보조보호자 연락처", getValue(surveyData, {}, "보조보호자 연락처"));
+    infoHtml3 += createInfoRow("보조보호자 친밀도", getValue(surveyData, {}, "보조보호자 친밀도"));
+    infoHtml3 += createInfoRow("거주가족", getValue(surveyData, {}, "거주가족", "가족구성"));
 
-        const val = student[key];
-        if (val === null || val === undefined || val === "") continue;
+    // 4사분면: 상세 기초조사 (나머지 설문 데이터)
+    let infoHtml4 = "";
+    const usedKeys = [
+        "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "student_id", "contact", "instagram", "insta", "인스타 아이디", "주소", "집주소", "address", "status", "gender",
+        "주보호자 관계", "주보호자 연락처", "주보호자 친밀도", "보조보호자 관계", "보조보호자 연락처", "보조보호자 친밀도", "거주가족", "SNS", "학생폰", "학생 연락처",
+        "보호자연락처", "보호자관계", "PARENT_RELATION", "PARENT_CONTACT", "가족구성", "친밀도", "MBTI", "보호자 연락처",
+        "주보호자연락처", "보조보호자연락처", "주보호자친밀도", "보조보호자친밀도"
+    ];
+    const techKeys = [
+        "학년", "반", "이름", "PID", "연번", "submitted_at", "pid", "photo_url", "photo_path", "created_at", "updated_at", "data", "id", "student_pid", "비밀번호", "사진저장링크", "연번", "파일명", "학생별시트", "입력시간", "ACADEMIC_YEAR", "CLASS_INFO", "NAME"
+    ];
 
-        const rowHtml = createInfoRow(key, val);
+    const allSurveyKeys = Object.keys(surveyRaw);
+    allSurveyKeys.forEach(k => {
+        const uk = k.toUpperCase();
+        const isInUsed = usedKeys.some(key => key.toUpperCase() === uk);
+        const isInTech = techKeys.some(key => key.toUpperCase() === uk);
+        if (isInUsed || isInTech) return;
 
-        // 분류 로직 (인스타/주소는 무조건 Q2)
-        if (basicKeys.includes(key) || key.includes("인스타") || key.includes("주소")) {
-            infoHtml2 += rowHtml;
-        } else if (contactKeys.some(ck => key.includes(ck))) {
-            infoHtml3 += rowHtml;
-        } else {
-            infoHtml4 += rowHtml;
+        const val = surveyRaw[k];
+        if (val && String(val).trim()) {
+            infoHtml4 += createInfoRow(k, val);
         }
-        displayedKeys.add(key);
-    }
-
-    // 2. 기초조사(surveys) 데이터 분류
-    for (let key in surveyData) {
-        // 이미 보여줬거나 기술용 키면 제외
-        if (technicalKeys.includes(key) || displayedKeys.has(key)) continue;
-
-        // 설문 조사용 공통 제외 키
-        const surveyTechKeys = ["학년", "반", "번호", "이름", "학번", "비밀번호", "PID", "연번"];
-        if (surveyTechKeys.includes(key)) continue;
-
-        const val = surveyData[key];
-        if (val === null || val === undefined || val === "") continue;
-
-        const rowHtml = createInfoRow(key, val);
-
-        // 인스타/주소 포함 항목은 무조건 Q2(기본정보)로 이동
-        if (basicKeys.includes(key) || key.includes("인스타") || key.includes("주소")) {
-            infoHtml2 += rowHtml;
-        } else if (contactKeys.some(ck => key.includes(ck))) {
-            infoHtml3 += rowHtml;
-        } else {
-            infoHtml4 += rowHtml;
-        }
-        displayedKeys.add(key);
-    }
-
+    });
 
     const escapedStudent = JSON.stringify(student).replace(/"/g, '&quot;');
     const photoImg = imgSrc ? `<img src="${imgSrc}" onerror="this.src='${fallbackImgSrc}'" alt="${student["이름"]} 사진">` : `<div class="no-photo-placeholder">📷<br>사진 없음</div>`;

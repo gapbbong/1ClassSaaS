@@ -242,22 +242,76 @@ body {
 /* 플로팅 컨트롤 (네비게이션) */
 .floating-controls {
     position: fixed;
-    bottom: 50px;
+    bottom: 40px;
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 20px;
+    align-items: center;
+    gap: 15px;
     z-index: 1001;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .floating-controls button {
-    font-size: 20px;
-    padding: 10px 14px;
+    font-size: 22px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    border: 2px solid rgba(200, 200, 200, 0.4);
-    background: transparent;
-    color: #3399ff;
+    border: 1.5px solid #e0e0e0;
+    background: white;
+    color: #1a73e8;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.floating-controls button:hover {
+    transform: scale(1.15) translateY(-5px);
+    background-color: #f8f9fa;
+    color: #1a73e8;
+    border-color: #1a73e8;
+    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.2);
+}
+
+.floating-controls button:active {
+    transform: scale(0.95);
+}
+
+/* 홈 버튼 좌상단 고정 스타일 */
+#home-btn {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e0e0e0;
+    color: #555;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#home-btn:hover {
+    background-color: #f8f9fa;
+    color: #1a73e8;
+    border-color: #1a73e8;
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(26, 115, 232, 0.15);
 }
 
 /* 안내 툴팁 모달/팝업 스타일 */
@@ -690,8 +744,8 @@ body {
 .popup-quadrants-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: 30% 70% !important;
-    /* Reduced top row height to 30% */
+    grid-template-rows: 45% 55% !important;
+    /* Adjusted top row height to 45% for better visibility and data density */
     gap: 16px !important;
     flex: 1 !important;
     min-height: 0 !important;
