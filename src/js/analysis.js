@@ -88,17 +88,23 @@ function initSearch() {
     const resultsDropdown = document.getElementById("search-results");
 
     searchInput.addEventListener("input", async (e) => {
-        const query = e.target.value.trim();
-        if (query.length < 2) {
+        const searchQuery = e.target.value.trim();
+        if (searchQuery.length < 2) {
             resultsDropdown.style.display = "none";
             return;
         }
 
         const { data, error } = await supabase
             .from('students')
-            .select('pid, student_id, name, class_info')
-            .or(`name.ilike.%${query}%,student_id.ilike.%${query}%`)
+            .select('pid, student_id, name, class_info, gender, photo_url')
+            .or(`name.ilike.%${searchQuery}%,student_id.ilike.%${searchQuery}%`)
             .limit(10);
+
+        if (error) {
+            console.error("학생 검색 오류:", error);
+            resultsDropdown.style.display = "none";
+            return;
+        }
 
         if (data && data.length > 0) {
             renderSearchResults(data);
@@ -397,150 +403,157 @@ async function triggerClassAIAnalysis(classInfo) {
 }
 
 
-// 4. 분석 결과 렌더링 및 렌즈 전환
-function initLensSelector() {
-    const selector = document.getElementById("lens-selector");
-    selector.addEventListener("change", () => {
-        if (currentInsight) renderAnalysis();
-    });
-}
-
+// 4. 분석 결과 전체 렌더링
 function renderAnalysis() {
-    const lensType = document.getElementById("lens-selector").value;
     const contentArea = document.getElementById("lens-content");
 
     document.getElementById("loading-view").style.display = "none";
     document.getElementById("result-view").style.display = "block";
 
+    const photoMiniContainer = document.getElementById("student-photo-mini");
+
     if (currentMode === 'individual' && currentStudent) {
         document.getElementById("view-student-name").innerText = currentStudent.name;
         document.getElementById("view-student-info").innerText = `${currentStudent.class_info} ${currentStudent.student_id ? currentStudent.student_id : ''}`;
+
+        // 학생 사진 표시
+        if (currentStudent.photo_url) {
+            const { data } = supabase.storage.from('student_photos').getPublicUrl(currentStudent.photo_url);
+            photoMiniContainer.innerHTML = `<img src="${data.publicUrl}" alt="photo" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        } else {
+            photoMiniContainer.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+        }
+
     } else if (currentMode === 'class' && currentClassInfo) {
         document.getElementById("view-student-name").innerText = `${currentClassInfo} 학급 전체`;
         document.getElementById("view-student-info").innerText = `AI 통합 분석 브리핑`;
+        // 학급의 경우 아이콘 표시
+        photoMiniContainer.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 14px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
     }
 
-    let html = "";
-    switch (lensType) {
-        case 'summary':
-            html = `
-                <div class="fade-in">
-                    <h3 style="color:#4A90E2">⭐ AI 핵심 요약</h3>
-                    <p style="font-size:1.1rem; line-height:1.6; background:#f8f9fa; padding:15px; border-radius:12px;">${currentInsight.summary}</p>
-                    <div style="margin-top:20px;">
-                        <strong>핵심 태그:</strong> 
-                        ${(currentInsight.tags || []).map(t => `<span class="badge">#${t}</span>`).join(' ')}
-                    </div>
-                </div>`;
-            break;
-        case 'stats':
-            html = `
-                <div class="fade-in">
-                    <h3 style="color:#4A90E2">📊 다면 수치 분석</h3>
-                    <div style="position: relative; height:300px; width:100%; display:flex; justify-content:center; align-items:center;">
-                        <canvas id="aiStatsChart"></canvas>
-                    </div>
-                </div>`;
-            break;
-        case 'rpg':
-            html = `
-                <div class="fade-in rpg-view">
-                    <h3 style="color:#6C5CE7">🎮 RPG 캐릭터 시트</h3>
-                    <div style="background:#2D3436; color:#00FF00; padding:20px; border-radius:12px; font-family:'Courier New'">
-                        [CLASS]: ${currentInsight.rpg?.class || '정보 없음'}<br>
-                        [SKILL]: ${currentInsight.rpg?.item || '정보 없음'}<br>
-                        [INT]: ${currentInsight.rpg?.stats?.INT || '?'} / [STR]: ${currentInsight.rpg?.stats?.STR || '?'} / [CHA]: ${currentInsight.rpg?.stats?.CHA || '?'}
-                    </div>
-                </div>`;
-            break;
-        case 'detective':
-            html = `
-                <div class="fade-in">
-                    <h3 style="color:#D35400">🕵️ 탐정의 추론</h3>
-                    <div style="background:#fdf6e3; padding:15px; border-radius:12px; border-left:4px solid #D35400;">
-                        <p style="font-weight:bold; margin-bottom:10px;">발견된 단서 (Clues)</p>
-                        <ul style="margin-left: 20px; color:#555;">
-                            ${(currentInsight.detective?.clues || []).map(c => `<li>${c}</li>`).join('')}
-                        </ul>
-                        <p style="margin-top:15px; font-weight:bold; border-top:1px dashed #ccc; padding-top:10px;">추론 결과</p>
-                        <p>${currentInsight.detective?.deduction || '단서 부족'}</p>
-                    </div>
-                </div>`;
-            break;
-        case 'garden':
-            html = `
-                <div class="fade-in">
-                    <h3 style="color:#27AE60">🌿 생태계 정원</h3>
-                    <div style="background:#eafaf1; padding:15px; border-radius:12px; border-left:4px solid #27AE60;">
-                        <p><strong>비유:</strong> <span style="font-size:1.1rem; color:#1e8449;">${currentInsight.garden?.species || '알 수 없음'}</span></p>
-                        <p style="margin-top:10px;"><strong>현재 상태/필요 요소:</strong><br>${currentInsight.garden?.condition || '파악 불가'}</p>
-                    </div>
-                </div>`;
-            break;
-    }
+    // 종합요약부터 생태계 정원까지 모든 인사이트를 한 번에 렌더링하도록 변경 (지연 페이드인 추가)
+    let html = `
+        <!-- 종합 요약 영역 -->
+        <div class="fade-in result-card" style="margin-bottom: 24px; animation-delay: 0.1s; animation-fill-mode: both;">
+            <h3 style="color:#4A90E2; margin-top:0;">⭐ AI 핵심 요약</h3>
+            <p style="font-size:1.1rem; line-height:1.6; background:#f8fafc; padding:18px; border-radius:12px; margin-bottom: 12px;">${currentInsight.summary}</p>
+            <div style="margin-top:10px;">
+                <strong>핵심 태그:</strong> 
+                ${(currentInsight.tags || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}
+            </div>
+        </div>
+        
+        <!-- 통계 및 분석 차트 영역 -->
+        <div class="fade-in result-card" style="margin-bottom: 24px; animation-delay: 0.3s; animation-fill-mode: both;">
+            <h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>
+            <div style="position: relative; height:300px; width:100%; display:flex; justify-content:center; align-items:center; background:#f8fafc; border-radius:12px; padding:10px; box-sizing:border-box;">
+                <canvas id="aiStatsChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- 하단 그리드 (RPG, 탐정, 정원) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+            <!-- RPG 시트 -->
+            <div class="fade-in result-card rpg-view" style="animation-delay: 0.5s; animation-fill-mode: both;">
+                <h3 style="color:#6C5CE7; margin-top:0;">🎮 고유 속성 (RPG)</h3>
+                <div style="background:#2D3436; color:#00FF00; padding:16px; border-radius:12px; font-family:'Courier New', monospace; font-size: 0.95rem;">
+                    [CLASS]: ${currentInsight.rpg?.class || '정보 없음'}<br>
+                    [SKILL]: ${currentInsight.rpg?.item || '정보 없음'}<br>
+                    [INT]: ${currentInsight.rpg?.stats?.INT || '?'} / [STR]: ${currentInsight.rpg?.stats?.STR || '?'} / [CHA]: ${currentInsight.rpg?.stats?.CHA || '?'}
+                </div>
+            </div>
+            
+            <!-- 탐정 추론 -->
+            <div class="fade-in result-card" style="animation-delay: 0.7s; animation-fill-mode: both;">
+                <h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론 (Detective)</h3>
+                <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size: 0.95rem;">
+                    <p style="font-weight:bold; margin-top:0; margin-bottom:8px;">발견된 단서 (Clues)</p>
+                    <ul style="margin-left: 20px; color:#555; padding-left: 0;">
+                        ${(currentInsight.detective?.clues || []).map(c => `<li style="margin-bottom:4px;">${c}</li>`).join('')}
+                    </ul>
+                    <p style="margin-top:12px; font-weight:bold; border-top:1px dashed #ccc; padding-top:10px;">추론 결과</p>
+                    <p style="margin-bottom:0; color:#444;">${currentInsight.detective?.deduction || '단서 부족'}</p>
+                </div>
+            </div>
+            
+            <!-- 생태계 정원 -->
+            <div class="fade-in result-card" style="animation-delay: 0.9s; animation-fill-mode: both;">
+                <h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3>
+                <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size: 0.95rem; height: calc(100% - 32px);">
+                    <p style="margin-top:0;"><strong>비유:</strong> <span style="font-size:1.05rem; color:#1e8449;">${currentInsight.garden?.species || '알 수 없음'}</span></p>
+                    <p style="margin-top:8px;"><strong>현재 상태/필요 요소:</strong><br><span style="color:#444; display:inline-block; margin-top:4px;">${currentInsight.garden?.condition || '파악 불가'}</span></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 액션 플랜 (교사 조언) -->
+        <div class="fade-in result-card" style="margin-top: 24px; border: 2px solid var(--ai-primary); background: #f0f7ff; animation-delay: 1.1s; animation-fill-mode: both;">
+            <h3 style="color:var(--ai-primary); margin-top:0;">💡 교사를 위한 추천 액션 플랜</h3>
+            <p style="font-size:1.05rem; font-weight:bold; color:#333; margin-bottom:0;">${currentInsight.action || '추천 플랜이 없습니다.'}</p>
+        </div>
+    `;
 
     contentArea.innerHTML = html;
 
-    // 차트 렌더링 로직
-    if (lensType === 'stats') {
-        const ctx = document.getElementById('aiStatsChart')?.getContext('2d');
-        if (ctx) {
-            if (analysisChart) {
-                analysisChart.destroy();
-            }
-
-            const statsData = currentInsight.stats || {};
-            const labels = ['학업(Study)', '루틴(Routine)', '정서(Emotion)', '사회성(Social)', '자아성찰(Self)', '회복탄력성(Resilience)'];
-            const data = [
-                statsData.study || 0,
-                statsData.routine || 0,
-                statsData.emotion || 0,
-                statsData.social || 0,
-                statsData.self || 0,
-                statsData.resilience || 0
-            ];
-
-            analysisChart = new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'AI 다면 평가 수치',
-                        data: data,
-                        backgroundColor: 'rgba(74, 144, 226, 0.2)',
-                        borderColor: 'rgba(74, 144, 226, 1)',
-                        pointBackgroundColor: 'rgba(108, 92, 231, 1)',
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: 'rgba(108, 92, 231, 1)',
-                        borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
-                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
-                            pointLabels: {
-                                font: { family: 'Pretendard', size: 12, weight: 'bold' },
-                                color: '#2d3436'
-                            },
-                            ticks: {
-                                suggestedMin: 0,
-                                suggestedMax: 100,
-                                stepSize: 20,
-                                backdropColor: 'transparent',
-                                display: false // 수치 숫자 표출 숨김(디자인상 깔끔하게)
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
+    // 차트 렌더링 로직 (항상 렌더링)
+    const ctx = document.getElementById('aiStatsChart')?.getContext('2d');
+    if (ctx) {
+        if (analysisChart) {
+            analysisChart.destroy();
         }
+
+        const statsData = currentInsight.stats || {};
+        const labels = ['학업(Study)', '루틴(Routine)', '정서(Emotion)', '사회성(Social)', '자아성찰(Self)', '회복탄력성(Resilience)'];
+        const data = [
+            statsData.study || 0,
+            statsData.routine || 0,
+            statsData.emotion || 0,
+            statsData.social || 0,
+            statsData.self || 0,
+            statsData.resilience || 0
+        ];
+
+        analysisChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'AI 다면 평가 수치',
+                    data: data,
+                    backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                    borderColor: 'rgba(74, 144, 226, 1)',
+                    pointBackgroundColor: 'rgba(108, 92, 231, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(108, 92, 231, 1)',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: {
+                            font: { family: 'Pretendard', size: 12, weight: 'bold' },
+                            color: '#2d3436'
+                        },
+                        ticks: {
+                            suggestedMin: 0,
+                            suggestedMax: 100,
+                            stepSize: 20,
+                            backdropColor: 'transparent',
+                            display: false // 수치 숫자 표출 숨김(디자인상 깔끔하게)
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
     }
+}
 }
