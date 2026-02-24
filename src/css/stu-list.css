@@ -6,6 +6,9 @@ body {
 
 /* 제목 영역 */
 .title-row {
+    width: 100%;
+    max-width: 1400px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -24,6 +27,7 @@ body {
     flex-wrap: wrap;
     gap: 12px;
     flex: 1;
+    min-width: 0;
 }
 
 @media (min-width: 480px) {
@@ -44,10 +48,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 4px;
     font-size: clamp(16px, 3.5vw, 32px);
     margin-bottom: 8px;
-    white-space: nowrap;
 }
 
 #teacher-info a {
