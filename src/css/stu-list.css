@@ -8,18 +8,28 @@ body {
 .title-row {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     flex-wrap: nowrap;
-    gap: 16px;
+    gap: 8px;
     margin-top: 10px;
     line-height: 1;
+    padding: 0 12px;
+}
+
+.title-center {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1;
 }
 
 @media (min-width: 480px) {
     .title-row {
-        flex-direction: row;
-        justify-content: center;
         gap: 12px;
+        padding: 0 20px;
     }
 }
 
@@ -47,7 +57,8 @@ body {
 /* 학생 그리드 */
 .student-grid {
     display: grid;
-    gap: 8px;
+    column-gap: 20px;
+    row-gap: 6px;
     padding: 10px;
     width: 100%;
     max-width: 1400px;
@@ -56,7 +67,8 @@ body {
 
 @media (min-width: 600px) {
     .student-grid {
-        gap: 12px;
+        column-gap: 16px;
+        row-gap: 8px;
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
 }
@@ -104,7 +116,7 @@ body {
 .student {
     display: flex;
     flex-direction: column;
-    padding: 6px;
+    padding: 4px;
     border-radius: 12px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     background: #fff;
@@ -149,7 +161,7 @@ body {
 }
 
 .student-name {
-    margin-top: 10px;
+    margin-top: 5px;
     padding: 2px 4px;
     display: flex;
     align-items: center;
@@ -242,55 +254,72 @@ body {
 /* 플로팅 컨트롤 (네비게이션) */
 .floating-controls {
     position: fixed;
-    bottom: 40px;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    width: 100%;
+    max-width: 1400px;
+    transform: translate(-50%, -50%);
+    display: block;
+    height: 0;
     z-index: 1001;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    padding: 10px 20px;
-    border-radius: 40px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+    box-sizing: border-box;
 }
 
 .floating-controls button {
-    font-size: 22px;
-    width: 50px;
-    height: 50px;
+    position: absolute;
+    top: 50%;
+    font-size: 18px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    border: 1.5px solid #e0e0e0;
-    background: white;
-    color: #1a73e8;
+    border: none;
+    background: rgba(0, 122, 255, 0.6);
+    backdrop-filter: blur(4px);
+    color: #ffffff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    pointer-events: auto;
+}
+
+#prev-btn {
+    left: 33.33%;
+    transform: translate(-50%, -50%);
+}
+
+#next-btn {
+    left: 66.66%;
+    transform: translate(-50%, -50%);
 }
 
 .floating-controls button:hover {
-    transform: scale(1.15) translateY(-5px);
-    background-color: #f8f9fa;
-    color: #1a73e8;
-    border-color: #1a73e8;
-    box-shadow: 0 6px 16px rgba(26, 115, 232, 0.2);
+    transform: translate(-50%, -50%) scale(1.15);
+    background-color: rgba(0, 122, 255, 0.9);
+    color: #ffffff;
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
 }
 
 .floating-controls button:active {
-    transform: scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
 }
 
-/* 홈 버튼 좌상단 고정 스타일 */
+@media (min-width: 600px) {
+    #prev-btn {
+        left: 20px;
+    }
+
+    #next-btn {
+        left: auto;
+        right: 20px;
+    }
+}
+
+/* 홈 버튼 & 헤더 액션 버튼 (타이틀 로우 내부 배치) */
 #home-btn {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1100;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -302,8 +331,9 @@ body {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    flex-shrink: 0;
 }
 
 #home-btn:hover {
@@ -312,6 +342,30 @@ body {
     border-color: #1a73e8;
     transform: scale(1.1);
     box-shadow: 0 5px 15px rgba(26, 115, 232, 0.15);
+}
+
+.header-action-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    color: #ff9800;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.header-action-btn:hover {
+    background-color: #fff3e0;
+    border-color: #ff9800;
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(255, 152, 0, 0.2);
 }
 
 /* 안내 툴팁 모달/팝업 스타일 */

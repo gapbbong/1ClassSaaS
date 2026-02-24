@@ -11,8 +11,12 @@
 
 <body>
   <div class="title-row">
-    <h2 id="class-title">반 정보</h2>
-    <div id="teacher-info" class="teacher-info"></div>
+    <button id="home-btn" title="메인으로">🏠</button>
+    <div class="title-center">
+      <h2 id="class-title">반 정보</h2>
+      <div id="teacher-info" class="teacher-info"></div>
+    </div>
+    <button id="survey-viewer-btn" title="기초조사 모아보기" class="header-action-btn">📋</button>
   </div>
 
   <div id="student-list" class="student-grid loading">📷</div>
@@ -20,13 +24,9 @@
   <div id="overlay" onclick="closePopup()"></div>
   <div id="popup"></div>
 
-  <button id="home-btn" title="메인으로">🏠</button>
-
   <div class="floating-controls">
-    <button id="prev-btn" title="이전 반">◀</button>
-    <button id="survey-viewer-btn" title="기초조사 모아보기"
-      style="color: #ff9800; border-color: rgba(255, 152, 0, 0.4);">📋</button>
-    <button id="next-btn" title="다음 반">▶</button>
+    <button id="prev-btn" title="이전 반">❮</button>
+    <button id="next-btn" title="다음 반">❯</button>
   </div>
 
   <script type="module" src="src/js/student.js"></script>

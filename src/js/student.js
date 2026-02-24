@@ -179,9 +179,37 @@ function setupEventListeners(classInfo) {
     const surveyBtn = document.getElementById("survey-viewer-btn");
     const nextBtn = document.getElementById("next-btn");
 
-    if (prevBtn) prevBtn.addEventListener("click", () => goToRelativeClass(-1));
-    if (homeBtn) homeBtn.addEventListener("click", goHome);
-    if (nextBtn) nextBtn.addEventListener("click", () => goToRelativeClass(1));
+    const handleNavClick = (e, direction) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        goToRelativeClass(direction);
+    };
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => handleNavClick(e, -1));
+        prevBtn.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: false });
+        prevBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNavClick(null, -1);
+        }, { passive: false });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => handleNavClick(e, 1));
+        nextBtn.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: false });
+        nextBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNavClick(null, 1);
+        }, { passive: false });
+    }
+
+    if (homeBtn) {
+        homeBtn.addEventListener("click", goHome);
+    }
 
     // [수정] 본인 담임반일 때만 기초조사 모아보기 버튼 노출
     if (surveyBtn) {
