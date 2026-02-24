@@ -185,6 +185,7 @@ body {
 .name-badge {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     /* 번호와 이름 사이 간격 유지 */
     min-width: 0;
@@ -211,10 +212,8 @@ body {
     font-size: clamp(12px, 3.5vw, 20px);
     font-weight: 700;
     min-width: 0;
-    flex: 1;
     word-break: keep-all;
     /* 이름이 통째로 묶여 다니도록 유지 */
-    text-align: left;
     white-space: nowrap;
     /* 여전히 한 줄로 유지하지만, overflow: hidden을 제거해 다 보이게 함 */
 }
