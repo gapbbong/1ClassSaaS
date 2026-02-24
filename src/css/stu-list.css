@@ -186,7 +186,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    overflow: hidden;
+    /* 번호와 이름 사이 간격 유지 */
     min-width: 0;
     width: 100%;
 }
@@ -202,18 +202,21 @@ body {
     min-width: 32px;
     text-align: center;
     border: 1px solid #e1efff;
+    flex-shrink: 0;
+    /* 번호창은 절대 작아지지 않게 고정 */
 }
 
 .student-nm {
     color: #333;
-    font-size: 1.25em;
-    /* 10% 증가 */
+    font-size: clamp(12px, 3.5vw, 20px);
     font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     min-width: 0;
     flex: 1;
+    word-break: keep-all;
+    /* 이름이 통째로 묶여 다니도록 유지 */
+    text-align: left;
+    white-space: nowrap;
+    /* 여전히 한 줄로 유지하지만, overflow: hidden을 제거해 다 보이게 함 */
 }
 
 @keyframes pressAnimation {
