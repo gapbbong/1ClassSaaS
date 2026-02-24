@@ -355,9 +355,11 @@ function loadStudents() {
                 // 롱 프레스 및 클릭 로직 구현
                 let pressTimer;
                 let isLongPress = false;
+                let isScrolling = false;
 
                 const startPress = (e) => {
                     isLongPress = false;
+                    isScrolling = false;
                     container.classList.add("pressing");
                     pressTimer = setTimeout(() => {
                         isLongPress = true;
@@ -369,20 +371,24 @@ function loadStudents() {
                     }, 600); // 600ms 동안 누르면 롱 프레스
                 };
 
-                const cancelPress = () => {
+                const cancelPress = (e) => {
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
                     container.classList.remove("long-pressed");
+                    if (e && (e.type === "touchmove" || e.type === "mouseleave")) {
+                        isScrolling = true;
+                    }
                 };
 
                 const handleRelease = (e) => {
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
-                    if (!isLongPress) {
+                    if (!isLongPress && !isScrolling) {
                         // 짧게 클릭한 경우에만 팝업 표시
                         showPopup(student);
                     }
                     isLongPress = false;
+                    isScrolling = false;
                 };
 
                 // 마우스 이벤트
