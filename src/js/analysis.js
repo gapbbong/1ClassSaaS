@@ -3,11 +3,83 @@ import { supabase } from './supabase.js';
 
 let currentStudent = null;
 let currentInsight = null;
+let currentMode = 'individual'; // 'individual' or 'class'
+let currentClassInfo = null;
 
 document.addEventListener("DOMContentLoaded", () => {
+    initModeToggle();
     initSearch();
+    initClassSelect();
     initLensSelector();
 });
+
+// 0. 모드 전환
+function initModeToggle() {
+    const radios = document.querySelectorAll('input[name="analysis-mode"]');
+    const indContainer = document.getElementById("individual-search-container");
+    const clsContainer = document.getElementById("class-select-container");
+    const welcomeText = document.querySelector("#welcome-view h2");
+
+    radios.forEach(r => {
+        r.addEventListener("change", (e) => {
+            currentMode = e.target.value;
+            if (currentMode === 'individual') {
+                indContainer.style.display = "block";
+                clsContainer.style.display = "none";
+                welcomeText.innerText = "학생을 선택하여 분석을 시작하세요";
+            } else {
+                indContainer.style.display = "none";
+                clsContainer.style.display = "flex";
+                welcomeText.innerText = "분석할 학급을 선택하여 분석을 시작하세요";
+            }
+            // 뷰 초기화
+            document.getElementById("welcome-view").style.display = "block";
+            document.getElementById("result-view").style.display = "none";
+            currentInsight = null;
+        });
+    });
+}
+
+// 0-1. 학급 목록 로드 및 선택
+async function initClassSelect() {
+    const dropdown = document.getElementById("class-dropdown");
+    const analyzeBtn = document.getElementById("class-analyze-btn");
+
+    try {
+        // 학급 목록 추출 (고유 담당 학급)
+        const { data, error } = await supabase
+            .from('students')
+            .select('class_info')
+            .neq('class_info', null);
+
+        if (!error && data) {
+            const uniqueClasses = [...new Set(data.map(item => item.class_info))].sort();
+            uniqueClasses.forEach(cls => {
+                const opt = document.createElement("option");
+                opt.value = cls;
+                opt.textContent = cls + " 학급";
+                dropdown.appendChild(opt);
+            });
+        }
+
+        dropdown.addEventListener("change", (e) => {
+            if (e.target.value) {
+                analyzeBtn.disabled = false;
+            } else {
+                analyzeBtn.disabled = true;
+            }
+        });
+
+        analyzeBtn.addEventListener("click", () => {
+            if (dropdown.value) {
+                loadClassAnalysis(dropdown.value);
+            }
+        });
+    } catch (e) {
+        console.error("클래스 목록 로드 오류", e);
+    }
+}
+
 
 // 1. 학생 검색 기능
 function initSearch() {
@@ -88,9 +160,8 @@ async function loadStudentAnalysis(pid) {
     }
 }
 
-// 3. AI 분석 트리거 (Gemini API 연동)
+// 3. AI 개별 분석 트리거
 async function triggerAIAnalysis(pid) {
-    // 1) API 키 확인 (환경 변수 또는 로컬 스토리지)
     let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
     if (!apiKey) {
         apiKey = prompt("제미나이(Gemini) API 키를 입력해주세요. (한 번 입력하면 기기에 저장됩니다)");
@@ -104,16 +175,25 @@ async function triggerAIAnalysis(pid) {
     }
 
     try {
-        // 2) 분석용 데이터 수집 (설문 + 생활기록)
         const [surveyRes, recordsRes] = await Promise.all([
             supabase.from('surveys').select('data').eq('student_pid', pid).order('submitted_at', { ascending: false }).limit(1),
             supabase.from('life_records').select('category, content, is_positive, created_at').eq('student_pid', pid).order('created_at', { ascending: false }).limit(10)
         ]);
 
         const surveyData = surveyRes.data?.[0]?.data || {};
-        const recordsData = recordsRes.data || [];
 
-        // 3) 제미나이 프롬프트 작성 (Omni-Perspective JSON Output)
+        // 데이터 필터링 (무의미한 짧은 기록 제외, 9글자 이하 등)
+        const rawRecords = recordsRes.data || [];
+        const recordsData = rawRecords.filter(r => r.content && r.content.trim().length > 9);
+
+        // 설문 역시 연락처 등은 삭제
+        const excludeSurveyKeys = ['비밀번호', '주소', '집주소', '연락처', '학생폰', '주보호자 연락처', '보조보호자 연락처', 'MBTI']; // 개별 분석 시에는 굳이 삭제 안해도 되나, 토큰 절약
+        Object.keys(surveyData).forEach(k => {
+            if (excludeSurveyKeys.includes(k) || (surveyData[k] && String(surveyData[k]).trim().length < 2)) {
+                delete surveyData[k];
+            }
+        });
+
         const promptText = `
 너는 고등학교 베테랑 교사이자, 수사관, 심리 분석가야.
 다음 학생의 기본 정보, 기초조사 설문 응답, 주요 지점 기록을 분석해서 아래 JSON 형식에 완벽하게 맞춰서 '통합 인사이트'를 도출해 줘. 
@@ -166,7 +246,6 @@ async function triggerAIAnalysis(pid) {
         }
 
         const rawText = result.candidates[0].content.parts[0].text;
-
         let insightData;
         try {
             insightData = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
@@ -175,7 +254,6 @@ async function triggerAIAnalysis(pid) {
             throw new Error("AI 응답 형식이 올바르지 않습니다.");
         }
 
-        // 5) DB에 캐싱 저장
         await supabase.from('student_insights').insert([
             { student_pid: pid, insight_type: 'omni', content: insightData }
         ]);
@@ -185,6 +263,133 @@ async function triggerAIAnalysis(pid) {
 
     } catch (err) {
         alert("분석 중 오류가 발생했습니다: " + err.message);
+        document.getElementById("loading-view").style.display = "none";
+        document.getElementById("welcome-view").style.display = "block";
+    }
+}
+
+// 3-1. AI 학급 전체 분석 로드 및 트리거
+async function loadClassAnalysis(classInfo) {
+    document.getElementById("welcome-view").style.display = "none";
+    document.getElementById("loading-view").style.display = "block";
+    document.getElementById("result-view").style.display = "none";
+
+    currentStudent = null; // 학급 모드이므로 개별 학생 초기화
+    currentClassInfo = classInfo;
+
+    // 캐시 확인 로직 생략(학급은 항상 갱신되거나 다른 테이블 사용, 일단 호출)
+    await triggerClassAIAnalysis(classInfo);
+}
+
+async function triggerClassAIAnalysis(classInfo) {
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+        apiKey = prompt("제미나이(Gemini) API 키를 입력해주세요.");
+        if (!apiKey) {
+            alert("API 키가 없어 분석을 진행할 수 없습니다.");
+            document.getElementById("loading-view").style.display = "none";
+            document.getElementById("welcome-view").style.display = "block";
+            return;
+        }
+        localStorage.setItem('gemini_api_key', apiKey);
+    }
+
+    try {
+        // 1. 해당 학급 학생 모두 찾기
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid, name, student_id')
+            .eq('class_info', classInfo);
+
+        if (sError || !students.length) throw new Error("학급 학생 정보를 불러오지 못했습니다.");
+        const pids = students.map(s => s.pid);
+
+        // 2. 학생들의 최근 설문 및 생활기록 가져오기
+        const [surveyRes, recordsRes] = await Promise.all([
+            supabase.from('surveys').select('student_pid, data').in('student_pid', pids),
+            supabase.from('life_records').select('student_pid, category, content, is_positive').in('student_pid', pids).order('created_at', { ascending: false })
+        ]);
+
+        // 3. 데이터 압축 매핑 (토큰 제한 방지)
+        const classData = students.map(st => {
+            const myRecords = (recordsRes.data || []).filter(r => r.student_pid === st.pid);
+            // 9글자 이하 쓰레기 기록 제외 필터링
+            const validRecords = myRecords.filter(r => r.content.trim().length > 9);
+
+            const mySurveysList = (surveyRes.data || []).filter(s => s.student_pid === st.pid);
+            let mySurvey = mySurveysList.length ? mySurveysList[mySurveysList.length - 1].data : {};
+
+            // 설문 압축
+            const excludeSurveyKeys = ['비밀번호', '주소', '집주소', '연락처', '학생폰', '주보호자 연락처', '보조보호자 연락처', 'MBTI', '이름', '학번', '번호'];
+            Object.keys(mySurvey).forEach(k => {
+                if (excludeSurveyKeys.includes(k) || (mySurvey[k] && String(mySurvey[k]).trim().length < 2)) {
+                    delete mySurvey[k];
+                }
+            });
+
+            return {
+                name: st.name,
+                id: st.student_id,
+                survey: mySurvey,
+                records: validRecords.map(r => `[${r.is_positive ? '긍정' : '부정'}] ${r.content}`)
+            };
+        });
+
+        // 4. 프롬프트 생성
+        const promptText = `
+너는 베테랑 학급 담임교사이자, 학급 조직 분석가야.
+우리 반 전체 학생들의 기록과 설문 응답을 기반으로, 현재 우리 반의 종합적인 생태계와 분위기를 분석해 줘.
+
+[분석할 학급 데이터]
+학급명: ${classInfo}
+전체 데이터: ${JSON.stringify(classData)}
+
+[JSON 응답 포맷] (반드시 순수 JSON 텍스트만 출력해. 코드블록 태그 쓰지 마)
+{
+  "summary": "우리 반의 현재 전반적인 분위기와 특징을 3~4줄로 생생체로 요약 (예: 활기차지만 집중력이 필요한 반)",
+  "tags": ["태그1", "태그2", "태그3"],
+  "rpg": {
+    "class": "우리 반을 하나의 RPG 길드/파티로 비유하자면? (예: 돌격형 전사 파티, 마법사 연구회 등)",
+    "item": "우리 반의 무기 (장점)",
+    "stats": {"STR": 10, "INT": 10, "CHA": 10}
+  },
+  "detective": {
+    "clues": ["반에서 포착된 특이 패턴 1", "특이 패턴 2"],
+    "deduction": "주목해야 할(관찰이 필요한) 학생 유형이나 갈등/성장 요소 추론 (이름 노출 자제, 성향으로 언급)"
+  },
+  "garden": {
+    "species": "전체 학급을 정원으로 비유한다면? (예: 활기찬 해바라기 밭)",
+    "condition": "현재 필요한 영양분이나 환경 (예: 차분한 분위기 조성이 필요함)"
+  },
+  "action": "담임교사에게 추천하는 이번 달 학급 경영 / 액션 플랜 1줄 요약"
+}`;
+
+        // 5. Gemini 호출
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: promptText }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+
+        const result = await response.json();
+        if (result.error) throw new Error(result.error.message || "API 호출 실패");
+
+        const rawText = result.candidates[0].content.parts[0].text;
+        let insightData;
+        try {
+            insightData = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+        } catch (e) {
+            throw new Error("AI 응답 형식이 올바르지 않습니다.");
+        }
+
+        currentInsight = insightData;
+        renderAnalysis();
+
+    } catch (err) {
+        alert("학급 분석 중 오류가 발생했습니다: " + err.message);
         document.getElementById("loading-view").style.display = "none";
         document.getElementById("welcome-view").style.display = "block";
     }
@@ -205,8 +410,14 @@ function renderAnalysis() {
 
     document.getElementById("loading-view").style.display = "none";
     document.getElementById("result-view").style.display = "block";
-    document.getElementById("view-student-name").innerText = currentStudent.name;
-    document.getElementById("view-student-info").innerText = `${currentStudent.class_info} ${currentStudent.student_id ? currentStudent.student_id : ''}`;
+
+    if (currentMode === 'individual' && currentStudent) {
+        document.getElementById("view-student-name").innerText = currentStudent.name;
+        document.getElementById("view-student-info").innerText = `${currentStudent.class_info} ${currentStudent.student_id ? currentStudent.student_id : ''}`;
+    } else if (currentMode === 'class' && currentClassInfo) {
+        document.getElementById("view-student-name").innerText = `${currentClassInfo} 학급 전체`;
+        document.getElementById("view-student-info").innerText = `AI 통합 분석 브리핑`;
+    }
 
     let html = "";
     switch (lensType) {

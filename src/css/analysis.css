@@ -44,7 +44,64 @@ body {
     cursor: pointer;
 }
 
-/* Search Bar */
+/* Search Bar & Mode Toggle */
+.analysis-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.mode-radio {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.mode-radio input {
+    display: none;
+}
+
+.mode-radio span {
+    padding: 10px 20px;
+    border-radius: 20px;
+    background: white;
+    box-shadow: var(--ai-shadow);
+    color: #666;
+    font-weight: bold;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.mode-radio input:checked+span {
+    background: var(--ai-primary);
+    color: white;
+    border-color: var(--ai-primary);
+}
+
+.analyze-btn {
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--ai-primary), var(--ai-accent));
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--ai-shadow);
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.analyze-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #ccc;
+}
+
+.analyze-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+}
+
 .search-container {
     position: relative;
     margin-bottom: 30px;

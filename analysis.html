@@ -26,9 +26,27 @@
         </div>
     </div>
 
-    <div class="search-container">
+    <div class="analysis-mode-toggle">
+        <label class="mode-radio">
+            <input type="radio" name="analysis-mode" value="individual" checked>
+            <span>👨‍🎓 개별 학생</span>
+        </label>
+        <label class="mode-radio">
+            <input type="radio" name="analysis-mode" value="class">
+            <span>🏫 학급 전체</span>
+        </label>
+    </div>
+
+    <div id="individual-search-container" class="search-container">
         <input type="text" id="student-search" placeholder="학생 이름 또는 학번 검색..." class="search-input">
         <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
+    </div>
+
+    <div id="class-select-container" class="search-container" style="display: none; display: flex; gap: 10px;">
+        <select id="class-dropdown" class="search-input" style="flex: 1;">
+            <option value="">분석할 학급을 선택하세요</option>
+        </select>
+        <button id="class-analyze-btn" class="analyze-btn" disabled>분석 시작</button>
     </div>
 
     <main id="analysis-content" class="analysis-main">
