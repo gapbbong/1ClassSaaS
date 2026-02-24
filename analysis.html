@@ -5,82 +5,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Omni-Perspective | AI 학생 분석</title>
-    <link rel="stylesheet" href="src/css/main.css">
     <link rel="stylesheet" href="src/css/analysis.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
-    <div class="title-bar">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <button class="back-btn" onclick="location.href='index.html'">◀</button>
-            <h1 class="school-name">AI 학생 분석</h1>
-        </div>
-        <div class="lens-selector-container">
-            <select id="lens-selector" class="lens-select">
-                <option value="summary">⭐ 종합 요약</option>
-                <option value="stats">📊 육각형/사분면</option>
-                <option value="rpg">🎮 RPG 캐릭터</option>
-                <option value="detective">🕵️ 탐정 추론</option>
-                <option value="garden">🌿 성장 정원</option>
-            </select>
-        </div>
-    </div>
+    <div class="analysis-dashboard">
+        <!-- 상단 헤더 영역 -->
+        <header class="dashboard-header">
+            <button class="back-btn" onclick="location.href='index.html'" aria-label="뒤로가기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <h1 class="dashboard-title">AI 인사이트 다이나믹스</h1>
+            <div style="width: 24px;"></div> <!-- 균형을 위한 빈 공간 -->
+        </header>
 
-    <div class="analysis-mode-toggle">
-        <label class="mode-radio">
-            <input type="radio" name="analysis-mode" value="individual" checked>
-            <span>👨‍🎓 개별 학생</span>
-        </label>
-        <label class="mode-radio">
-            <input type="radio" name="analysis-mode" value="class">
-            <span>🏫 학급 전체</span>
-        </label>
-    </div>
+        <!-- 통합 컨트롤 패널 -->
+        <section class="control-panel">
+            <!-- 1. 대상 모드 선택 -->
+            <div class="analysis-mode-toggle">
+                <label class="mode-radio">
+                    <input type="radio" name="analysis-mode" value="individual" checked>
+                    <span>👨‍🎓 개별 학생</span>
+                </label>
+                <label class="mode-radio">
+                    <input type="radio" name="analysis-mode" value="class">
+                    <span>🏫 학급 전체</span>
+                </label>
+            </div>
 
-    <div id="individual-search-container" class="search-container">
-        <input type="text" id="student-search" placeholder="학생 이름 또는 학번 검색..." class="search-input">
-        <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
-    </div>
-
-    <div id="class-select-container" class="search-container" style="display: none; display: flex; gap: 10px;">
-        <select id="class-dropdown" class="search-input" style="flex: 1;">
-            <option value="">분석할 학급을 선택하세요</option>
-        </select>
-        <button id="class-analyze-btn" class="analyze-btn" disabled>분석 시작</button>
-    </div>
-
-    <main id="analysis-content" class="analysis-main">
-        <!-- 초기 안내 화면 -->
-        <div id="welcome-view" class="empty-state">
-            <div class="empty-icon">🧠</div>
-            <h2>학생을 선택하여 분석을 시작하세요</h2>
-            <p>다양한 AI 렌즈를 통해 학생의 숨겨진 잠재력을 발견할 수 있습니다.</p>
-        </div>
-
-        <!-- 분석 로딩 화면 -->
-        <div id="loading-view" class="loading-container" style="display: none;">
-            <div class="ai-spinner"></div>
-            <p>제미나이가 다각도로 분석 중입니다...</p>
-        </div>
-
-        <!-- 실제 분석 결과가 들어갈 영역 -->
-        <div id="result-view" class="result-container" style="display: none;">
-            <!-- 상단 학생 프로필 요약 -->
-            <section class="student-header-card">
-                <div id="student-photo-mini" class="student-photo-mini"></div>
-                <div class="student-meta">
-                    <h2 id="view-student-name">김경성</h2>
-                    <p id="view-student-info">1학년 1반 1번</p>
+            <!-- 2. 구체적 대상 검색/선택 -->
+            <div class="target-selection-area">
+                <div id="individual-search-container" class="search-container">
+                    <div class="input-with-icon">
+                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="student-search" placeholder="학생 이름 또는 학번 검색..." class="search-input">
+                    </div>
+                    <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
                 </div>
-                <div class="ai-badge">AI INSIGHT</div>
-            </section>
 
-            <!-- 렌즈별 결과 영역 (JS에서 전환함) -->
-            <div id="lens-content" class="lens-content-area"></div>
-        </div>
-    </main>
+                <div id="class-select-container" class="search-container" style="display: none;">
+                    <select id="class-dropdown" class="styled-select">
+                        <option value="">분석할 학급을 선택하세요</option>
+                    </select>
+                    <button id="class-analyze-btn" class="action-btn" disabled>분석 시작</button>
+                </div>
+            </div>
 
-    <script type="module" src="src/js/analysis.js"></script>
+            <!-- 3. 분석 렌즈 선택 -->
+            <div class="lens-selection-area">
+                <select id="lens-selector" class="styled-select lens-select">
+                    <option value="summary">⭐ 종합 요약</option>
+                    <option value="stats">📊 육각형/사분면</option>
+                    <option value="rpg">🎮 RPG 캐릭터</option>
+                    <option value="detective">🕵️ 탐정 추론</option>
+                    <option value="garden">🌿 성장 정원</option>
+                </select>
+            </div>
+        </section>
+
+        <main id="analysis-content" class="analysis-main">
+            <!-- 초기 안내 화면 -->
+            <div id="welcome-view" class="empty-state">
+                <div class="empty-icon">🧠</div>
+                <h2>학생을 선택하여 분석을 시작하세요</h2>
+                <p>다양한 AI 렌즈를 통해 학생의 숨겨진 잠재력을 발견할 수 있습니다.</p>
+            </div>
+
+            <!-- 분석 로딩 화면 -->
+            <div id="loading-view" class="loading-container" style="display: none;">
+                <div class="ai-spinner"></div>
+                <p>제미나이가 다각도로 분석 중입니다...</p>
+            </div>
+
+            <!-- 실제 분석 결과가 들어갈 영역 -->
+            <div id="result-view" class="result-container" style="display: none;">
+                <!-- 상단 학생 프로필 요약 -->
+                <section class="student-header-card">
+                    <div id="student-photo-mini" class="student-photo-mini"></div>
+                    <div class="student-meta">
+                        <h2 id="view-student-name">김경성</h2>
+                        <p id="view-student-info">1학년 1반 1번</p>
+                    </div>
+                    <div class="ai-badge">AI INSIGHT</div>
+                </section>
+
+                <!-- 렌즈별 결과 영역 (JS에서 전환함) -->
+                <div id="lens-content" class="lens-content-area"></div>
+            </div>
+        </main>
+
+        <script type="module" src="src/js/analysis.js"></script>
 </body>
 
 </html>

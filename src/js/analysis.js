@@ -5,6 +5,7 @@ let currentStudent = null;
 let currentInsight = null;
 let currentMode = 'individual'; // 'individual' or 'class'
 let currentClassInfo = null;
+let analysisChart = null; // 차트 인스턴스 관리용
 
 document.addEventListener("DOMContentLoaded", () => {
     initModeToggle();
@@ -428,31 +429,118 @@ function renderAnalysis() {
                     <p style="font-size:1.1rem; line-height:1.6; background:#f8f9fa; padding:15px; border-radius:12px;">${currentInsight.summary}</p>
                     <div style="margin-top:20px;">
                         <strong>핵심 태그:</strong> 
-                        <span class="badge">#학구파</span> <span class="badge">#전략가</span>
+                        ${(currentInsight.tags || []).map(t => `<span class="badge">#${t}</span>`).join(' ')}
                     </div>
                 </div>`;
             break;
         case 'stats':
-            html = `<div class="fade-in"><h3>📊 수치 분석 (준비 중)</h3><p>육각형 차트는 Chart.js 연동 후 공개됩니다.</p></div>`;
+            html = `
+                <div class="fade-in">
+                    <h3 style="color:#4A90E2">📊 다면 수치 분석</h3>
+                    <div style="position: relative; height:300px; width:100%; display:flex; justify-content:center; align-items:center;">
+                        <canvas id="aiStatsChart"></canvas>
+                    </div>
+                </div>`;
             break;
         case 'rpg':
             html = `
                 <div class="fade-in rpg-view">
                     <h3 style="color:#6C5CE7">🎮 RPG 캐릭터 시트</h3>
                     <div style="background:#2D3436; color:#00FF00; padding:20px; border-radius:12px; font-family:'Courier New'">
-                        [CLASS]: ${currentInsight.rpg.class}<br>
-                        [SKILL]: ${currentInsight.rpg.item}<br>
-                        [INT]: ${currentInsight.rpg.stats.INT} (Top Tier)
+                        [CLASS]: ${currentInsight.rpg?.class || '정보 없음'}<br>
+                        [SKILL]: ${currentInsight.rpg?.item || '정보 없음'}<br>
+                        [INT]: ${currentInsight.rpg?.stats?.INT || '?'} / [STR]: ${currentInsight.rpg?.stats?.STR || '?'} / [CHA]: ${currentInsight.rpg?.stats?.CHA || '?'}
                     </div>
                 </div>`;
             break;
         case 'detective':
-            html = `<div class="fade-in"><h3>🕵️ 탐정의 추론</h3><p>${currentInsight.detective.deduction}</p></div>`;
+            html = `
+                <div class="fade-in">
+                    <h3 style="color:#D35400">🕵️ 탐정의 추론</h3>
+                    <div style="background:#fdf6e3; padding:15px; border-radius:12px; border-left:4px solid #D35400;">
+                        <p style="font-weight:bold; margin-bottom:10px;">발견된 단서 (Clues)</p>
+                        <ul style="margin-left: 20px; color:#555;">
+                            ${(currentInsight.detective?.clues || []).map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                        <p style="margin-top:15px; font-weight:bold; border-top:1px dashed #ccc; padding-top:10px;">추론 결과</p>
+                        <p>${currentInsight.detective?.deduction || '단서 부족'}</p>
+                    </div>
+                </div>`;
             break;
         case 'garden':
-            html = `<div class="fade-in"><h3>🌿 식물 성장 정원</h3><p>유형: ${currentInsight.garden.species}</p></div>`;
+            html = `
+                <div class="fade-in">
+                    <h3 style="color:#27AE60">🌿 생태계 정원</h3>
+                    <div style="background:#eafaf1; padding:15px; border-radius:12px; border-left:4px solid #27AE60;">
+                        <p><strong>비유:</strong> <span style="font-size:1.1rem; color:#1e8449;">${currentInsight.garden?.species || '알 수 없음'}</span></p>
+                        <p style="margin-top:10px;"><strong>현재 상태/필요 요소:</strong><br>${currentInsight.garden?.condition || '파악 불가'}</p>
+                    </div>
+                </div>`;
             break;
     }
 
     contentArea.innerHTML = html;
+
+    // 차트 렌더링 로직
+    if (lensType === 'stats') {
+        const ctx = document.getElementById('aiStatsChart')?.getContext('2d');
+        if (ctx) {
+            if (analysisChart) {
+                analysisChart.destroy();
+            }
+
+            const statsData = currentInsight.stats || {};
+            const labels = ['학업(Study)', '루틴(Routine)', '정서(Emotion)', '사회성(Social)', '자아성찰(Self)', '회복탄력성(Resilience)'];
+            const data = [
+                statsData.study || 0,
+                statsData.routine || 0,
+                statsData.emotion || 0,
+                statsData.social || 0,
+                statsData.self || 0,
+                statsData.resilience || 0
+            ];
+
+            analysisChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'AI 다면 평가 수치',
+                        data: data,
+                        backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                        borderColor: 'rgba(74, 144, 226, 1)',
+                        pointBackgroundColor: 'rgba(108, 92, 231, 1)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgba(108, 92, 231, 1)',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: {
+                                font: { family: 'Pretendard', size: 12, weight: 'bold' },
+                                color: '#2d3436'
+                            },
+                            ticks: {
+                                suggestedMin: 0,
+                                suggestedMax: 100,
+                                stepSize: 20,
+                                backdropColor: 'transparent',
+                                display: false // 수치 숫자 표출 숨김(디자인상 깔끔하게)
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    }
 }
