@@ -143,14 +143,24 @@ h4 {
 }
 
 /* 통계 테이블 (공통) */
+#summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
 #summaryTable,
 .summary-table {
-    width: 100%;
-    /* 너비 통일 (반응형 대응) */
-    max-width: 500px;
-    margin: 20px auto;
+    width: auto;
+    /* 너비 자동 (콘텐츠에 맞춤) */
+    min-width: 320px;
+    max-width: 95%;
+    /* 너무 넓어지지 않게 */
+    margin: 20px auto 40px;
     border-collapse: collapse;
-    font-size: 14px;
+    font-size: 21px;
+    /* 14px * 1.5 = 21px */
 }
 
 #summaryTable th,
@@ -158,10 +168,11 @@ h4 {
 .summary-table th,
 .summary-table td {
     border: 1px solid #ccc;
-    padding: 6px 8px;
+    padding: 10px 12px;
+    /* 폰트 크기에 맞춰 패딩 조정 */
     text-align: center;
     white-space: nowrap;
-    font-size: clamp(14px, 1vw, 15px);
+    font-size: 21px;
 }
 
 .summary-table th {
@@ -251,19 +262,24 @@ h4 {
     /* 테이블 모바일 최적화 */
     #summaryTable,
     .summary-table {
-        font-size: 12px;
-        display: block;
-        /* 스크롤 활성화를 위해 필요할 수 있음 */
-        overflow-x: auto;
+        font-size: 18px;
+        /* 모바일에서는 살짝 조절하되 여전히 크게 */
+        margin: 15px auto 30px;
         white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
+    }
+
+    #summary {
+        overflow-x: auto;
+        /* 컨테이너에서 스크롤 처리 */
+        width: 100%;
+        padding-bottom: 20px;
     }
 
     #summaryTable th,
     #summaryTable td,
     .summary-table th,
     .summary-table td {
-        padding: 4px 6px;
-        font-size: 12px;
+        padding: 8px 10px;
+        font-size: 18px;
     }
 }

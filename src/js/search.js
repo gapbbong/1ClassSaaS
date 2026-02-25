@@ -72,8 +72,15 @@ function loadSummaryTable(data) {
     const summary = {};
 
     data.forEach(s => {
-        const grade = parseInt(s["학년"]);
+        let grade = parseInt(s["학년"]);
         const cls = parseInt(s["반"]);
+
+        // [수정] 학년이 2025 등 연도로 표시된 경우 학번의 첫 자리를 학년으로 사용
+        if (grade > 10 && s["학번"]) {
+            const sNum = String(s["학번"]);
+            grade = parseInt(sNum[0]) || grade;
+        }
+
         const gender = s["성별"];
         const status = String(s["학적"] || "").trim();
 
@@ -156,8 +163,15 @@ function loadSummaryTable(data) {
     // 반별 인원 요약표 추가
     const classSummary = {};
     data.forEach(s => {
-        const grade = s["학년"];
-        const cls = s["반"];
+        let grade = parseInt(s["학년"]);
+        const cls = parseInt(s["반"]);
+
+        // [수정] 학년이 연도로 표시된 경우 학번 첫 자리 추출
+        if (grade > 10 && s["학번"]) {
+            const sNum = String(s["학번"]);
+            grade = parseInt(sNum[0]) || grade;
+        }
+
         const status = String(s["학적"] || "").trim();
         if (status.includes("자퇴") || status.includes("전출")) return;
 
