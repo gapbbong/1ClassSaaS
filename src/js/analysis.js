@@ -742,24 +742,50 @@ function renderCounselingPriority(priority) {
         return;
     }
 
-    const levels = {
-        '시급': { color: '#e11d48', bg: '#fff1f2', border: '#fda4af', icon: '🔴' },
-        '주의': { color: '#ea580c', bg: '#fff7ed', border: '#fdba74', icon: '🟠' },
-        '관심': { color: '#ca8a04', bg: '#fefce8', border: '#fef08a', icon: '🟡' },
-        '안정': { color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', icon: '🟢' }
+    const levels = [
+        { id: '시급', color: '#e11d48', icon: '🔴' },
+        { id: '주의', color: '#ea580c', icon: '🟠' },
+        { id: '관심', color: '#ca8a04', icon: '🟡' },
+        { id: '안정', color: '#16a34a', icon: '🟢' }
+    ];
+
+    const currentLevel = priority.level;
+    const bgInfo = {
+        '시급': { bg: '#fff1f2', border: '#fda4af' },
+        '주의': { bg: '#fff7ed', border: '#fdba74' },
+        '관심': { bg: '#fefce8', border: '#fef08a' },
+        '안정': { bg: '#f0fdf4', border: '#bbf7d0' }
     };
+    const highlight = bgInfo[currentLevel] || bgInfo['안정'];
 
-    const cfg = levels[priority.level] || levels['안정'];
+    let html = `
+        <div style="background:${highlight.bg}; border:2px solid ${highlight.border}; border-radius:16px; padding:18px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
+                <div style="font-weight:800; color:#1e293b; font-size:1rem;">상담 시급도</div>
+                <div style="display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.5); padding:4px 12px; border-radius:20px; border:1px solid rgba(0,0,0,0.03);">
+    `;
 
-    el.innerHTML = `
-        <div style="background:${cfg.bg}; border:2px solid ${cfg.border}; border-radius:16px; padding:20px; display:flex; align-items:center; gap:15px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
-            <div style="font-size:2.5rem;">${cfg.icon}</div>
-            <div>
-                <div style="font-size:1.1rem; color:${cfg.color}; font-weight:800; margin-bottom:4px;">상담 시급도: ${priority.level}</div>
-                <div style="color:#475569; font-size:0.95rem; line-height:1.5;">${priority.reason}</div>
+    levels.forEach((lvl, index) => {
+        const isActive = lvl.id === currentLevel;
+        html += `
+            <span style="font-size:0.95rem; display:flex; align-items:center; gap:4px; ${isActive ? `color:${lvl.color}; font-weight:900;` : 'color:#94a3b8; font-weight:400;'}">
+                ${isActive ? lvl.icon : ''} ${lvl.id}
+            </span>
+            ${index < levels.length - 1 ? '<span style="color:#cbd5e1; margin:0 2px; font-weight:100;">/</span>' : ''}
+        `;
+    });
+
+    html += `
+                </div>
+            </div>
+            <div style="color:#475569; font-size:0.95rem; line-height:1.5;">
+                <span style="display:inline-block; background:${highlight.border}; color:#fff; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; margin-right:6px; vertical-align:middle;">AI 소견</span>
+                <span style="vertical-align:middle;">${priority.reason}</span>
             </div>
         </div>
     `;
+
+    el.innerHTML = html;
 }
 
 // 전인적 프로파일 및 모둠 역할 렌더링
