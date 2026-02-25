@@ -1,5 +1,5 @@
-/* analysis.js - Omni-Perspective AI Integration Logic (Incremental Loading Version) */
 import { supabase } from './supabase.js';
+import { extractDriveId, getThumbnailUrl } from './utils.js';
 
 let currentStudent = null;
 let currentInsight = {}; // 부분적 업데이트를 위해 객체로 관리
@@ -142,11 +142,21 @@ function initSearch() {
 function renderSearchResults(students) {
     const resultsDropdown = document.getElementById("search-results");
     resultsDropdown.innerHTML = students.map(s => {
-        let photoHtml = `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">👤</div>`;
-        if (s.photo_url) {
+        let photoUrl = "";
+        const driveId = extractDriveId(s.photo_url);
+        if (driveId) {
+            photoUrl = getThumbnailUrl(driveId);
+        } else if (s.photo_url && s.photo_url.startsWith('http')) {
+            photoUrl = s.photo_url;
+        } else if (s.photo_url) {
             const { data } = supabase.storage.from('student_photos').getPublicUrl(s.photo_url);
-            photoHtml = `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;"><img src="${data.publicUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='👤'"></div>`;
+            photoUrl = data.publicUrl;
         }
+
+        let photoHtml = photoUrl
+            ? `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;"><img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='👤'"></div>`
+            : `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">👤</div>`;
+
         return `
             <div class="search-item" data-pid="${s.pid}" style="display:flex; align-items:center; gap:10px; padding:10px 16px;">
                 ${photoHtml}
@@ -347,19 +357,24 @@ async function runBatchClassAnalysis(classInfo) {
 
 // Helper: Call Gemini
 async function callGeminiAPI(apiKey, prompt, context) {
-    // 모델명을 최신 무료 모델인 gemini-1.5-flash로 안정화
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [{ parts: [{ text: context + "\n" + prompt }] }],
-            generationConfig: { responseMimeType: "application/json" }
-        })
-    });
-    const res = await response.json();
-    if (res.error) throw new Error(res.error.message);
-    const text = res.candidates[0].content.parts[0].text;
-    return JSON.parse(text);
+    // 모델명 안정화 및 에러 구체화
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: context + "\n" + prompt }] }],
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+        const res = await response.json();
+        if (res.error) throw new Error(res.error.message);
+        const text = res.candidates[0].content.parts[0].text;
+        return JSON.parse(text);
+    } catch (err) {
+        console.error("Gemini API Call Error:", err);
+        throw err;
+    }
 }
 
 // UI: Initial Result View (Skeleton)
@@ -372,9 +387,21 @@ function renderResultView() {
     if (currentStudent) {
         headerName.innerText = currentStudent.name;
         headerInfo.innerText = `${currentStudent.class_info} ${currentStudent.student_id || ''}`;
-        if (currentStudent.photo_url) {
+
+        // 사진 처리 로직 개선 (Drive ID 지원)
+        let photoUrl = "";
+        const driveId = extractDriveId(currentStudent.photo_url);
+        if (driveId) {
+            photoUrl = getThumbnailUrl(driveId);
+        } else if (currentStudent.photo_url && currentStudent.photo_url.startsWith('http')) {
+            photoUrl = currentStudent.photo_url;
+        } else if (currentStudent.photo_url) {
             const { data } = supabase.storage.from('student_photos').getPublicUrl(currentStudent.photo_url);
-            photoMini.innerHTML = `<img src="${data.publicUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='https://ovpcrjovaypvnstzptvi.supabase.co/storage/v1/object/public/student_photos/default-avatar.png'; this.onerror=null; this.parentElement.innerHTML='👤';">`;
+            photoUrl = data.publicUrl;
+        }
+
+        if (photoUrl) {
+            photoMini.innerHTML = `<img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='https://ovpcrjovaypvnstzptvi.supabase.co/storage/v1/object/public/student_photos/default-avatar.png'; this.onerror=null; this.parentElement.innerHTML='👤';">`;
         } else {
             photoMini.innerHTML = "👤";
         }
