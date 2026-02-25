@@ -179,9 +179,37 @@ function setupEventListeners(classInfo) {
     const surveyBtn = document.getElementById("survey-viewer-btn");
     const nextBtn = document.getElementById("next-btn");
 
-    if (prevBtn) prevBtn.addEventListener("click", () => goToRelativeClass(-1));
-    if (homeBtn) homeBtn.addEventListener("click", goHome);
-    if (nextBtn) nextBtn.addEventListener("click", () => goToRelativeClass(1));
+    const handleNavClick = (e, direction) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        goToRelativeClass(direction);
+    };
+
+    if (prevBtn) {
+        prevBtn.addEventListener("click", (e) => handleNavClick(e, -1));
+        prevBtn.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: false });
+        prevBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNavClick(null, -1);
+        }, { passive: false });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener("click", (e) => handleNavClick(e, 1));
+        nextBtn.addEventListener("touchstart", (e) => e.stopPropagation(), { passive: false });
+        nextBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleNavClick(null, 1);
+        }, { passive: false });
+    }
+
+    if (homeBtn) {
+        homeBtn.addEventListener("click", goHome);
+    }
 
     // [수정] 본인 담임반일 때만 기초조사 모아보기 버튼 노출
     if (surveyBtn) {
@@ -327,11 +355,13 @@ function loadStudents() {
                 // 롱 프레스 및 클릭 로직 구현
                 let pressTimer;
                 let isLongPress = false;
+                let isScrolling = false;
                 let touchStartX = 0;
                 let touchStartY = 0;
 
                 const startPress = (e) => {
                     isLongPress = false;
+                    isScrolling = false;
 
                     // 터치 이벤트인 경우 시작 위치 기록
                     if (e.type === 'touchstart' && e.touches.length > 0) {
@@ -350,21 +380,25 @@ function loadStudents() {
                     }, 600); // 600ms 동안 누르면 롱 프레스
                 };
 
-                const cancelPress = () => {
+                const cancelPress = (e) => {
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
                     container.classList.remove("long-pressed");
+                    if (e && (e.type === "touchmove" || e.type === "mouseleave")) {
+                        isScrolling = true;
+                    }
                 };
 
                 const handleRelease = (e) => {
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
 
-                    // 롱 프레스가 아니었을 때만 팝업 실행
-                    if (!isLongPress) {
+                    // 롱 프레스가 아니었고 스크롤 중이 아니었을 때만 팝업 실행
+                    if (!isLongPress && !isScrolling) {
                         showPopup(student);
                     }
                     isLongPress = false;
+                    isScrolling = false;
                 };
 
                 const handleTouchMove = (e) => {
@@ -535,7 +569,7 @@ async function showPopup(student) {
     const usedKeys = [
         "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "student_id", "contact", "instagram", "insta", "인스타 아이디", "주소", "집주소", "address", "status", "gender",
         "주보호자 관계", "주보호자 연락처", "주보호자 친밀도", "보조보호자 관계", "보조보호자 연락처", "보조보호자 친밀도", "거주가족", "SNS", "학생폰", "학생 연락처",
-        "보호자연락처", "보호자관계", "PARENT_RELATION", "PARENT_CONTACT", "가족구성", "친밀도", "MBTI", "보호자 연락처",
+        "보호자연락처", "보호자관계", "PARENT_RELATION", "PARENT_CONTACT", "가족구성", "친밀도", "보호자 연락처",
         "주보호자연락처", "보조보호자연락처", "주보호자친밀도", "보조보호자친밀도"
     ];
     const techKeys = [

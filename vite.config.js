@@ -11,7 +11,8 @@ export default defineConfig({
         search: resolve(__dirname, 'search.html'),
         bulk: resolve(__dirname, 'bulk-record.html'),
         total: resolve(__dirname, 'total-records.html'),
-        survey: resolve(__dirname, 'class-survey.html')
+        survey: resolve(__dirname, 'class-survey.html'),
+        analysis: resolve(__dirname, 'analysis.html')
       }
     }
   },

@@ -2,10 +2,15 @@
 
 body {
     text-align: center;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* 제목 영역 */
 .title-row {
+    width: 100%;
+    max-width: 1400px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -21,6 +26,7 @@ body {
         flex-direction: row;
         gap: 20px;
         margin-top: 25px;
+        padding: 0 20px;
     }
 }
 
@@ -47,8 +53,10 @@ body {
     gap: 8px;
     /* 10px -> 8px */
     padding: 10px;
+    margin: 0 auto;
     width: 100%;
     max-width: 1400px;
+    box-sizing: border-box;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
 }
 
@@ -104,13 +112,13 @@ body {
     display: flex;
     flex-direction: column;
     padding: 4px;
-    /* 6px -> 4px */
     border-radius: 12px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     background: #fff;
     cursor: pointer;
     position: relative;
     border: 1px solid transparent;
+    min-width: 0;
 }
 
 .student:hover {
@@ -157,35 +165,40 @@ body {
     justify-content: center;
     width: 100%;
     text-align: center;
+    box-sizing: border-box;
+    min-width: 0;
 }
 
 .name-badge {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    overflow: hidden;
+    /* 번호와 이름 사이 간격 유지 */
+    min-width: 0;
+    width: 100%;
 }
 
 .student-num {
     background: #f0f7ff;
     color: #4499ff;
     font-size: 0.95em;
-    /* 10% 증가 */
     padding: 2px 7px;
     border-radius: 6px;
     font-weight: 800;
     min-width: 32px;
     text-align: center;
     border: 1px solid #e1efff;
+    flex-shrink: 0;
 }
 
 .student-nm {
     color: #333;
     font-size: 1.1em;
     font-weight: 700;
+    min-width: 0;
+    word-break: keep-all;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 @media (max-width: 400px) {
@@ -430,7 +443,7 @@ body {
     }
 }
 
-/* ���� ����ó ��ư ��Ÿ�� */
+/* 담임 연락처 버튼 스타일 */
 .teacher-contact-btn {
     display: inline-flex;
     align-items: center;
@@ -473,7 +486,7 @@ body {
     color: #333;
 }
 
-/* ���� ����ó ��� ���� */
+/* 교사 연락처 모달 전용 */
 .teacher-modal {
     text-align: center;
 }
@@ -617,57 +630,42 @@ body {
     font-size: 1em;
     font-family: inherit;
     background: #fff;
-    transition: border-color 0.2s;
-}
-
-.action-input-group select:focus,
-.action-input-group input[type="time"]:focus {
-    outline: none;
-    border-color: #007aff;
 }
 
 .action-submit-btn {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: none;
     background: #007aff;
     color: white;
-    font-weight: 600;
-    font-size: 1.05em;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 700;
     cursor: pointer;
-    margin-top: 8px;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
-    transition: all 0.2s ease;
+    transition: 0.2s;
 }
 
 .action-submit-btn:hover {
-    background: #0066cc;
+    background: #0056b3;
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
 }
 
-.action-submit-btn:active {
-    transform: scale(0.98);
-}
-
-/* --- SUPER ROBUST POPUP STYLES --- */
-#popup.student-detail-popup {
-    background: #ffffff !important;
-    border-radius: 24px !important;
-    padding: 24px !important;
-    width: 95vw !important;
-    height: 88vh !important;
-    max-width: 1400px !important;
-    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3) !important;
+/* Robust Popup Window Styles */
+.student-detail-popup {
     position: fixed !important;
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    z-index: 9999 !important;
+    width: 90vw !important;
+    max-width: 900px !important;
+    height: 85vh !important;
+    max-height: 800px !important;
+    background: #fff !important;
+    z-index: 1000 !important;
+    border-radius: 30px !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 20px !important;
+    padding: 24px !important;
+    box-sizing: border-box !important;
     animation: popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow: hidden !important;
 }
@@ -675,7 +673,7 @@ body {
 @keyframes popupFadeIn {
     from {
         opacity: 0;
-        transform: translate(-50%, -48%) scale(0.96);
+        transform: translate(-50%, -45%) scale(0.95);
     }
 
     to {
@@ -692,7 +690,6 @@ body {
     gap: 16px !important;
     border-bottom: 2px solid #f1f5f9 !important;
     padding: 0 50px 16px 0 !important;
-    /* Extra padding on right for absolute close button */
     flex-shrink: 0 !important;
     flex-wrap: wrap !important;
 }
@@ -758,7 +755,6 @@ body {
     justify-content: center !important;
     transition: 0.2s !important;
     z-index: 99999 !important;
-    /* Top of everything */
     position: absolute !important;
     top: 15px !important;
     right: 15px !important;
@@ -771,20 +767,17 @@ body {
     transform: rotate(90deg) !important;
 }
 
-/* Quadrants Container - The most critical part */
+/* Quadrants Container */
 .popup-quadrants-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: 45% 55% !important;
-    /* Adjusted top row height to 45% for better visibility and data density */
     gap: 16px !important;
     flex: 1 !important;
     min-height: 0 !important;
     height: 100% !important;
-    /* Added to force flex child to respect container */
 }
 
-/* Individual Quadrant Styles with Debug Colors */
 .popup-quadrant {
     border-radius: 20px !important;
     border: 1px solid #e2e8f0 !important;
@@ -795,7 +788,6 @@ body {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Debug Base Colors (Subtle) */
 .quad-1 {
     background-color: #fff !important;
     border-left: 5px solid #ff4d4f !important;
@@ -841,13 +833,7 @@ body {
     min-height: 0 !important;
 }
 
-/* Quadrant 1: Photo - Fully Centered */
-.quad-1 {
-    display: flex;
-    flex-direction: column;
-}
-
-/* Photo Wrapper Fix */
+/* Quadrant 1: Photo */
 .photo-wrapper {
     flex: 1 !important;
     display: flex !important;
@@ -866,8 +852,6 @@ body {
     border-radius: 16px !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
 }
-
-
 
 .no-photo-placeholder {
     width: 160px;
@@ -900,12 +884,10 @@ body {
     font-weight: 800 !important;
     color: #000000 !important;
     flex: 0 0 50px !important;
-    /* Fixed width for labels to prevent squishing */
     border-right: 1px solid #e2e8f0;
     padding-right: 8px;
     margin-right: 4px;
     word-break: keep-all;
-    /* Prevent awkward breaks in Korean */
     text-transform: uppercase;
 }
 
@@ -951,7 +933,6 @@ body {
         left: 0 !important;
         transform: none !important;
         padding: 10px !important;
-        /* Lesser padding on mobile */
         gap: 10px !important;
     }
 
@@ -961,7 +942,6 @@ body {
         grid-template-rows: 30% 70% !important;
         gap: 8px !important;
         overflow: hidden !important;
-        /* Keep it non-scrolling at container level */
     }
 
     .popup-quadrant {
