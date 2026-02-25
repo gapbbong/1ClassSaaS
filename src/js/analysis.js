@@ -141,11 +141,22 @@ function initSearch() {
 
 function renderSearchResults(students) {
     const resultsDropdown = document.getElementById("search-results");
-    resultsDropdown.innerHTML = students.map(s => `
-        <div class="search-item" data-pid="${s.pid}">
-            <strong>${s.name}</strong> (${s.student_id}) - ${s.class_info}
-        </div>
-    `).join('');
+    resultsDropdown.innerHTML = students.map(s => {
+        let photoHtml = `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">👤</div>`;
+        if (s.photo_url) {
+            const { data } = supabase.storage.from('student_photos').getPublicUrl(s.photo_url);
+            photoHtml = `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;"><img src="${data.publicUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='👤'"></div>`;
+        }
+        return `
+            <div class="search-item" data-pid="${s.pid}" style="display:flex; align-items:center; gap:10px; padding:10px 16px;">
+                ${photoHtml}
+                <div>
+                    <strong>${s.name}</strong> (${s.student_id})<br>
+                    <small style="color:#666;">${s.class_info}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
     resultsDropdown.style.display = "block";
 
     resultsDropdown.querySelectorAll(".search-item").forEach(item => {
@@ -266,6 +277,14 @@ async function runBatchAIAnalysis(pid) {
 
     } catch (err) {
         console.error("AI Analysis Failed", err);
+        const sections = ['summary', 'stats', 'detective', 'garden', 'action'];
+        sections.forEach(sec => {
+            const el = document.getElementById(`sec-${sec}`);
+            if (el && el.classList.contains('loading-section')) {
+                el.classList.remove('loading-section');
+                el.innerHTML = `<h3 style="color:#d63031;">⚠️ 분석 오류</h3><p style="color:#636e72; font-size:0.9rem;">AI 연동 중 문제가 발생했습니다. (API 키 확인 필요)</p>`;
+            }
+        });
     }
 }
 
@@ -315,6 +334,14 @@ async function runBatchClassAnalysis(classInfo) {
         updateSectionUI('action', s3.action);
     } catch (e) {
         console.error("Class Analysis Error", e);
+        const sections = ['summary', 'detective', 'garden', 'action'];
+        sections.forEach(sec => {
+            const el = document.getElementById(`sec-${sec}`);
+            if (el && el.classList.contains('loading-section')) {
+                el.classList.remove('loading-section');
+                el.innerHTML = `<h3 style="color:#d63031;">⚠️ 분석 오류</h3><p style="color:#636e72; font-size:0.9rem;">학급 분석 중 오류가 발생했습니다.</p>`;
+            }
+        });
     }
 }
 
@@ -347,7 +374,7 @@ function renderResultView() {
         headerInfo.innerText = `${currentStudent.class_info} ${currentStudent.student_id || ''}`;
         if (currentStudent.photo_url) {
             const { data } = supabase.storage.from('student_photos').getPublicUrl(currentStudent.photo_url);
-            photoMini.innerHTML = `<img src="${data.publicUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+            photoMini.innerHTML = `<img src="${data.publicUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='https://ovpcrjovaypvnstzptvi.supabase.co/storage/v1/object/public/student_photos/default-avatar.png'; this.onerror=null; this.parentElement.innerHTML='👤';">`;
         } else {
             photoMini.innerHTML = "👤";
         }
