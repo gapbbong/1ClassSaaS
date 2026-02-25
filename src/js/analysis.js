@@ -234,7 +234,7 @@ async function loadStudentAnalysis(pid) {
         renderResultView();
 
         // 캐시 데이터 로드 시 각 섹션을 명시적으로 업데이트 (스피너 제거 및 태그 복구)
-        if (currentInsight.summary) updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
+        if (currentInsight.summary) updateSectionUI('summary', currentInsight, currentInsight.tags);
         if (currentInsight.stats) updateSectionUI('stats', currentInsight.stats);
         if (currentInsight.detective) updateSectionUI('detective', currentInsight.detective);
         if (currentInsight.garden) updateSectionUI('garden', currentInsight.garden);
@@ -339,7 +339,7 @@ async function runBatchAIAnalysis(pid) {
         setTimeout(() => {
             document.getElementById("loading-view").style.display = "none";
             renderResultView();
-            updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
+            updateSectionUI('summary', currentInsight, currentInsight.tags);
         }, 800);
 
         setTimeout(() => {
@@ -601,10 +601,20 @@ function updateSectionUI(type, data, extra) {
 
     switch (type) {
         case 'summary':
-            const typeBadgeHtml = data.student_type ? `<div style="margin-top: 10px; margin-bottom: 12px;"><span style="background:linear-gradient(135deg, #FF9A9E, #FECFEF); color:#D81B60; padding:6px 12px; border-radius:20px; font-size:0.95rem; font-weight:800; border:1px solid #FF80AB; display:inline-flex; align-items:center; gap:6px;">✨ ${data.student_type}</span></div>` : '';
+            let summaryText = "";
+            let studentType = "";
+
+            if (typeof data === 'string') {
+                summaryText = data;
+            } else if (data && typeof data === 'object') {
+                summaryText = data.summary || data.text || "";
+                studentType = data.student_type || "";
+            }
+
+            const typeBadgeHtml = studentType ? `<div style="margin-top: 10px; margin-bottom: 12px;"><span style="background:linear-gradient(135deg, #FF9A9E, #FECFEF); color:#D81B60; padding:6px 12px; border-radius:20px; font-size:0.95rem; font-weight:800; border:1px solid #FF80AB; display:inline-flex; align-items:center; gap:6px;">✨ ${studentType}</span></div>` : '';
             el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">⭐ AI 핵심 요약</h3>
                             ${typeBadgeHtml}
-                            <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${data.text}</p>
+                            <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${summaryText}</p>
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
             break;
         case 'stats':
