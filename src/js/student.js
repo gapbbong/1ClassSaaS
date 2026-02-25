@@ -229,7 +229,7 @@ function loadStudents() {
             const totalClassRecords = filtered.reduce((acc, s) => acc + (parseInt(s.recordCount) || 0), 0);
             const titleElement = document.getElementById("class-title");
             if (titleElement && grade && classNum) {
-                titleElement.textContent = `${grade}학년 ${classNum}반 (${totalClassRecords}건)`;
+                titleElement.innerHTML = `${grade}학년 ${classNum}반 <span style="font-size: 0.65em; color: #64748b; font-weight: 500; margin-left: 6px;">(${totalClassRecords}건)</span>`;
             }
 
             // 번호순 정렬
@@ -327,9 +327,18 @@ function loadStudents() {
                 // 롱 프레스 및 클릭 로직 구현
                 let pressTimer;
                 let isLongPress = false;
+                let touchStartX = 0;
+                let touchStartY = 0;
 
                 const startPress = (e) => {
                     isLongPress = false;
+
+                    // 터치 이벤트인 경우 시작 위치 기록
+                    if (e.type === 'touchstart' && e.touches.length > 0) {
+                        touchStartX = e.touches[0].clientX;
+                        touchStartY = e.touches[0].clientY;
+                    }
+
                     container.classList.add("pressing");
                     pressTimer = setTimeout(() => {
                         isLongPress = true;
@@ -350,11 +359,24 @@ function loadStudents() {
                 const handleRelease = (e) => {
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
+
+                    // 롱 프레스가 아니었을 때만 팝업 실행
                     if (!isLongPress) {
-                        // 짧게 클릭한 경우에만 팝업 표시
                         showPopup(student);
                     }
                     isLongPress = false;
+                };
+
+                const handleTouchMove = (e) => {
+                    if (e.touches.length > 0) {
+                        const moveX = e.touches[0].clientX;
+                        const moveY = e.touches[0].clientY;
+
+                        // 10px 이상 움직이면 스크롤 중으로 판단하고 이벤트 취소
+                        if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
+                            cancelPress();
+                        }
+                    }
                 };
 
                 // 마우스 이벤트
@@ -364,11 +386,13 @@ function loadStudents() {
 
                 // 터치 이벤트
                 container.addEventListener("touchstart", (e) => {
-                    // 기본 동작(스크롤 등)은 유지하면서 롱 프레스 체크
                     startPress(e);
                 }, { passive: true });
-                container.addEventListener("touchend", handleRelease);
-                container.addEventListener("touchmove", cancelPress);
+                container.addEventListener("touchend", (e) => {
+                    // 터치 시에만 브라우저 기본 동작 방지 (필요 시)
+                    handleRelease(e);
+                });
+                container.addEventListener("touchmove", handleTouchMove, { passive: true });
 
                 list.appendChild(container);
             });
