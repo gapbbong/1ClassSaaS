@@ -133,8 +133,11 @@ function initSearch() {
     applyBtn.addEventListener("click", handleLookup);
 
     [idInput, nameInput].forEach(el => {
-        el.addEventListener("keypress", (e) => {
-            if (e.key === 'Enter') handleLookup();
+        el.addEventListener("keydown", (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLookup();
+            }
         });
     });
 }
@@ -188,6 +191,26 @@ async function loadStudentAnalysis(pid) {
     const { data: student } = await supabase.from('students').select('*').eq('pid', pid).single();
     if (!student) return alert("학생 정보를 찾을 수 없습니다.");
     currentStudent = student;
+
+    // 동급생 캐싱 (이전/다음 버튼용)
+    if (!window.currentClassStudents || window.currentClassStudents.length === 0 || window.currentClassStudents[0].class_info !== student.class_info) {
+        const { data: classmates } = await supabase.from('students')
+            .select('pid, student_id, name, class_info')
+            .eq('class_info', student.class_info)
+            .order('student_id', { ascending: true });
+        window.currentClassStudents = classmates || [];
+    }
+
+    // 이전/다음 학생 이동 전역 함수 정의
+    window.navigateAdjacentStudent = (dir) => {
+        if (!currentStudent || !window.currentClassStudents) return;
+        const idx = window.currentClassStudents.findIndex(s => s.pid === currentStudent.pid);
+        if (idx === -1) return;
+        const targetIdx = idx + dir;
+        if (targetIdx >= 0 && targetIdx < window.currentClassStudents.length) {
+            loadStudentAnalysis(window.currentClassStudents[targetIdx].pid);
+        }
+    };
 
     const { data: insight } = await supabase
         .from('student_insights')
@@ -436,6 +459,37 @@ function renderResultView() {
         headerName.innerText = `${currentClassInfo} 학급 전체`;
         headerInfo.innerText = "통합 분석";
         photoMini.innerHTML = "🏫";
+
+        // 학급 전체 모드일 때는 이동 버튼 및 클릭 숨김 (css/js 제어)
+        const prevBtn = document.getElementById("prev-student-btn");
+        const nextBtn = document.getElementById("next-student-btn");
+        if (prevBtn) prevBtn.style.visibility = "hidden";
+        if (nextBtn) nextBtn.style.visibility = "hidden";
+        const linkDiv = document.getElementById("student-profile-link");
+        if (linkDiv) linkDiv.style.cursor = "default";
+    }
+
+    // 개별 학생 모드일 때만 이동 버튼 활성화
+    if (currentStudent && window.currentClassStudents && window.currentClassStudents.length > 0) {
+        const idx = window.currentClassStudents.findIndex(s => s.pid === currentStudent.pid);
+        const prevBtn = document.getElementById("prev-student-btn");
+        const nextBtn = document.getElementById("next-student-btn");
+        const linkDiv = document.getElementById("student-profile-link");
+
+        if (prevBtn) {
+            prevBtn.style.visibility = idx > 0 ? "visible" : "hidden";
+            prevBtn.onclick = () => window.navigateAdjacentStudent(-1);
+        }
+        if (nextBtn) {
+            nextBtn.style.visibility = idx < window.currentClassStudents.length - 1 ? "visible" : "hidden";
+            nextBtn.onclick = () => window.navigateAdjacentStudent(+1);
+        }
+        if (linkDiv) {
+            linkDiv.style.cursor = "pointer";
+            linkDiv.onclick = () => {
+                window.location.href = `record.html?num=${currentStudent.student_id || ''}&name=${encodeURIComponent(currentStudent.name)}`;
+            };
+        }
     }
 
     document.getElementById("lens-content").innerHTML = `
