@@ -233,12 +233,12 @@ async function loadStudentAnalysis(pid) {
         currentInsight = insight.content;
         renderResultView();
 
-        // 캐시 데이터 로드 시 각 섹션을 명시적으로 업데이트 (스피너 제거 및 태그 복구)
-        if (currentInsight.summary) updateSectionUI('summary', currentInsight, currentInsight.tags);
-        if (currentInsight.stats) updateSectionUI('stats', currentInsight.stats);
-        if (currentInsight.detective) updateSectionUI('detective', currentInsight.detective);
-        if (currentInsight.garden) updateSectionUI('garden', currentInsight.garden);
-        if (currentInsight.action) updateSectionUI('action', currentInsight.action);
+        // 캐시 데이터 로드 시 모든 섹션을 업데이트 (데이터가 없어도 스피너 제거)
+        updateSectionUI('summary', currentInsight, currentInsight.tags);
+        updateSectionUI('stats', currentInsight.stats);
+        updateSectionUI('detective', currentInsight.detective || {});
+        updateSectionUI('garden', currentInsight.garden || {});
+        updateSectionUI('action', currentInsight.action || "분석 데이터가 없습니다.");
 
         renderChart();
     } else {
@@ -633,14 +633,18 @@ function updateSectionUI(type, data, extra) {
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
 
             // 상담 시급도 및 프로파일 자동 렌더링 호출
-            if (data && data.counseling_priority) renderCounselingPriority(data.counseling_priority);
-            if (data && data.holistic_analysis) renderHolisticProfile(data.holistic_analysis, data.group_role);
+            renderCounselingPriority(data.counseling_priority);
+            renderHolisticProfile(data.holistic_analysis, data.group_role);
             break;
         case 'stats':
             el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>
                             <div style="height:300px; display:flex; justify-content:center; align-items:center; background:#f8fafc; border-radius:12px; padding:10px;"><canvas id="aiStatsChart"></canvas></div>`;
             break;
         case 'detective':
+            if (!data || !data.clues) {
+                el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론 (Detective)</h3><p style="padding:10px; color:#94a3b8;">데이터가 없습니다.</p>`;
+                break;
+            }
             el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론 (Detective)</h3>
                             <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size:0.95rem; line-height:1.6; color:#444; word-break:keep-all;">
                                 <p style="font-weight:bold; margin:0 0 8px 0; color:#D35400;">발견된 단서 (Clues)</p>
@@ -650,6 +654,10 @@ function updateSectionUI(type, data, extra) {
                             </div>`;
             break;
         case 'garden':
+            if (!data || !data.species) {
+                el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3><p style="padding:10px; color:#94a3b8;">데이터가 없습니다.</p>`;
+                break;
+            }
             el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3>
                             <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size:0.95rem; line-height:1.6; color:#444; height:100%; box-sizing:border-box; word-break:keep-all;">
                                 <p style="margin:0 0 8px 0;"><strong>비유:</strong> <span style="font-size:1.05rem; color:#1e8449; font-weight:bold;">${data.species}</span></p>
@@ -708,7 +716,11 @@ function renderChart() {
 // 상담 시급도 배너 렌더링
 function renderCounselingPriority(priority) {
     const el = document.getElementById("sec-counseling");
-    if (!el || !priority) return;
+    if (!el) return;
+    if (!priority) {
+        el.innerHTML = "";
+        return;
+    }
 
     const levels = {
         '시급': { color: '#e11d48', bg: '#fff1f2', border: '#fda4af', icon: '🔴' },
@@ -733,8 +745,14 @@ function renderCounselingPriority(priority) {
 // 전인적 프로파일 및 모둠 역할 렌더링
 function renderHolisticProfile(analysis, role) {
     const el = document.getElementById("sec-profile");
-    if (!el || !analysis) return;
+    if (!el) return;
     el.classList.remove('loading-section');
+
+    if (!analysis) {
+        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">🌈 전인적 분석 프로파일</h3>
+                        <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
+        return;
+    }
 
     const config = [
         { key: 'career', label: '🎯 학습 동기 & 진로', items: ['목표지향형', '탐색형', '방황형'] },
