@@ -1,6 +1,6 @@
 // ✅ service-worker.js (v6)
 
-const CACHE_NAME = "photo-cache-v8";
+const CACHE_NAME = "photo-cache-v9";
 const urlsToCache = [
   "/",
   "/index.html",
