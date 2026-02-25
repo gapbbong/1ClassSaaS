@@ -24,7 +24,7 @@ function initModeToggle() {
         r.addEventListener("change", (e) => {
             currentMode = e.target.value;
             if (currentMode === 'individual') {
-                indContainer.style.display = "block";
+                indContainer.style.display = "flex";
                 clsContainer.style.display = "none";
                 welcomeText.innerText = "학생을 선택하여 분석을 시작하세요";
             } else {
