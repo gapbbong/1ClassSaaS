@@ -139,18 +139,23 @@ body {
 
 .id-input {
     flex: 4 !important;
-    padding: 14px 10px !important;
+    min-width: 0;
+    /* 내용물에 의한 확장 방지 */
+    padding: 14px 8px !important;
 }
 
 .name-input {
     flex: 4;
+    min-width: 0;
 }
 
 #search-apply-btn {
     flex: 2 !important;
+    min-width: 60px;
+    /* 조회 버튼 최소 너비 확보 */
     border-radius: 12px;
     padding: 0 !important;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
 }
 
 .search-input:focus {

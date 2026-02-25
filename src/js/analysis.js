@@ -605,7 +605,27 @@ function renderResultView() {
             <div id="sec-garden" class="result-card loading-section"><h3>🌿 현재 상태</h3><div class="mini-spinner"></div></div>
         </div>
         <div id="sec-action" class="result-card loading-section"><h3>💡 추천 액션 플랜</h3><div class="mini-spinner"></div></div>
+        
+        <!-- 새로운 분석 시작 버튼 추가 (하단) -->
+        <div style="margin-top: 30px; text-align: center;">
+            <button id="re-analyze-btn" class="action-btn" style="width: 100%; padding: 18px; font-size: 1.1rem; border-radius: 16px; box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);">
+                ✨ 최신 데이터로 새로운 분석 시작
+            </button>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 10px;">기존 분석 데이터가 있더라도 실시간 기록을 바탕으로 다시 분석합니다.</p>
+        </div>
     `;
+
+    // 재분석 버튼 이벤트 리스너
+    const reBtn = document.getElementById("re-analyze-btn");
+    if (reBtn) {
+        reBtn.onclick = () => {
+            if (currentStudent && confirm(`${currentStudent.name} 학생의 최신 기록을 바탕으로 다시 분석을 시작할까요?`)) {
+                runBatchAIAnalysis(currentStudent.pid);
+            } else if (!currentStudent && currentClassInfo) {
+                // 학급 전체 모드는 일단 보류하거나 필요시 구현
+            }
+        };
+    }
 }
 
 // UI: Update specific section
