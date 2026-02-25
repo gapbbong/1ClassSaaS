@@ -1,6 +1,6 @@
 {
   "name": "oneclass25",
-  "version": "1.1.12",
+  "version": "1.1.13",
   "type": "module",
   "main": "service-worker.js",
   "scripts": {

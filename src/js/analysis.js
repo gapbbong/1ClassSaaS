@@ -377,9 +377,9 @@ async function runBatchClassAnalysis(classInfo) {
 
 // Helper: Call Gemini
 async function callGeminiAPI(apiKey, prompt, context) {
-    // 404/400 에러 방지를 위해 v1beta 엔드포인트 및 최신 Flash 모델 사용
+    // 사용자의 최신 환경에 맞춰 Gemini 2.5 Flash 모델로 업데이트
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
