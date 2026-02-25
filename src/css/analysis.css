@@ -138,21 +138,18 @@ body {
 }
 
 .id-input {
-    flex: 0 0 85px !important;
-    min-width: 85px;
+    flex: 4 !important;
     padding: 14px 10px !important;
 }
 
 .name-input {
-    flex: 1 !important;
-    min-width: 0;
-    padding: 14px 10px !important;
+    flex: 4;
 }
 
 #search-apply-btn {
-    flex: 0 0 65px !important;
+    flex: 2 !important;
     border-radius: 12px;
-    padding: 0 10px !important;
+    padding: 0 !important;
     font-size: 0.95rem;
 }
 
