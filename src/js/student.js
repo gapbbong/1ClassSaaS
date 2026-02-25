@@ -428,6 +428,12 @@ function loadStudents() {
                 });
                 container.addEventListener("touchmove", handleTouchMove, { passive: true });
 
+                // 우클릭 이벤트 (PC 환경 지원)
+                container.addEventListener("contextmenu", (e) => {
+                    e.preventDefault(); // 기본 우클릭 메뉴 방지
+                    showActionModal(student);
+                });
+
                 list.appendChild(container);
             });
 
@@ -669,6 +675,11 @@ window.showRecord = function (student) {
     window.location.href = `record.html?num=${num}&name=${name}`;
 }
 
+window.goToAnalysis = function (student) {
+    const sid = encodeURIComponent(student["학번"]);
+    window.location.href = `analysis.html?sid=${sid}`;
+}
+
 window.showActionModal = function (student) {
     const existing = document.getElementById("action-modal");
     if (existing) existing.remove();
@@ -683,6 +694,9 @@ window.showActionModal = function (student) {
             <h3 style="margin-bottom: 20px;">[${displayNum}번] ${student["이름"]} 기록 메뉴</h3>
             
             <div class="action-grid" id="action-grid-main">
+                <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
+                   <span class="action-icon">🧠</span> ✨ AI 학생 분석
+                </button>
                 <button class="action-btn" onclick="showRecord(${JSON.stringify(student).replace(/"/g, '&quot;')})">
                    <span class="action-icon">📒</span> 생활기록 작성
                 </button>

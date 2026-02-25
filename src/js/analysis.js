@@ -11,6 +11,14 @@ document.addEventListener("DOMContentLoaded", () => {
     initModeToggle();
     initSearch();
     initClassSelect();
+
+    // Check URL parameters for direct student search
+    const urlParams = new URLSearchParams(window.location.search);
+    const sid = urlParams.get("sid");
+    if (sid) {
+        document.getElementById("search-id").value = sid;
+        setTimeout(() => document.getElementById("search-apply-btn").click(), 100);
+    }
 });
 
 // 0. 모드 전환
@@ -305,6 +313,7 @@ async function runBatchAIAnalysis(pid) {
         
         {
           "summary": "학생의 전반적인 특징을 요약한 3줄 문장",
+          "student_type": "학생의 핵심 성향 (예: 리더형, 협력형, 탐구형, 성실형, 창의형 등 1~2단어로 표현)",
           "tags": ["키워드1", "키워드2", "키워드3"],
           "stats": {"study": 85, "routine": 70, "emotion": 90, "social": 80, "self": 75, "resilience": 88},
           "detective": {"clues": ["단서1", "단서2"], "deduction": "추론 의견"},
@@ -592,8 +601,10 @@ function updateSectionUI(type, data, extra) {
 
     switch (type) {
         case 'summary':
+            const typeBadgeHtml = data.student_type ? `<div style="margin-top: 10px; margin-bottom: 12px;"><span style="background:linear-gradient(135deg, #FF9A9E, #FECFEF); color:#D81B60; padding:6px 12px; border-radius:20px; font-size:0.95rem; font-weight:800; border:1px solid #FF80AB; display:inline-flex; align-items:center; gap:6px;">✨ ${data.student_type}</span></div>` : '';
             el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">⭐ AI 핵심 요약</h3>
-                            <p style="font-size:1.05rem; line-height:1.7; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${data}</p>
+                            ${typeBadgeHtml}
+                            <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${data.text}</p>
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
             break;
         case 'stats':
@@ -602,23 +613,23 @@ function updateSectionUI(type, data, extra) {
             break;
         case 'detective':
             el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론 (Detective)</h3>
-                            <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size:0.95rem; line-height:1.6; color:#444;">
+                            <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size:0.95rem; line-height:1.6; color:#444; word-break:keep-all;">
                                 <p style="font-weight:bold; margin:0 0 8px 0; color:#D35400;">발견된 단서 (Clues)</p>
-                                <ul style="margin:0 0 12px 0; padding-left:24px; color:#555;">${(data.clues || []).map(c => `<li style="margin-bottom:4px;">${c}</li>`).join('')}</ul>
+                                <ul style="margin:0 0 12px 0; padding-left:24px; color:#555; word-break:keep-all;">${(data.clues || []).map(c => `<li style="margin-bottom:4px;">${c}</li>`).join('')}</ul>
                                 <p style="margin:12px 0 4px 0; font-weight:bold; border-top:1px dashed #ccc; padding-top:10px; color:#D35400;">추론 결과</p>
-                                <p style="margin:0;">${data.deduction}</p>
+                                <p style="margin:0; word-break:keep-all;">${data.deduction}</p>
                             </div>`;
             break;
         case 'garden':
             el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3>
-                            <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size:0.95rem; line-height:1.6; color:#444; height:100%; box-sizing:border-box;">
+                            <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size:0.95rem; line-height:1.6; color:#444; height:100%; box-sizing:border-box; word-break:keep-all;">
                                 <p style="margin:0 0 8px 0;"><strong>비유:</strong> <span style="font-size:1.05rem; color:#1e8449; font-weight:bold;">${data.species}</span></p>
                                 <p style="margin:0;"><strong>현재 상태 및 필요 요소:</strong><br><span style="display:inline-block; margin-top:4px;">${data.condition}</span></p>
                             </div>`;
             break;
         case 'action':
             el.innerHTML = `<h3 style="color:var(--ai-primary); margin-top:0;">💡 교사를 위한 추천 액션 플랜</h3>
-                            <p style="font-size:1.05rem; font-weight:bold; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data}</p>`;
+                            <p style="font-size:1.05rem; font-weight:bold; word-break:keep-all; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data}</p>`;
             break;
     }
     el.classList.add('fade-in');

@@ -121,6 +121,10 @@ body {
     position: relative;
     border: 1px solid transparent;
     min-width: 0;
+    -webkit-touch-callout: none;
+    /* 모바일 브라우저 길게 누르기 팝업 방지 */
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .student:hover {
@@ -143,6 +147,8 @@ body {
     border-radius: 10px;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
+    pointer-events: none;
+    /* 이미지 영역 자체에 대한 우클릭/길게 누르기 차단, 부모로 이벤트를 넘김 */
 }
 
 @supports not (aspect-ratio: 3 / 4) {

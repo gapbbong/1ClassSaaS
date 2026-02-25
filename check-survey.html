@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>기초조사 제출 현황</title>
+    <link rel="stylesheet" href="src/css/common.css">
+    <link rel="stylesheet" href="src/css/check-survey.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- 헤더 영역 -->
+        <header class="header">
+            <button class="back-btn" onclick="location.href='index.html'" aria-label="메인으로 돌아가기">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+            </button>
+            <h1 class="page-title">기초조사 제출 현황</h1>
+            <div style="width: 44px;"></div> <!-- 중앙 정렬 맞춤용 여백 -->
+        </header>
+
+        <!-- 컨트롤 패널 -->
+        <section class="control-panel">
+            <div class="search-container">
+                <select id="class-dropdown" class="styled-select">
+                    <option value="">학급을 선택하세요</option>
+                    <!-- JS에서 학급 옵션 자동 생성 -->
+                </select>
+                <button id="search-btn" class="action-btn" disabled>조회</button>
+            </div>
+        </section>
+
+        <!-- 현황 요약 서머리 대시보드 (초기 숨김) -->
+        <section id="summary-dashboard" class="summary-dashboard" style="display: none;">
+            <div class="summary-card total">
+                <div class="summary-label">총원</div>
+                <div class="summary-value" id="summary-total">0</div>
+            </div>
+            <div class="summary-card submitted">
+                <div class="summary-label">제출 완료 ✅</div>
+                <div class="summary-value" id="summary-submitted">0</div>
+            </div>
+            <div class="summary-card pending">
+                <div class="summary-label">미제출 🚨</div>
+                <div class="summary-value" id="summary-pending">0</div>
+            </div>
+        </section>
+
+        <!-- 학생 명단 영역 -->
+        <main id="list-container" class="list-container">
+            <!-- 초기 안내 화면 -->
+            <div id="welcome-view" class="empty-state">
+                <div class="empty-icon">📋</div>
+                <h2>학급을 선택하여 현황을 확인하세요</h2>
+                <p>누가 제출했는지 한눈에 파악할 수 있습니다.</p>
+            </div>
+
+            <!-- 로딩 화면 -->
+            <div id="loading-view" class="loading-state" style="display: none;">
+                <div class="spinner"></div>
+                <p>데이터를 불러오는 중입니다...</p>
+            </div>
+
+            <!-- 실제 리스트 결과 화면 -->
+            <div id="result-view" style="display: none;">
+
+                <!-- 필터 탭 -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">전체보기</button>
+                    <button class="filter-tab" data-filter="pending">미제출자</button>
+                    <button class="filter-tab" data-filter="submitted">제출완료</button>
+                </div>
+
+                <!-- 데스크탑/모바일 공통 리스트 (또는 테이블) -->
+                <div class="student-list-box">
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>학번</th>
+                                <th>이름</th>
+                                <th>상태</th>
+                                <th>제출일시</th>
+                            </tr>
+                        </thead>
+                        <tbody id="student-tbody">
+                            <!-- JS에서 데이터 삽입 -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- 스크립트 연결 -->
+    <script type="module" src="src/js/check-survey.js"></script>
+</body>
+
+</html>
