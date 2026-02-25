@@ -39,15 +39,11 @@
 
             <!-- 2. 구체적 대상 검색/선택 -->
             <div class="target-selection-area">
-                <div id="individual-search-container" class="search-container">
-                    <div class="input-with-icon">
-                        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                        </svg>
-                        <input type="text" id="student-search" placeholder="학생 이름 또는 학번 검색..." class="search-input">
-                    </div>
+                <div id="individual-search-container" class="search-container dual-search">
+                    <input type="number" id="search-id" placeholder="학번(숫자)" class="search-input id-input"
+                        inputmode="numeric">
+                    <input type="text" id="search-name" placeholder="이름 검색..." class="search-input name-input">
+                    <button id="search-apply-btn" class="action-btn">조회</button>
                     <div id="search-results" class="search-results-dropdown" style="display: none;"></div>
                 </div>
 

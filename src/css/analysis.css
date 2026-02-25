@@ -118,22 +118,14 @@ body {
     position: relative;
 }
 
-.input-with-icon {
-    position: relative;
-    width: 100%;
-}
-
-.search-icon {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
+.dual-search {
+    flex-wrap: wrap;
+    /* 모바일 대응 */
 }
 
 .search-input {
     width: 100%;
-    padding: 14px 16px 14px 44px;
+    padding: 14px 16px;
     border: 1px solid var(--ai-border);
     border-radius: 12px;
     font-size: 1rem;
@@ -141,6 +133,17 @@ body {
     box-sizing: border-box;
     transition: all 0.2s;
     outline: none;
+}
+
+.id-input {
+    flex: 0 0 100px !important;
+    padding-left: 12px !important;
+}
+
+.name-input {
+    flex: 1 !important;
+    min-width: 150px;
+    padding-left: 12px !important;
 }
 
 .search-input:focus {

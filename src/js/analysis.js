@@ -73,26 +73,69 @@ async function initClassSelect() {
     }
 }
 
-// 1. 학생 검색
+// 1. 학생 검색 기능 (학번/이름 분리)
 function initSearch() {
-    const searchInput = document.getElementById("student-search");
+    const idInput = document.getElementById("search-id");
+    const nameInput = document.getElementById("search-name");
+    const applyBtn = document.getElementById("search-apply-btn");
     const resultsDropdown = document.getElementById("search-results");
 
-    searchInput.addEventListener("input", async (e) => {
+    // 이름 입력 시 실시간 드롭다운
+    nameInput.addEventListener("input", async (e) => {
         const searchQuery = e.target.value.trim();
         if (searchQuery.length < 2) {
             resultsDropdown.style.display = "none";
             return;
         }
 
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from('students')
             .select('pid, student_id, name, class_info, gender, photo_url')
-            .or(`name.ilike.%${searchQuery}%,student_id.ilike.%${searchQuery}%`)
+            .ilike('name', `%${searchQuery}%`)
             .limit(10);
 
         if (data && data.length > 0) renderSearchResults(data);
         else resultsDropdown.style.display = "none";
+    });
+
+    // 조회 버튼 클릭 및 엔터키 처리
+    const handleLookup = async () => {
+        const sid = idInput.value.trim();
+        const sname = nameInput.value.trim();
+
+        if (!sid && !sname) return alert("학번 또는 이름을 입력해주세요.");
+
+        let query = supabase.from('students').select('pid, student_id, name, class_info, gender, photo_url');
+
+        if (sid) {
+            query = query.eq('student_id', sid);
+        } else if (sname) {
+            query = query.ilike('name', `%${sname}%`);
+        }
+
+        const { data } = await query.limit(20);
+
+        if (!data || data.length === 0) {
+            alert("검색 결과가 없습니다.");
+            return;
+        }
+
+        if (data.length === 1) {
+            loadStudentAnalysis(data[0].pid);
+            idInput.value = "";
+            nameInput.value = "";
+            resultsDropdown.style.display = "none";
+        } else {
+            renderSearchResults(data);
+        }
+    };
+
+    applyBtn.addEventListener("click", handleLookup);
+
+    [idInput, nameInput].forEach(el => {
+        el.addEventListener("keypress", (e) => {
+            if (e.key === 'Enter') handleLookup();
+        });
     });
 }
 
@@ -109,7 +152,8 @@ function renderSearchResults(students) {
         item.addEventListener("click", () => {
             loadStudentAnalysis(item.getAttribute("data-pid"));
             resultsDropdown.style.display = "none";
-            document.getElementById("student-search").value = "";
+            document.getElementById("search-id").value = "";
+            document.getElementById("search-name").value = "";
         });
     });
 }
@@ -135,7 +179,14 @@ async function loadStudentAnalysis(pid) {
     if (insight) {
         currentInsight = insight.content;
         renderResultView();
-        Object.keys(currentInsight).forEach(key => updateSectionUI(key, currentInsight[key]));
+
+        // 캐시 데이터 로드 시 각 섹션을 명시적으로 업데이트 (스피너 제거 및 태그 복구)
+        if (currentInsight.summary) updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
+        if (currentInsight.stats) updateSectionUI('stats', currentInsight.stats);
+        if (currentInsight.detective) updateSectionUI('detective', currentInsight.detective);
+        if (currentInsight.garden) updateSectionUI('garden', currentInsight.garden);
+        if (currentInsight.action) updateSectionUI('action', currentInsight.action);
+
         renderChart();
     } else {
         await runBatchAIAnalysis(pid);
@@ -269,6 +320,7 @@ async function runBatchClassAnalysis(classInfo) {
 
 // Helper: Call Gemini
 async function callGeminiAPI(apiKey, prompt, context) {
+    // 모델명을 최신 무료 모델인 gemini-1.5-flash로 안정화
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -354,12 +406,36 @@ function renderChart() {
     if (analysisChart) analysisChart.destroy();
 
     const s = currentInsight.stats;
+    // 차트 레이블 설정 (크고 진하게)
     analysisChart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: ['학업', '루틴', '정서', '사회성', '자아성찰', '회복탄력성'],
-            datasets: [{ label: 'AI 분석', data: [s.study, s.routine, s.emotion, s.social, s.self, s.resilience], backgroundColor: 'rgba(74, 144, 226, 0.2)', borderColor: '#4A90E2', borderWidth: 2 }]
+            datasets: [{
+                label: 'AI 분석',
+                data: [s.study, s.routine, s.emotion, s.social, s.self, s.resilience],
+                backgroundColor: 'rgba(74, 144, 226, 0.2)',
+                borderColor: '#4A90E2',
+                borderWidth: 2
+            }]
         },
-        options: { scales: { r: { suggestedMin: 0, suggestedMax: 100, ticks: { display: false } } }, plugins: { legend: { display: false } } }
+        options: {
+            scales: {
+                r: {
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: { display: false },
+                    pointLabels: {
+                        font: {
+                            size: 22, // 기존보다 약 2~3배 확대 (충분히 크게)
+                            weight: '900', // 더 두껍게
+                            family: 'Pretendard'
+                        },
+                        color: '#1e293b'
+                    }
+                }
+            },
+            plugins: { legend: { display: false } }
+        }
     });
 }
