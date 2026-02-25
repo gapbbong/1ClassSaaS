@@ -252,15 +252,16 @@ async function runBatchAIAnalysis(pid) {
         updateStatus("학생 생활 기록 분석 중...");
 
         const promptText = `
-        다음 학생 데이터를 바탕으로 통합 인사이트를 도출해줘.
-        JSON 포맷을 엄격히 지켜서 답변해줘.
+        다음 [데이터]를 바탕으로 학생의 특성을 다각도로 분석하여 JSON 형식으로만 답변해줘.
+        JSON 이외의 텍스트(설명 등)는 절대 포함하지 마.
+        
         {
-          "summary": "3줄 종합 요약",
-          "tags": ["태그1", "태그2", "태그3"],
-          "stats": {"study": 50, "routine": 50, "emotion": 50, "social": 50, "self": 50, "resilience": 50},
-          "detective": {"clues": ["단서1", "단서2"], "deduction": "심층 추론"},
-          "garden": {"species": "꽃 비유", "condition": "정서 상태"},
-          "action": "교사 액션 플랜"
+          "summary": "학생의 전반적인 특징을 요약한 3줄 문장",
+          "tags": ["키워드1", "키워드2", "키워드3"],
+          "stats": {"study": 85, "routine": 70, "emotion": 90, "social": 80, "self": 75, "resilience": 88},
+          "detective": {"clues": ["단서1", "단서2"], "deduction": "추론 의견"},
+          "garden": {"species": "식물 이름", "condition": "환경 제안"},
+          "action": "교사를 위한 조언"
         }
         
         [데이터]
@@ -343,15 +344,24 @@ async function runBatchClassAnalysis(classInfo) {
     const commonContext = `학급명: ${classInfo}, 데이터: ${JSON.stringify(classDataSnippet)}`;
 
     try {
-        const s1 = await callGeminiAPI(apiKey, `학급 분위기 요약과 태그를 생성해줘. JSON: {"summary": "요약", "tags": ["T1"]}`, commonContext);
-        updateSectionUI('summary', s1.summary, s1.tags);
+        const promptText = `
+        다음 학급 [데이터]를 분석하여 JSON 형식으로만 답변해줘. 다른 설명 없이 오직 JSON만 출력해.
+        {
+          "summary": "학급 전체 분위기 요약 (3줄)",
+          "tags": ["태그1", "태그2", "태그3"],
+          "detective": {"clues": ["공통 패턴1", "공통 패턴2"], "deduction": "학급 전체 해석"},
+          "garden": {"species": "숲/정원 비유 이름", "condition": "운영 제안"},
+          "action": "교사 팁"
+        }
+        [데이터]
+        ${commonContext}`;
 
-        const s2 = await callGeminiAPI(apiKey, `학급 내 관찰 패턴과 비유 분석을 해줘. JSON: {"detective": {"clues":[], "deduction":""}, "garden": {"species": "", "condition": ""}}`, commonContext);
-        updateSectionUI('detective', s2.detective);
-        updateSectionUI('garden', s2.garden);
+        const fullData = await callGeminiAPI(apiKey, promptText, "");
 
-        const s3 = await callGeminiAPI(apiKey, `학급 경영 가이드를 제안해줘. JSON: {"action": ""}`, commonContext);
-        updateSectionUI('action', s3.action);
+        updateSectionUI('summary', fullData.summary, fullData.tags);
+        updateSectionUI('detective', fullData.detective);
+        updateSectionUI('garden', fullData.garden);
+        updateSectionUI('action', fullData.action);
     } catch (e) {
         console.error("Class Analysis Error", e);
         const sections = ['summary', 'detective', 'garden', 'action'];
@@ -367,9 +377,9 @@ async function runBatchClassAnalysis(classInfo) {
 
 // Helper: Call Gemini
 async function callGeminiAPI(apiKey, prompt, context) {
-    // 안정성을 위해 v1 엔드포인트 및 최신 Flash 모델 사용
+    // 404/400 에러 방지를 위해 v1beta 엔드포인트 및 최신 Flash 모델 사용
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -381,7 +391,11 @@ async function callGeminiAPI(apiKey, prompt, context) {
         if (res.error) throw new Error(res.error.message);
         if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
 
-        const text = res.candidates[0].content.parts[0].text;
+        let text = res.candidates[0].content.parts[0].text;
+
+        // 마크다운 백틱 제거 및 순수 JSON 추출
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
         return JSON.parse(text);
     } catch (err) {
         console.error("Gemini API Call Error:", err);
