@@ -308,13 +308,26 @@ async function runBatchAIAnalysis(pid) {
         }, 500);
 
         const promptText = `
-        다음 [데이터]를 바탕으로 학생의 특성을 다각도로 분석하여 JSON 형식으로만 답변해줘.
+        다음 [데이터]를 바탕으로 학생의 특성을 전인적(Holistic) 관점에서 분석하여 JSON 형식으로만 답변해줘.
         JSON 이외의 텍스트(설명 등)는 절대 포함하지 마.
-        
+
         {
           "summary": "학생의 전반적인 특징을 요약한 3줄 문장",
-          "student_type": "학생의 핵심 성향 (예: 리더형, 협력형, 탐구형, 성실형, 창의형 등 1~2단어로 표현)",
+          "student_type": "학생의 핵심 성향 (1~2단어)",
           "tags": ["키워드1", "키워드2", "키워드3"],
+          "counseling_priority": {
+            "level": "시급/주의/관심/안정 중 택1",
+            "reason": "해당 순위로 판단한 AI 소견 (1문장)"
+          },
+          "holistic_analysis": {
+            "career": "목표지향형/탐색형/방황형 중 택1",
+            "disposition": "내향 집중형/외향 활동형/균형형 중 택1",
+            "family": "보호 안정형/정서 의존형/책임 조기성숙형 중 택1",
+            "hobby_life": "경쟁 몰입형/창작 몰입형/소비형 중 택1",
+            "rhythm": "건강 안정형/수면 부족형 중 택1",
+            "emotion": "자기 인식형/고민 내재형/도움 요청형 중 택1"
+          },
+          "group_role": "리더형/전략가형/실행형/분위기 메이커형/자료 탐색형/책임 분산형/독주형 중 택1",
           "stats": {"study": 85, "routine": 70, "emotion": 90, "social": 80, "self": 75, "resilience": 88},
           "detective": {"clues": ["단서1", "단서2"], "deduction": "추론 의견"},
           "garden": {"species": "식물 이름", "condition": "환경 제안"},
@@ -583,7 +596,9 @@ function renderResultView() {
     }
 
     document.getElementById("lens-content").innerHTML = `
+        <div id="sec-counseling" style="margin-bottom: 25px;"></div>
         <div id="sec-summary" class="result-card loading-section"><h3>⭐ AI 핵심 요약</h3><div class="mini-spinner"></div><p class="status-text">분석 중...</p></div>
+        <div id="sec-profile" class="result-card loading-section"><h3>🌈 전인적 분석 프로파일</h3><div class="mini-spinner"></div></div>
         <div id="sec-stats" class="result-card loading-section" style="${currentMode === 'class' ? 'display:none' : ''}"><h3>📊 다면 평가 수치</h3><div class="mini-spinner"></div></div>
         <div class="analysis-grid">
             <div id="sec-detective" class="result-card loading-section"><h3>🕵️ 특이점 추론</h3><div class="mini-spinner"></div></div>
@@ -616,6 +631,10 @@ function updateSectionUI(type, data, extra) {
                             ${typeBadgeHtml}
                             <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${summaryText}</p>
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
+
+            // 상담 시급도 및 프로파일 자동 렌더링 호출
+            if (data && data.counseling_priority) renderCounselingPriority(data.counseling_priority);
+            if (data && data.holistic_analysis) renderHolisticProfile(data.holistic_analysis, data.group_role);
             break;
         case 'stats':
             el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>
@@ -684,4 +703,78 @@ function renderChart() {
             plugins: { legend: { display: false } }
         }
     });
+}
+
+// 상담 시급도 배너 렌더링
+function renderCounselingPriority(priority) {
+    const el = document.getElementById("sec-counseling");
+    if (!el || !priority) return;
+
+    const levels = {
+        '시급': { color: '#e11d48', bg: '#fff1f2', border: '#fda4af', icon: '🔴' },
+        '주의': { color: '#ea580c', bg: '#fff7ed', border: '#fdba74', icon: '🟠' },
+        '관심': { color: '#ca8a04', bg: '#fefce8', border: '#fef08a', icon: '🟡' },
+        '안정': { color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0', icon: '🟢' }
+    };
+
+    const cfg = levels[priority.level] || levels['안정'];
+
+    el.innerHTML = `
+        <div style="background:${cfg.bg}; border:2px solid ${cfg.border}; border-radius:16px; padding:20px; display:flex; align-items:center; gap:15px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
+            <div style="font-size:2.5rem;">${cfg.icon}</div>
+            <div>
+                <div style="font-size:1.1rem; color:${cfg.color}; font-weight:800; margin-bottom:4px;">상담 시급도: ${priority.level}</div>
+                <div style="color:#475569; font-size:0.95rem; line-height:1.5;">${priority.reason}</div>
+            </div>
+        </div>
+    `;
+}
+
+// 전인적 프로파일 및 모둠 역할 렌더링
+function renderHolisticProfile(analysis, role) {
+    const el = document.getElementById("sec-profile");
+    if (!el || !analysis) return;
+    el.classList.remove('loading-section');
+
+    const config = [
+        { key: 'career', label: '🎯 학습 동기 & 진로', items: ['목표지향형', '탐색형', '방황형'] },
+        { key: 'disposition', label: '🧠 성향 & 에너지', items: ['내향 집중형', '외향 활동형', '균형형'] },
+        { key: 'family', label: '🏠 가정 환경 기반', items: ['보호 안정형', '정서 의존형', '책임 조기성숙형'] },
+        { key: 'hobby_life', label: '🎮 몰입 에너지', items: ['경쟁 몰입형', '창작 몰입형', '소비형'] },
+        { key: 'rhythm', label: '🌙 생활 리듬', items: ['건강 안정형', '수면 부족형'] },
+        { key: 'emotion', label: '💛 정서 유형', items: ['자기 인식형', '고민 내재형', '도움 요청형'] }
+    ];
+
+    let html = '<h3 style="color:#4A90E2; margin-top:0;">🌈 전인적 분석 프로파일</h3>';
+    html += '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:15px;">';
+
+    config.forEach(cfg => {
+        const selected = analysis[cfg.key];
+        html += `
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+                <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">${cfg.label}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                    ${cfg.items.map(item => {
+            const isActive = item === selected;
+            return `<span style="padding:4px 10px; border-radius:8px; font-size:0.9rem; ${isActive ? 'background:#4A90E2; color:#fff; font-weight:bold; box-shadow:0 2px 4px rgba(74,144,226,0.3);' : 'background:#f1f5f9; color:#94a3b8;'}">${item}</span>`;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+
+    if (role) {
+        html += `
+            <div style="margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;">
+                <div style="font-weight:bold; color:#0369a1; margin-bottom:8px;">👥 모둠 활동 추천 역할</div>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="background:#0369a1; color:#fff; padding:4px 12px; border-radius:20px; font-weight:bold;">${role}</span>
+                    <span style="color:#0c4a6e; font-size:0.95rem;">활동 시 위 역할을 맡을 때 가장 높은 시너지를 낼 수 있습니다.</span>
+                </div>
+            </div>
+        `;
+    }
+
+    el.innerHTML = html;
 }
