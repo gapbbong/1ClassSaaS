@@ -778,7 +778,7 @@ function renderHolisticProfile(analysis, role) {
     el.classList.remove('loading-section');
 
     if (!analysis) {
-        el.innerHTML = `< h3 style = "color:#94a3b8; margin-top:0;" >🌈 전인적 분석 프로파일</h3 >
+        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">🌈 전인적 분석 프로파일</h3>
                 <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
         return;
     }
@@ -798,7 +798,7 @@ function renderHolisticProfile(analysis, role) {
     config.forEach(cfg => {
         const selected = analysis[cfg.key];
         html += `
-                    < div style = "background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;" >
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
                 <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">${cfg.label}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
                     ${cfg.items.map(item => {
@@ -806,21 +806,21 @@ function renderHolisticProfile(analysis, role) {
             return `<span style="padding:4px 10px; border-radius:8px; font-size:0.9rem; ${isActive ? 'background:#4A90E2; color:#fff; font-weight:bold; box-shadow:0 2px 4px rgba(74,144,226,0.3);' : 'background:#f1f5f9; color:#94a3b8;'}">${item}</span>`;
         }).join('')}
                 </div>
-            </div >
-                `;
+            </div>
+        `;
     });
     html += '</div>';
 
     if (role) {
         html += `
-                < div style = "margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;" >
+            <div style="margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;">
                 <div style="font-weight:bold; color:#0369a1; margin-bottom:8px;">👥 모둠 활동 추천 역할</div>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="background:#0369a1; color:#fff; padding:4px 12px; border-radius:20px; font-weight:bold;">${role}</span>
                     <span style="color:#0c4a6e; font-size:0.95rem;">활동 시 위 역할을 맡을 때 가장 높은 시너지를 낼 수 있습니다.</span>
                 </div>
-            </div >
-                `;
+            </div>
+        `;
     }
 
     el.innerHTML = html;
