@@ -198,6 +198,7 @@ async function loadStudentAnalysis(pid) {
         .maybeSingle();
 
     if (insight) {
+        document.getElementById("loading-view").style.display = "none"; // 로딩 스피너 제거
         currentInsight = insight.content;
         renderResultView();
 
@@ -456,24 +457,33 @@ function updateSectionUI(type, data, extra) {
 
     switch (type) {
         case 'summary':
-            el.innerHTML = `<h3>⭐ AI 핵심 요약</h3><p style="font-size:1.1rem; line-height:1.6; background:#f8fafc; padding:18px; border-radius:12px;">${data}</p>
-                            <div style="margin-top:10px;">${(extra || []).map(t => `<span class="badge" style="background:#4A90E2; color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
+            el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">⭐ AI 핵심 요약</h3>
+                            <p style="font-size:1.05rem; line-height:1.7; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${data}</p>
+                            <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
             break;
         case 'stats':
-            el.innerHTML = `<h3>📊 다면 평가 수치</h3><div style="height:300px; display:flex; justify-content:center;"><canvas id="aiStatsChart"></canvas></div>`;
+            el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>
+                            <div style="height:300px; display:flex; justify-content:center; align-items:center; background:#f8fafc; border-radius:12px; padding:10px;"><canvas id="aiStatsChart"></canvas></div>`;
             break;
         case 'detective':
-            el.innerHTML = `<h3>🕵️ 특이점 추론</h3><div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400;">
-                            <p style="font-weight:bold; margin-bottom:8px;">단서</p><ul style="margin-left: 20px;">${(data.clues || []).map(c => `<li>${c}</li>`).join('')}</ul>
-                            <p style="margin-top:10px; font-weight:bold;">추론 결과</p><p>${data.deduction}</p></div>`;
+            el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론 (Detective)</h3>
+                            <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size:0.95rem; line-height:1.6; color:#444;">
+                                <p style="font-weight:bold; margin:0 0 8px 0; color:#D35400;">발견된 단서 (Clues)</p>
+                                <ul style="margin:0 0 12px 0; padding-left:24px; color:#555;">${(data.clues || []).map(c => `<li style="margin-bottom:4px;">${c}</li>`).join('')}</ul>
+                                <p style="margin:12px 0 4px 0; font-weight:bold; border-top:1px dashed #ccc; padding-top:10px; color:#D35400;">추론 결과</p>
+                                <p style="margin:0;">${data.deduction}</p>
+                            </div>`;
             break;
         case 'garden':
-            el.innerHTML = `<h3>🌿 현재 상태</h3><div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60;">
-                            <p><strong>비유:</strong> <span style="font-size:1.1rem; color:#1e8449;">${data.species}</span></p>
-                            <p><strong>상태:</strong> ${data.condition}</p></div>`;
+            el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3>
+                            <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size:0.95rem; line-height:1.6; color:#444; height:100%; box-sizing:border-box;">
+                                <p style="margin:0 0 8px 0;"><strong>비유:</strong> <span style="font-size:1.05rem; color:#1e8449; font-weight:bold;">${data.species}</span></p>
+                                <p style="margin:0;"><strong>현재 상태 및 필요 요소:</strong><br><span style="display:inline-block; margin-top:4px;">${data.condition}</span></p>
+                            </div>`;
             break;
         case 'action':
-            el.innerHTML = `<h3 style="color:#4A90E2;">💡 추천 액션 플랜</h3><p style="font-size:1.1rem; font-weight:bold; background:#f0f7ff; padding:16px; border-radius:12px;">${data}</p>`;
+            el.innerHTML = `<h3 style="color:var(--ai-primary); margin-top:0;">💡 교사를 위한 추천 액션 플랜</h3>
+                            <p style="font-size:1.05rem; font-weight:bold; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data}</p>`;
             break;
     }
     el.classList.add('fade-in');
