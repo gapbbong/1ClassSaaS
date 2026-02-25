@@ -245,48 +245,58 @@ async function runBatchAIAnalysis(pid) {
     `;
 
     try {
-        // Step 1: Core (Summary, Tags, Stats)
-        const step1Data = await callGeminiAPI(apiKey, `
-            위 데이터를 분석해서 요약과 수치 평가를 해줘.
-            JSON 포맷: {
-              "summary": "3줄 요약",
-              "tags": ["태그1", "태그2", "태그3"],
-              "stats": {"study": 50, "routine": 50, "emotion": 50, "social": 50, "self": 50, "resilience": 50}
-            }
-        `, commonContext);
+        // AI 호출 시작 전 상태 메시지 시뮬레이션 (사용자 경험)
+        const statusEl = document.querySelector("#sec-summary .status-text");
+        const updateStatus = (text) => { if (statusEl) statusEl.innerText = text; };
 
-        currentInsight = { ...currentInsight, ...step1Data };
-        updateSectionUI('summary', step1Data.summary, step1Data.tags);
-        updateSectionUI('stats', step1Data.stats);
-        renderChart();
+        updateStatus("학생 생활 기록 분석 중...");
 
-        // Step 2: Deep Analysis (Detective, Garden)
-        const step2Data = await callGeminiAPI(apiKey, `
-            위 데이터를 바탕으로 탐정 관점과 생태계 비유 분석을 해줘.
-            JSON 포맷: {
-              "detective": {"clues": ["단서1"], "deduction": "추론"},
-              "garden": {"species": "꽃이름", "condition": "상태"}
-            }
-        `, commonContext);
+        const promptText = `
+        다음 학생 데이터를 바탕으로 통합 인사이트를 도출해줘.
+        JSON 포맷을 엄격히 지켜서 답변해줘.
+        {
+          "summary": "3줄 종합 요약",
+          "tags": ["태그1", "태그2", "태그3"],
+          "stats": {"study": 50, "routine": 50, "emotion": 50, "social": 50, "self": 50, "resilience": 50},
+          "detective": {"clues": ["단서1", "단서2"], "deduction": "심층 추론"},
+          "garden": {"species": "꽃 비유", "condition": "정서 상태"},
+          "action": "교사 액션 플랜"
+        }
+        
+        [데이터]
+        ${commonContext}`;
 
-        currentInsight = { ...currentInsight, ...step2Data };
-        updateSectionUI('detective', step2Data.detective);
-        updateSectionUI('garden', step2Data.garden);
+        // 단 한 번의 호출로 통합 데이터 수신
+        const fullData = await callGeminiAPI(apiKey, promptText, "");
 
-        // Step 3: Synthesis (Action Plan)
-        const step3Data = await callGeminiAPI(apiKey, `
-            모든 분석을 종합해서 교사에게 추천하는 짧은 액션 플랜을 제안해줘.
-            JSON 포맷: { "action": "실행 가이드" }
-        `, commonContext);
+        updateStatus("다면 평가 수치 계산 중...");
+        currentInsight = fullData;
 
-        currentInsight = { ...currentInsight, ...step3Data };
-        updateSectionUI('action', step3Data.action);
+        // 시각적 박진감을 위해 약간의 시차를 두고 UI 업데이트
+        updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
 
-        // Final Save to DB (Full Insight)
+        setTimeout(() => {
+            updateSectionUI('stats', currentInsight.stats);
+            renderChart();
+        }, 300);
+
+        setTimeout(() => {
+            updateSectionUI('detective', currentInsight.detective);
+            updateSectionUI('garden', currentInsight.garden);
+        }, 600);
+
+        setTimeout(() => {
+            updateSectionUI('action', currentInsight.action);
+        }, 900);
+
+        // DB 저장
         await supabase.from('student_insights').insert([{ student_pid: pid, insight_type: 'omni', content: currentInsight }]);
 
     } catch (err) {
         console.error("AI Analysis Failed", err);
+        const statusEl = document.querySelector("#sec-summary .status-text");
+        if (statusEl) statusEl.innerText = "분석 실패 (API 한도/키 확인)";
+
         const sections = ['summary', 'stats', 'detective', 'garden', 'action'];
         sections.forEach(sec => {
             const el = document.getElementById(`sec-${sec}`);
@@ -357,18 +367,20 @@ async function runBatchClassAnalysis(classInfo) {
 
 // Helper: Call Gemini
 async function callGeminiAPI(apiKey, prompt, context) {
-    // 모델명 안정화 및 에러 구체화
+    // 안정성을 위해 v1 엔드포인트 및 최신 Flash 모델 사용
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: context + "\n" + prompt }] }],
+                contents: [{ parts: [{ text: (context ? context + "\n" : "") + prompt }] }],
                 generationConfig: { responseMimeType: "application/json" }
             })
         });
         const res = await response.json();
         if (res.error) throw new Error(res.error.message);
+        if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
+
         const text = res.candidates[0].content.parts[0].text;
         return JSON.parse(text);
     } catch (err) {
