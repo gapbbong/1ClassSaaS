@@ -297,8 +297,8 @@ body {
 }
 
 .student-photo-mini {
-    width: 64px;
-    height: 64px;
+    width: 128px;
+    height: 128px;
     border-radius: 50%;
     background: white;
     display: flex;
