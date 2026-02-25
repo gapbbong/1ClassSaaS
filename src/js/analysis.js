@@ -269,11 +269,36 @@ async function runBatchAIAnalysis(pid) {
     `;
 
     try {
-        // AI 호출 시작 전 상태 메시지 시뮬레이션 (사용자 경험)
-        const statusEl = document.querySelector("#sec-summary .status-text");
-        const updateStatus = (text) => { if (statusEl) statusEl.innerText = text; };
+        // AI 호출 시작 전 상태 메시지 및 프로그레스 바 시뮬레이션
+        const pBar = document.getElementById("ai-progress-bar");
+        const pText = document.getElementById("ai-progress-text");
+        const pPercent = document.getElementById("ai-progress-percent");
 
-        updateStatus("학생 생활 기록 분석 중...");
+        // 프로그레스 바 초기화
+        let progress = 0;
+        if (pBar) pBar.style.width = "0%";
+        if (pText) pText.innerText = "학생 기록 및 설문 데이터 종합 중...";
+        if (pPercent) pPercent.innerText = "0%";
+
+        // 가짜 진행률 시뮬레이션 인터벌
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                // 천천히 90%까지 증가
+                progress += Math.floor(Math.random() * 5) + 1;
+                if (progress > 90) progress = 90;
+
+                if (progress > 20 && progress <= 40) {
+                    pText.innerText = "제미나이 2.5 Flash 모델 응답 대기 중...";
+                } else if (progress > 40 && progress <= 70) {
+                    pText.innerText = "다면 평가 지표 추출 및 분석 중...";
+                } else if (progress > 70) {
+                    pText.innerText = "거의 완료되었습니다. 결과 요약 중...";
+                }
+
+                if (pBar) pBar.style.width = `${progress}%`;
+                if (pPercent) pPercent.innerText = `${progress}%`;
+            }
+        }, 500);
 
         const promptText = `
         다음 [데이터]를 바탕으로 학생의 특성을 다각도로 분석하여 JSON 형식으로만 답변해줘.
@@ -294,7 +319,12 @@ async function runBatchAIAnalysis(pid) {
         // 단 한 번의 호출로 통합 데이터 수신
         const fullData = await callGeminiAPI(apiKey, promptText, "");
 
-        updateStatus("다면 평가 수치 계산 중...");
+        // 인터벌 정리 및 완료 상태(100%) 표시
+        clearInterval(progressInterval);
+        if (pBar) pBar.style.width = "100%";
+        if (pText) pText.innerText = "분석 완료! 결과를 화면에 적용합니다.";
+        if (pPercent) pPercent.innerText = "100%";
+
         currentInsight = fullData;
 
         // 시각적 박진감을 위해 약간의 시차를 두고 UI 업데이트
@@ -318,9 +348,19 @@ async function runBatchAIAnalysis(pid) {
         await supabase.from('student_insights').insert([{ student_pid: pid, insight_type: 'omni', content: currentInsight }]);
 
     } catch (err) {
+        if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
         console.error("AI Analysis Failed", err);
-        const statusEl = document.querySelector("#sec-summary .status-text");
-        if (statusEl) statusEl.innerText = "분석 실패 (API 한도/키 확인)";
+
+        const pBar = document.getElementById("ai-progress-bar");
+        const pText = document.getElementById("ai-progress-text");
+        if (pBar) {
+            pBar.style.background = "#d63031";
+            pBar.style.width = "100%";
+        }
+        if (pText) {
+            pText.style.color = "#d63031";
+            pText.innerText = "분석 실패 (API 한도/키 오류)";
+        }
 
         const sections = ['summary', 'stats', 'detective', 'garden', 'action'];
         sections.forEach(sec => {
