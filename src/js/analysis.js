@@ -237,7 +237,6 @@ async function loadStudentAnalysis(pid) {
         updateSectionUI('summary', currentInsight, currentInsight.tags);
         updateSectionUI('stats', currentInsight.stats);
         updateSectionUI('detective', currentInsight.detective || {});
-        updateSectionUI('garden', currentInsight.garden || {});
         updateSectionUI('action', currentInsight.action || "분석 데이터가 없습니다.");
 
         renderChart();
@@ -330,7 +329,6 @@ async function runBatchAIAnalysis(pid) {
           "group_role": "리더형/전략가형/실행형/분위기 메이커형/자료 탐색형/책임 분산형/독주형 중 택1",
           "stats": {"study": 85, "routine": 70, "emotion": 90, "social": 80, "self": 75, "resilience": 88},
           "detective": {"clues": ["단서1", "단서2"], "deduction": "추론 의견"},
-          "garden": {"species": "식물 이름", "condition": "환경 제안"},
           "action": "교사를 위한 조언"
         }
         
@@ -362,7 +360,6 @@ async function runBatchAIAnalysis(pid) {
 
         setTimeout(() => {
             updateSectionUI('detective', currentInsight.detective);
-            updateSectionUI('garden', currentInsight.garden);
         }, 600);
 
         setTimeout(() => {
@@ -600,10 +597,7 @@ function renderResultView() {
         <div id="sec-summary" class="result-card loading-section"><h3>⭐ AI 핵심 요약</h3><div class="mini-spinner"></div><p class="status-text">분석 중...</p></div>
         <div id="sec-profile" class="result-card loading-section"><h3>🌈 전인적 분석 프로파일</h3><div class="mini-spinner"></div></div>
         <div id="sec-stats" class="result-card loading-section" style="${currentMode === 'class' ? 'display:none' : ''}"><h3>📊 다면 평가 수치</h3><div class="mini-spinner"></div></div>
-        <div class="analysis-grid">
-            <div id="sec-detective" class="result-card loading-section"><h3>🕵️ 특이점 추론</h3><div class="mini-spinner"></div></div>
-            <div id="sec-garden" class="result-card loading-section"><h3>🌿 현재 상태</h3><div class="mini-spinner"></div></div>
-        </div>
+        <div id="sec-detective" class="result-card loading-section"><h3>🕵️ 특이점 추론</h3><div class="mini-spinner"></div></div>
         <div id="sec-action" class="result-card loading-section"><h3>💡 추천 액션 플랜</h3><div class="mini-spinner"></div></div>
         
         <!-- 새로운 분석 시작 버튼 추가 (하단) -->
@@ -673,20 +667,9 @@ function updateSectionUI(type, data, extra) {
                                 <p style="margin:0; word-break:keep-all;">${data.deduction}</p>
                             </div>`;
             break;
-        case 'garden':
-            if (!data || !data.species) {
-                el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3><p style="padding:10px; color:#94a3b8;">데이터가 없습니다.</p>`;
-                break;
-            }
-            el.innerHTML = `<h3 style="color:#27AE60; margin-top:0;">🌿 현재 상태 (Garden)</h3>
-                            <div style="background:#eafaf1; padding:16px; border-radius:12px; border-left:4px solid #27AE60; font-size:0.95rem; line-height:1.6; color:#444; height:100%; box-sizing:border-box; word-break:keep-all;">
-                                <p style="margin:0 0 8px 0;"><strong>비유:</strong> <span style="font-size:1.05rem; color:#1e8449; font-weight:bold;">${data.species}</span></p>
-                                <p style="margin:0;"><strong>현재 상태 및 필요 요소:</strong><br><span style="display:inline-block; margin-top:4px;">${data.condition}</span></p>
-                            </div>`;
-            break;
         case 'action':
             el.innerHTML = `<h3 style="color:var(--ai-primary); margin-top:0;">💡 교사를 위한 추천 액션 플랜</h3>
-                            <p style="font-size:1.05rem; font-weight:bold; word-break:keep-all; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data}</p>`;
+                            <p style="font-size:1.05rem; font-weight:bold; word-break:keep-all; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data || "추천 액션이 없습니다."}</p>`;
             break;
     }
     el.classList.add('fade-in');
@@ -795,8 +778,8 @@ function renderHolisticProfile(analysis, role) {
     el.classList.remove('loading-section');
 
     if (!analysis) {
-        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">🌈 전인적 분석 프로파일</h3>
-                        <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
+        el.innerHTML = `< h3 style = "color:#94a3b8; margin-top:0;" >🌈 전인적 분석 프로파일</h3 >
+                <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
         return;
     }
 
@@ -815,7 +798,7 @@ function renderHolisticProfile(analysis, role) {
     config.forEach(cfg => {
         const selected = analysis[cfg.key];
         html += `
-            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
+                    < div style = "background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;" >
                 <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">${cfg.label}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
                     ${cfg.items.map(item => {
@@ -823,21 +806,21 @@ function renderHolisticProfile(analysis, role) {
             return `<span style="padding:4px 10px; border-radius:8px; font-size:0.9rem; ${isActive ? 'background:#4A90E2; color:#fff; font-weight:bold; box-shadow:0 2px 4px rgba(74,144,226,0.3);' : 'background:#f1f5f9; color:#94a3b8;'}">${item}</span>`;
         }).join('')}
                 </div>
-            </div>
-        `;
+            </div >
+                `;
     });
     html += '</div>';
 
     if (role) {
         html += `
-            <div style="margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;">
+                < div style = "margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;" >
                 <div style="font-weight:bold; color:#0369a1; margin-bottom:8px;">👥 모둠 활동 추천 역할</div>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="background:#0369a1; color:#fff; padding:4px 12px; border-radius:20px; font-weight:bold;">${role}</span>
                     <span style="color:#0c4a6e; font-size:0.95rem;">활동 시 위 역할을 맡을 때 가장 높은 시너지를 낼 수 있습니다.</span>
                 </div>
-            </div>
-        `;
+            </div >
+                `;
     }
 
     el.innerHTML = html;
