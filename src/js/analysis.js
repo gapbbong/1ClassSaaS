@@ -256,9 +256,8 @@ async function runBatchAIAnalysis(pid) {
     const surveyData = surveyRes.data?.[0]?.data || {};
     const recordsData = (recordsRes.data || []).filter(r => r.content && r.content.trim().length > 9);
 
-    // UI 스켈레톤 노출
-    document.getElementById("loading-view").style.display = "none";
-    renderResultView();
+    // UI 스켈레톤 렌더링 지연 (완전한 로딩바 노출을 위함)
+    document.getElementById("result-view").style.display = "none";
     currentInsight = {};
 
     const commonContext = `
@@ -328,7 +327,11 @@ async function runBatchAIAnalysis(pid) {
         currentInsight = fullData;
 
         // 시각적 박진감을 위해 약간의 시차를 두고 UI 업데이트
-        updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
+        setTimeout(() => {
+            document.getElementById("loading-view").style.display = "none";
+            renderResultView();
+            updateSectionUI('summary', currentInsight.summary, currentInsight.tags);
+        }, 800);
 
         setTimeout(() => {
             updateSectionUI('stats', currentInsight.stats);
@@ -403,11 +406,39 @@ async function runBatchClassAnalysis(classInfo) {
         records: (recordsRes.data || []).filter(r => r.student_pid === st.pid && r.content.length > 9).map(r => r.content)
     }));
 
-    renderResultView();
+    // UI 스켈레톤 지연 처리
+    document.getElementById("result-view").style.display = "none";
 
     const commonContext = `학급명: ${classInfo}, 데이터: ${JSON.stringify(classDataSnippet)}`;
 
     try {
+        // AI 호출 시작 전 상태 메시지 및 프로그레스 바 시뮬레이션
+        const pBar = document.getElementById("ai-progress-bar");
+        const pText = document.getElementById("ai-progress-text");
+        const pPercent = document.getElementById("ai-progress-percent");
+
+        let progress = 0;
+        if (pBar) pBar.style.width = "0%";
+        if (pText) pText.innerText = "학급 전체 데이터 수집 및 분석 준비...";
+        if (pPercent) pPercent.innerText = "0%";
+
+        const progressInterval = setInterval(() => {
+            if (progress < 90) {
+                progress += Math.floor(Math.random() * 5) + 1;
+                if (progress > 90) progress = 90;
+
+                if (progress > 20 && progress <= 40) {
+                    pText.innerText = "제미나이 2.5 Flash 응답 대기 중...";
+                } else if (progress > 40 && progress <= 70) {
+                    pText.innerText = "학급 공통 특이점 및 패턴 추출 중...";
+                } else if (progress > 70) {
+                    pText.innerText = "거의 완료되었습니다. 결과 정리 중...";
+                }
+
+                if (pBar) pBar.style.width = `${progress}%`;
+                if (pPercent) pPercent.innerText = `${progress}%`;
+            }
+        }, 500);
         const promptText = `
         다음 학급 [데이터]를 분석하여 JSON 형식으로만 답변해줘. 다른 설명 없이 오직 JSON만 출력해.
         {
@@ -422,11 +453,21 @@ async function runBatchClassAnalysis(classInfo) {
 
         const fullData = await callGeminiAPI(apiKey, promptText, "");
 
-        updateSectionUI('summary', fullData.summary, fullData.tags);
-        updateSectionUI('detective', fullData.detective);
-        updateSectionUI('garden', fullData.garden);
-        updateSectionUI('action', fullData.action);
+        clearInterval(progressInterval);
+        if (pBar) pBar.style.width = "100%";
+        if (pText) pText.innerText = "학급 분석 완료! 화면을 구성합니다.";
+        if (pPercent) pPercent.innerText = "100%";
+
+        setTimeout(() => {
+            document.getElementById("loading-view").style.display = "none";
+            renderResultView();
+            updateSectionUI('summary', fullData.summary, fullData.tags);
+            updateSectionUI('detective', fullData.detective);
+            updateSectionUI('garden', fullData.garden);
+            updateSectionUI('action', fullData.action);
+        }, 800);
     } catch (e) {
+        if (typeof progressInterval !== 'undefined') clearInterval(progressInterval);
         console.error("Class Analysis Error", e);
         const sections = ['summary', 'detective', 'garden', 'action'];
         sections.forEach(sec => {
