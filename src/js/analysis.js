@@ -436,7 +436,7 @@ function renderResultView() {
 
     if (currentStudent) {
         headerName.innerText = currentStudent.name;
-        headerInfo.innerText = `${currentStudent.class_info} ${currentStudent.student_id || ''}`;
+        headerInfo.innerText = `${currentStudent.student_id || ''}`.trim();
 
         // 사진 처리 로직 개선 (Drive ID 지원)
         let photoUrl = "";
