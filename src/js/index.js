@@ -151,6 +151,10 @@ async function initAuth() {
 
   // 이미 인증되어있다면 모달 숨기고 진행
   if (storedEmail) {
+    if (storedEmail === 'keeper@kse.hs.kr') {
+      window.location.href = 'keeper.html';
+      return false;
+    }
     authModal.style.display = 'none';
     return true;
   }
@@ -192,6 +196,11 @@ async function initAuth() {
         } else {
           // 인증 통과
           setStoredEmail(data.email);
+          if (data.email === 'keeper@kse.hs.kr') {
+            window.location.href = 'keeper.html';
+            resolve(false);
+            return;
+          }
           authModal.style.display = 'none';
           // 화면 복구
           titleBar.style.display = 'flex';
