@@ -35,12 +35,11 @@
     border: 1px solid #eaeaea;
     color: #333;
     cursor: pointer;
-    padding: 9px 18px;
-    /* 1.5배 */
-    border-radius: 16px;
-    /* 둥근 정도 비례 확대 */
-    min-width: 90px;
-    /* 1.5배 */
+    padding: 7px 14px;
+    /* 25% 축소 */
+    border-radius: 12px;
+    min-width: 68px;
+    /* 25% 축소 */
     transition: all 0.2s ease;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
     text-decoration: none;
@@ -57,15 +56,14 @@
 }
 
 .nav-icon {
-    font-size: 1.85rem;
-    /* ~1.5배 */
-    margin-bottom: 4px;
-    /* 여백 확대 */
+    font-size: 1.4rem;
+    /* 25% 축소 */
+    margin-bottom: 2px;
 }
 
 .nav-text {
-    font-size: 1.1rem;
-    /* ~1.5배 */
+    font-size: 0.85rem;
+    /* 25% 축소 */
     font-weight: 700;
     color: #444;
     white-space: nowrap;
