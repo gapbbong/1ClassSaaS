@@ -312,11 +312,17 @@ function loadStudents() {
 
                 imgContainer.appendChild(img);
 
-                // [추가] 학적 상태 배지 (자퇴, 전출 등)
+                // [추가] 학적 상태 배지 (자퇴, 전출, 졸업 등)
                 if (status && status !== "재학") {
                     const statusBadge = document.createElement("div");
                     statusBadge.className = "status-badge";
-                    statusBadge.textContent = status;
+
+                    if (status === "graduated") {
+                        statusBadge.classList.add("graduated");
+                        statusBadge.textContent = "졸업";
+                    } else {
+                        statusBadge.textContent = status;
+                    }
                     imgContainer.appendChild(statusBadge);
                 }
 

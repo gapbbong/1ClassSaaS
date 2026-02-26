@@ -119,13 +119,19 @@ async function loadClassSurveyStatus() {
             });
         }
 
-        // 4. 데이터 병합
+        // 4. 데이터 병합 (학생 + 설문)
         currentClassData = students.map(student => {
+            // PID를 문자열로 변환하고 양 끝 공백 제거 후 비교 (안정성 강화)
+            const studentPid = String(student.pid || '').trim().toLowerCase();
+            const survey = Object.values(surveyMap).find(s => String(s.student_pid || '').trim().toLowerCase() === studentPid) || null;
+
             return {
                 student: student,
-                survey: surveyMap[student.pid] || null
+                survey: survey
             };
         });
+
+        console.log(`[Data Merge] ${classInfo}: ${currentClassData.filter(d => d.survey).length}/${currentClassData.length} 제출됨`);
 
         // 5. 완료 후 렌더링
         document.getElementById('loading-view').style.display = 'none';
@@ -135,8 +141,9 @@ async function loadClassSurveyStatus() {
         renderSummary();
         renderStudentList();
 
-        // 6. 실시간 업데이트 구독 설정 (기존 구독 해제 후 새로 설정)
+        // 6. 실시간 업데이트 구독 및 폴백 설정
         setupRealtimeSubscription(classInfo, pids);
+        setupPollingFallback();
 
     } catch (error) {
         console.error("데이터 로드 오류:", error);
@@ -147,6 +154,7 @@ async function loadClassSurveyStatus() {
 }
 
 let surveySubscription = null;
+let pollingInterval = null;
 
 // 실시간 구독 설정 함수
 function setupRealtimeSubscription(classInfo, pids) {
@@ -156,29 +164,96 @@ function setupRealtimeSubscription(classInfo, pids) {
 
     if (pids.length === 0) return;
 
-    surveySubscription = supabase.channel(`public:surveys:${classInfo}`)
+    // 채널 생성 (유니크한 이름으로)
+    const channelName = `surveys-realtime-${Date.now()}`;
+    surveySubscription = supabase.channel(channelName)
         .on(
             'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'surveys' },
-            (payload) => {
-                const newSurvey = payload.new;
-                // 현재 로드된 학생의 데이터인지 확인
-                if (pids.includes(newSurvey.student_pid)) {
-                    console.log('실시간 새 설문 제출 감지!', newSurvey);
+            { event: '*', schema: 'public', table: 'surveys' },
+            async (payload) => {
+                const { eventType, new: newSurvey, old: oldSurvey } = payload;
+                console.log(`실시간 변경 감지 [${eventType}]`, payload);
 
-                    // currentClassData 업데이트
-                    const targetIndex = currentClassData.findIndex(d => d.student.pid === newSurvey.student_pid);
-                    if (targetIndex !== -1 && currentClassData[targetIndex].survey === null) {
-                        currentClassData[targetIndex].survey = newSurvey;
-
-                        // 화면 리렌더링
+                // INSERT, UPDATE 시 처리
+                if (eventType === 'INSERT' || eventType === 'UPDATE') {
+                    const sid = String(newSurvey.student_pid);
+                    if (pids.map(String).includes(sid)) {
+                        const targetIndex = currentClassData.findIndex(d => String(d.student.pid) === sid);
+                        if (targetIndex !== -1) {
+                            currentClassData[targetIndex].survey = newSurvey;
+                            renderSummary();
+                            renderStudentList();
+                        }
+                    }
+                }
+                // DELETE 시 처리
+                else if (eventType === 'DELETE') {
+                    // DELETE payload의 old에는 PK(id)만 있는 경우가 많으므로, 
+                    // currentClassData에서 survey.id가 일치하는 항목을 찾아 비웁니다.
+                    const targetIndex = currentClassData.findIndex(d => d.survey && String(d.survey.id) === String(oldSurvey.id));
+                    if (targetIndex !== -1) {
+                        currentClassData[targetIndex].survey = null;
                         renderSummary();
                         renderStudentList();
                     }
                 }
             }
         )
-        .subscribe();
+        .subscribe((status) => {
+            console.log(`실시간 구독 상태 [${classInfo}]:`, status);
+        });
+}
+
+// 폴백: 실시간이 불안정할 경우를 대비해 60초마다 백그라운드에서 동기화 (서버 부하 최소화)
+function setupPollingFallback() {
+    if (pollingInterval) clearInterval(pollingInterval);
+
+    pollingInterval = setInterval(async () => {
+        // [최적화] 브라우저 탭이 백그라운드에 있으면 통신하지 않음
+        if (document.hidden) return;
+
+        const classInfo = document.getElementById('class-dropdown').value;
+        if (!classInfo) return;
+
+        const pids = currentClassData.map(d => d.student.pid);
+        if (pids.length === 0) return;
+
+        try {
+            console.log("[Safety Sync] 최신 데이터 동기화 체크 중...");
+            // surveys 테이블에서 최신 정보만 다시 가져옴 (백그라운드)
+            const { data: surveys, error } = await supabase
+                .from('surveys')
+                .select('student_pid, submitted_at, id, data')
+                .in('student_pid', pids);
+
+            if (error) throw error;
+
+            let updated = false;
+            const surveyMap = {};
+            surveys.forEach(s => { surveyMap[String(s.student_pid)] = s; });
+
+            // currentClassData와 비교하여 변경 사항 반영
+            currentClassData.forEach(item => {
+                const pidStr = String(item.student.pid);
+                const currentSurvey = item.survey;
+                const latestSurvey = surveyMap[pidStr] || null;
+
+                // 변경 여부 확인 (있던 게 없어지거나, 없던 게 생기거나, ID가 바뀌었거나)
+                if (JSON.stringify(currentSurvey) !== JSON.stringify(latestSurvey)) {
+                    item.survey = latestSurvey;
+                    updated = true;
+                }
+            });
+
+            if (updated) {
+                console.log("폴백 데이터 업데이트 반영: UI 갱신");
+                renderSummary();
+                renderStudentList();
+            }
+        } catch (e) {
+            console.warn("폴백 동기화 실패:", e);
+        }
+    }, 30000); // 30초 주기로 변경 (사용자 경험과 서버 부하 조절)
 }
 
 // 2. 대시보드 요약 렌더링
@@ -195,6 +270,8 @@ function renderSummary() {
 // 3. 학생 리스트 렌더링
 function renderStudentList() {
     const tbody = document.getElementById('student-tbody');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
     // 필터링 적용
@@ -234,11 +311,11 @@ function renderStudentList() {
             : `<span class="badge pending">미제출</span>`;
 
         // 이름 렌더링 (전화번호 툴팁 추가 등 가능)
-        const nameHtml = `<div style="font-weight:bold;">${student['이름']}</div>
-                          <div style="font-size:0.8rem; color:#64748b;">${student['연락처'] || ''}</div>`;
+        const nameHtml = `<div style="font-weight:bold;">${student['이름'] || student.name}</div>
+                          <div style="font-size:0.8rem; color:#64748b;">${student['연락처'] || student.contact || ''}</div>`;
 
         tr.innerHTML = `
-            <td><strong>${student['학번'] || ''}</strong></td>
+            <td><strong>${student['학번'] || student.student_id || ''}</strong></td>
             <td>${nameHtml}</td>
             <td>${statusBadge}</td>
             <td class="submit-time">${timeStr}</td>

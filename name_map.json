@@ -1,0 +1,1416 @@
+[
+  {
+    "pid": "6046e3d2-b35c-4210-b3fa-ebaf0f8d9ef0",
+    "name": "김은혁",
+    "student_id": "2105",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "c6781e6d-11aa-4235-8360-5b8273bef634",
+    "name": "김현우",
+    "student_id": "2106",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "123e41a8-09c8-4d1e-90e1-e950640b6c41",
+    "name": "이서준",
+    "student_id": "2310",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "de8b05f6-dc11-4c73-be04-92b0460601fe",
+    "name": "김동욱",
+    "student_id": "2102",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "8a06b046-64e5-4bc6-bfe1-601b630a1ec4",
+    "name": "조서현",
+    "student_id": "2215",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b87f06a1-13ae-4791-bd00-79dfbbe87c01",
+    "name": "전현욱",
+    "student_id": "2114",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7206a627-ee59-462b-90b7-b07e7c475172",
+    "name": "조재범",
+    "student_id": "2118",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "17907902-1601-4f76-b7c7-f0f0771574e9",
+    "name": "허환",
+    "student_id": "2119",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "6d28c014-25a5-45ec-b3ed-e131a1da7c07",
+    "name": "김범서",
+    "student_id": "2303",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e2d84c71-68d3-47f2-aa21-408dec6ba248",
+    "name": "고현호",
+    "student_id": "2203",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b5bb84c3-88e9-440b-b083-bbdf7f2afc75",
+    "name": "김윤우",
+    "student_id": "2205",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "61da73d8-a07a-43db-957c-f49caf500b10",
+    "name": "서영범",
+    "student_id": "2307",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "91fe9e75-77ac-4902-8031-b4b6d8855d45",
+    "name": "이해원",
+    "student_id": "2112",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "3e22857e-7a9a-42b6-8c94-3f327ec0695b",
+    "name": "전경필",
+    "student_id": "2113",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "afbc4236-9dae-4e68-912d-f384efad40b5",
+    "name": "정지원",
+    "student_id": "2313",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "26edf3ca-5322-4f42-ad74-c85fbfedf892",
+    "name": "전민겸",
+    "student_id": "1215",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "302b5f4e-ac6e-4572-8842-c9a690e3a6e0",
+    "name": "강민성",
+    "student_id": "2401",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e870e739-3794-4852-88ef-7a983567716e",
+    "name": "황보민",
+    "student_id": "1219",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "f8c8dcab-8c85-4d98-8b2d-0a33ca4c9228",
+    "name": "김경민",
+    "student_id": "2204",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "1480bfff-2591-4046-afb0-653798ee6d42",
+    "name": "이성빈",
+    "student_id": "2210",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "ccb9f721-b04f-4921-8045-706c4761a79c",
+    "name": "문재현",
+    "student_id": "1307",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "936afa27-dfe9-44e2-b647-7e1117c8832b",
+    "name": "정유준",
+    "student_id": "2115",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "c9948129-2d0e-4079-a9b3-32d83a557761",
+    "name": "정현승",
+    "student_id": "2117",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d820fc41-d4ba-4aa8-86f0-0d5ddf3b4323",
+    "name": "최동현",
+    "student_id": "2217",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d70d96e8-e047-4dec-b3f3-b28368d711be",
+    "name": "김동혁",
+    "student_id": "2405",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "6028ace2-27e8-4725-a234-238097c85ef7",
+    "name": "배지민",
+    "student_id": "2410",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "54b7caf6-7fb2-449d-afc5-560adcf19826",
+    "name": "박지솔",
+    "student_id": "2506",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e66262b9-4a10-4460-b2f6-59cfe4ebe428",
+    "name": "조준호",
+    "student_id": "2516",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d86d1196-e9ad-4751-a348-a80977f57f24",
+    "name": "김동현",
+    "student_id": "2406",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "4903a51a-3916-4031-9fdb-c7b7adf2df24",
+    "name": "장예찬",
+    "student_id": "2415",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "bf7e5602-97a5-48cf-a23e-8b4c8388bdc8",
+    "name": "박기태",
+    "student_id": "2505",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "1ee5dff0-d171-4c76-bebc-eb139c6e0223",
+    "name": "우주",
+    "student_id": "2512",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9342ccc1-15ff-40c8-bc6a-58fe40759514",
+    "name": "이태헌",
+    "student_id": "2513",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "c5e3f89f-3312-4ff6-8b4a-29aaf13812f6",
+    "name": "김태윤",
+    "student_id": "2504",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "efc093f5-759e-42d7-9d42-3194decd912b",
+    "name": "권태리",
+    "student_id": "2604",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "869e4cc2-ec80-457e-a0f1-78fb781b2ed5",
+    "name": "양민현",
+    "student_id": "2610",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "23e15d68-f3df-4ff3-aab8-e742dff137dd",
+    "name": "김명준",
+    "student_id": "2407",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "2bfb2fa3-238c-4e19-ab5d-252c0d38a5c1",
+    "name": "박태현",
+    "student_id": "2507",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "a2362619-dc7b-4cf8-9d44-ac9299c73c95",
+    "name": "배재령",
+    "student_id": "3607",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "ad24e060-accf-4405-b06e-903698ad80be",
+    "name": "이유진",
+    "student_id": "2614",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9f05c6fc-1107-4e37-872a-4f6e81570ced",
+    "name": "정원호",
+    "student_id": "2615",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "511d78d9-0355-4e9c-a360-bbe2f126e849",
+    "name": "정효민",
+    "student_id": "2515",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "1dfde551-118f-4f1e-b30f-7bd7b6380250",
+    "name": "최지훈",
+    "student_id": "2617",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "96692730-ddab-4908-ad8f-b0a75cc82c7e",
+    "name": "이윤후",
+    "student_id": "3512",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "b11ca283-b782-4ddc-9b33-e5162d80b849",
+    "name": "손민성",
+    "student_id": "3309",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "9f71244d-2f90-4562-b5ae-965a8dc9e642",
+    "name": "전보민",
+    "student_id": "3514",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "d96b82ad-9953-4478-94a8-8aeebcc5bb02",
+    "name": "박태웅",
+    "student_id": "3105",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "3588229d-20fb-46b8-88b0-5e7d939e3f15",
+    "name": "공성민",
+    "student_id": "2403",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7cf48cfe-2668-4fb1-b087-8acc11dab9aa",
+    "name": "여종혁",
+    "student_id": "3310",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "6647bfb3-c408-4dca-bb77-2bf5ee063f43",
+    "name": "장우찬",
+    "student_id": "3313",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "bc34232b-2d71-4d8b-b88b-63ee46b52647",
+    "name": "박태준",
+    "student_id": "2306",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "f6b4412f-edad-4e55-a2db-1a5f373ffacf",
+    "name": "고강민",
+    "student_id": "2101",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "de4efdd8-9f8c-4000-ac98-debb9da9e801",
+    "name": "신연우",
+    "student_id": "2308",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "50dcc488-14d9-4d92-b03a-4b51722062af",
+    "name": "최민혁",
+    "student_id": "2315",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b20be1ac-8d9d-4d14-bc8b-f28320c2fd66",
+    "name": "김민혁",
+    "student_id": "2103",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b687e326-416d-4d61-a212-3dab7bdbdeec",
+    "name": "IBRAHIM SANAULLAH",
+    "student_id": "2201",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "54aeb2f4-7550-4889-ad3e-cac41d9f7e80",
+    "name": "박성현",
+    "student_id": "2107",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "318ff62c-d30a-440b-ae73-fd4c1021d3ef",
+    "name": "강대현",
+    "student_id": "2202",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "053d6825-c731-40eb-90d4-f7047ad5f23d",
+    "name": "안지환",
+    "student_id": "2110",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "29a88039-66ca-4022-894c-38399bbad7e0",
+    "name": "조재민",
+    "student_id": "2216",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "95ef9cc4-8ba6-486b-a548-0ce3fefdcb59",
+    "name": "이지현",
+    "student_id": "2111",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "62be3733-aa1f-4d03-8621-21458d67e2aa",
+    "name": "정시우",
+    "student_id": "2116",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "ab01ce2f-5cd6-4620-8932-926166c4ee6b",
+    "name": "신정운",
+    "student_id": "2309",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "f17d6f65-62fb-45aa-a9b6-39a87f00cffd",
+    "name": "한석주",
+    "student_id": "2218",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "3e277916-545d-42b9-9e33-25a8693b6748",
+    "name": "최현수",
+    "student_id": "2316",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9d488684-6ee7-4dae-91a8-d21feba66242",
+    "name": "김건영",
+    "student_id": "2301",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "1d2dfe7d-a4bf-49f3-985c-c6bb0f192ed9",
+    "name": "이준희",
+    "student_id": "2311",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7369d528-6088-4735-9080-b1237e87673f",
+    "name": "김성진",
+    "student_id": "2304",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "6d055259-52e6-4361-9d83-f671b27b9a99",
+    "name": "정준석",
+    "student_id": "2312",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "0c01c970-769a-4290-9f36-0ab5f66a6c47",
+    "name": "주현우",
+    "student_id": "2314",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "1ed77aa4-3c8a-49ca-81f3-fd393a6b804a",
+    "name": "김재안",
+    "student_id": "1206",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "8e86c18b-200d-4dd3-aec7-4a708da10947",
+    "name": "이정민",
+    "student_id": "1214",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "747b9a4d-8422-41ac-a29c-4ab2874589db",
+    "name": "정시우",
+    "student_id": "1216",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "4262a69f-d5a2-49e7-ba4f-a99e93c91a02",
+    "name": "김준혁",
+    "student_id": "1306",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "18cd6c1a-5c4a-4e54-b9a2-9a174b33ed3c",
+    "name": "박지훈",
+    "student_id": "1308",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "f3dc728b-f073-4057-a4d6-2a397e7db742",
+    "name": "심호영",
+    "student_id": "3107",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "5eb7866a-31cd-4c15-abad-d33dd4be79b1",
+    "name": "이지백",
+    "student_id": "3109",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "40cff94b-098f-4d08-b4f4-ef265f1a3420",
+    "name": "이수호",
+    "student_id": "2412",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "074b906e-c234-4442-98bb-14aaff00f174",
+    "name": "김우진",
+    "student_id": "2411",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "09b5ba1a-d2a4-46e9-8568-05b03626422e",
+    "name": "전지후",
+    "student_id": "2514",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "8d3ef82c-6026-493d-b409-9207ba7cda29",
+    "name": "오윤호",
+    "student_id": "1415",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "e6c39a7d-4a10-419b-9286-245253af7d5b",
+    "name": "천재윤",
+    "student_id": "2616",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "5ef64bae-7258-4762-894a-f9b2fea0341e",
+    "name": "이정준",
+    "student_id": "2414",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "53bfc08e-36cb-450e-b3b8-e7e54604e383",
+    "name": "문준영",
+    "student_id": "2607",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "76f3f4ba-47ae-40af-a781-77ed6fa418cf",
+    "name": "김민재",
+    "student_id": "1506",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "97a0e87b-1f5c-4ddf-9b67-939db8f4bc2a",
+    "name": "손윤후",
+    "student_id": "2508",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9294e3af-e779-42e0-bc29-4090e5b66195",
+    "name": "배재진",
+    "student_id": "2609",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b84e07b4-e726-4dfb-ba16-5fecbc5e0946",
+    "name": "오선준",
+    "student_id": "2611",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9e8e82ee-9992-4d9e-bb54-18437a263063",
+    "name": "윤영빈",
+    "student_id": "2613",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e755c376-ee87-4316-b65a-d3887651db0c",
+    "name": "정채은",
+    "student_id": "1516",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "cb4ec47f-cc45-48c5-9dd3-7026046c3aaa",
+    "name": "김천호",
+    "student_id": "2408",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b4bba5cb-aedf-41c1-9483-5f32096ea68e",
+    "name": "김재원",
+    "student_id": "2503",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d0e8bddc-9c8c-4209-a2ae-d1e0277857d0",
+    "name": "배원빈",
+    "student_id": "2409",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "0b4b95e6-26b0-4fad-85a9-56ee21af19a0",
+    "name": "박기태",
+    "student_id": "2608",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "bdcfefd2-8114-49c0-a43e-b39a99de41f6",
+    "name": "송지후",
+    "student_id": "2509",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "0b234456-a317-4695-939b-6de7b661cad6",
+    "name": "윤리원",
+    "student_id": "2612",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "03b0ffdb-a9ea-4160-b903-8605fbeb9e78",
+    "name": "김예빈",
+    "student_id": "2502",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d7829581-ad65-49cd-88e2-7a2ad2a7724a",
+    "name": "권범준",
+    "student_id": "2602",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "a21e0323-8bfe-4731-95e6-a13289ad251a",
+    "name": "김도원",
+    "student_id": "2404",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e1e8a1cc-7259-47c4-9b29-e710848f5901",
+    "name": "문승민",
+    "student_id": "3306",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7b67802a-28d9-4c61-baf1-56291231bb1a",
+    "name": "이준서",
+    "student_id": "3312",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "c35b09fa-aea9-4286-8266-32e2a1ff1efb",
+    "name": "학생_2503",
+    "student_id": "2503",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d505b11e-5dbc-4c80-a325-4d8e9b38c42e",
+    "name": "김성훈",
+    "student_id": "1406",
+    "academic_year": 2025,
+    "status": "active"
+  },
+  {
+    "pid": "7aef31c6-18e7-4e01-9cb7-a9b2cc2d81cb",
+    "name": "백승준",
+    "student_id": "3212",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "5b405c78-6ab7-40ca-a5b3-57b65342b32b",
+    "name": "이영준",
+    "student_id": "3215",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7f679b63-2956-422f-b234-b2549f769100",
+    "name": "정다은",
+    "student_id": "3218",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e276251a-da9a-4622-aacc-56c332888b86",
+    "name": "김승하",
+    "student_id": "2104",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d9fa0996-cf98-4c05-9f95-185b16a14fe1",
+    "name": "성재원",
+    "student_id": "2108",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d208542e-6b11-4b9e-b2c7-6f895ea2e31a",
+    "name": "신지후",
+    "student_id": "2109",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "07cde99f-8201-4ebe-87f2-7efeb97ebf09",
+    "name": "윤희정",
+    "student_id": "2209",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "17013f44-78a0-4459-ae08-076b7409c3f3",
+    "name": "임현묵",
+    "student_id": "2211",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "e211cacd-4a3e-44a7-9640-30df3e158e69",
+    "name": "김민준",
+    "student_id": "2302",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "73bd7ae4-4384-4e16-b077-55501b4dffb0",
+    "name": "강병윤",
+    "student_id": "2402",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "49e4ac5f-3b03-42e1-9e14-fb4e9f9e41f1",
+    "name": "이예천",
+    "student_id": "2413",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "fb268a9d-ae6e-4da3-93c9-65f09610e30f",
+    "name": "오선용",
+    "student_id": "2510",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "8ca3669b-1951-4f09-add7-669abc10482c",
+    "name": "강태윤",
+    "student_id": "2601",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "dd78b5d6-fb04-4f43-8119-952b2e1b4238",
+    "name": "남현서",
+    "student_id": "2606",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b28110c1-00b3-4769-8012-bef4af5e6bf8",
+    "name": "진정현",
+    "student_id": "3111",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "f42e8060-8755-45ab-b800-56c62e37307f",
+    "name": "김산",
+    "student_id": "3201",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "eefaf23e-2b60-4dd0-8578-419b0606b967",
+    "name": "김지현",
+    "student_id": "3203",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9527c1fe-c9d3-4fbc-ac30-48a961ca16f2",
+    "name": "김태원",
+    "student_id": "3205",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "2fd4a846-730e-4341-bc50-e35d35dfcaea",
+    "name": "김하진",
+    "student_id": "3207",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "ba9dd6aa-6445-4882-8b84-dbf3bad509f2",
+    "name": "박고영",
+    "student_id": "3209",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "f66bbf6e-e436-4a9b-a6cd-59ee3d06da8b",
+    "name": "배은찬",
+    "student_id": "3211",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "2b981de8-320d-4564-bb81-3c3410b3fd1d",
+    "name": "손민곤",
+    "student_id": "3213",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "79752b7f-0dcb-4ab4-aa52-3a4728288c8f",
+    "name": "이제윤",
+    "student_id": "3216",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "2fa39c5e-c47f-48ee-93d9-b6c28ac6c7ad",
+    "name": "김현수",
+    "student_id": "3101",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "bd69a8f0-c43e-4ebf-a606-c97d4b4c1e4b",
+    "name": "박동현",
+    "student_id": "3307",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "cdf2eb31-a401-474c-a503-df290d5e159f",
+    "name": "최강",
+    "student_id": "3315",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "15815e6f-7694-4a09-aef6-c0bef9314553",
+    "name": "송유찬",
+    "student_id": "3412",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "b83fb83d-6886-467b-ba64-723405377d36",
+    "name": "지유찬",
+    "student_id": "3418",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "4139a988-2152-4233-a93c-9f7984c6ada2",
+    "name": "김유빈",
+    "student_id": "3603",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "ea4d9100-2ff7-4844-8e6d-16d0ca4aa6d9",
+    "name": "강한",
+    "student_id": "3402",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "504e1b78-baca-4fa4-a653-cddacd57b8f5",
+    "name": "김세영",
+    "student_id": "3404",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4f6b06bc-636e-453e-ac89-feb1d0da2669",
+    "name": "노민규",
+    "student_id": "3407",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "42546664-bca6-4a3f-984d-c96915c76338",
+    "name": "박민혁",
+    "student_id": "3408",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "44489af1-1bef-425d-9412-d7036489b17f",
+    "name": "이윤준",
+    "student_id": "3416",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "385e3937-10fd-458e-aadf-71e94e9913d3",
+    "name": "황윤호",
+    "student_id": "3420",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "58967875-2895-40da-b409-7aa3715ff7c3",
+    "name": "김주환",
+    "student_id": "3502",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "cbf31b16-a75c-4afd-b81c-5b2aedc44664",
+    "name": "박근우",
+    "student_id": "3505",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "5fa71afb-39e7-499d-b1dc-e35b923dd698",
+    "name": "심유경",
+    "student_id": "3509",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "ad31cabc-f8e8-42a9-b10a-c7aba226d24e",
+    "name": "박시현",
+    "student_id": "3605",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "9ebc1caa-6607-4a0f-8d9f-6837e4aefb6a",
+    "name": "이희성",
+    "student_id": "3613",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "35b53860-a76c-4ee0-ad49-ebb738c96d34",
+    "name": "정마로",
+    "student_id": "3515",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "d0009a30-d736-429c-a33e-4bc96efba34e",
+    "name": "김현준",
+    "student_id": "3305",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "351db64b-ca7f-4407-a2d5-87536def07a1",
+    "name": "이우성",
+    "student_id": "3108",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "a4613cc8-67cb-4222-8722-1ba9d6ddf844",
+    "name": "차정원",
+    "student_id": "3616",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "6e4b8e49-475e-4ea1-bf72-b5b892998ef4",
+    "name": "김시준",
+    "student_id": "3202",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d2655a8a-46dc-4518-8e96-610acc803cfe",
+    "name": "문채린",
+    "student_id": "3208",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "4bad9037-6092-40a2-9027-81b95447b4af",
+    "name": "김범석",
+    "student_id": "3302",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "9dcdc9bc-e8e7-4f95-bc08-c35076e92322",
+    "name": "강태민",
+    "student_id": "3401",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "11f4ab1e-4519-418e-baa3-49007adb8d84",
+    "name": "임도현",
+    "student_id": "3417",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "de7bf9c5-c957-4fe3-9bea-f81c9ecc26b9",
+    "name": "이동호",
+    "student_id": "3609",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "aa7ad759-e356-4a51-a2c1-e09c5054cb0f",
+    "name": "차민준",
+    "student_id": "3516",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "8bbf39cf-7928-4cbb-9a63-052b15b65360",
+    "name": "최세중",
+    "student_id": "3617",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "f2ef0b8d-5b7b-4301-8d1b-b4b7ec3f1df2",
+    "name": "박세홍",
+    "student_id": "3604",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "bb39e7a2-a144-4964-b258-0fec6067b50e",
+    "name": "이하준",
+    "student_id": "3612",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "58ca6aa4-0adb-45c0-ade8-c07671dc2070",
+    "name": "박건하",
+    "student_id": "3504",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "274c63be-5af8-4080-bb71-c488bcbd8b90",
+    "name": "염석흔",
+    "student_id": "3510",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "de1695aa-b671-45bb-a44b-da2fbe21d474",
+    "name": "강서안",
+    "student_id": "3501",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "1c6cd94d-dd44-4a1f-9514-d7942bb26ac3",
+    "name": "김진현",
+    "student_id": "3204",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "0d3b0fcc-9577-42b6-9980-bfc23ca07cda",
+    "name": "김하율",
+    "student_id": "3206",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4dcd8254-03d9-49e7-8b40-a60a0964a4f0",
+    "name": "박상규",
+    "student_id": "3210",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4b8e5ade-5367-471a-ac20-f6b71eb801a6",
+    "name": "이지연",
+    "student_id": "3217",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "0ad35e6d-b876-4591-bda8-6cb638422f6f",
+    "name": "정창희",
+    "student_id": "3314",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "dbce6798-92b0-4101-b9da-273b5465550c",
+    "name": "김민준",
+    "student_id": "3403",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "a1787bb1-f41d-4a54-a73c-d19b348b8800",
+    "name": "김세윤",
+    "student_id": "3405",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4f459c4e-ad60-478e-861e-7d0578832783",
+    "name": "박순호",
+    "student_id": "3409",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "8c95ccdb-ed0f-40ca-aba7-5219acd1f586",
+    "name": "배용빈",
+    "student_id": "3411",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "28536a49-0b41-48aa-8f09-a50f35f646fe",
+    "name": "심지민",
+    "student_id": "3413",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "3ea4a87e-d261-4a4c-b269-8df46ece18d1",
+    "name": "이광현",
+    "student_id": "3415",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "98d6b11d-d13a-4a4a-ac55-808dca4c9b75",
+    "name": "권서희",
+    "student_id": "3601",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "78d14b29-8797-48cf-a7fd-5b917a99adf4",
+    "name": "박미송",
+    "student_id": "3506",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "57084924-3c58-4fcc-be0e-6a4109ec7243",
+    "name": "박재빈",
+    "student_id": "3507",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "e08f27b3-1b66-48eb-8790-bb96b4c0887a",
+    "name": "송지성",
+    "student_id": "3508",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "577b2eed-d089-45cf-a8e7-7241f740a34f",
+    "name": "이동후",
+    "student_id": "3511",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "3d3b2add-1548-40cf-9b94-31dd6f7e33e9",
+    "name": "장민지",
+    "student_id": "3614",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "ec2773c3-2ddb-4e70-b12e-a3527e91fd1d",
+    "name": "김푸른",
+    "student_id": "3503",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "94dbbce0-1a2e-4988-9a21-66ad982dcf1d",
+    "name": "박찬희",
+    "student_id": "3606",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "0b56d494-1e89-46b9-883a-93fe92859740",
+    "name": "이원재",
+    "student_id": "3611",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "1db14fa0-2956-4dc3-b03c-a1a5b901fe72",
+    "name": "최진혁",
+    "student_id": "3112",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "048833e1-9adc-4cac-8cf5-ae3d642ef840",
+    "name": "박영재",
+    "student_id": "3103",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "7347f788-1561-40fe-abe0-28f3dc2f120b",
+    "name": "조현용",
+    "student_id": "3615",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4ef20e4e-421d-42cb-871a-099bc0617a36",
+    "name": "황제현",
+    "student_id": "3517",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "13c673bf-05ed-42b9-b9d7-c60f7f2a5fc0",
+    "name": "윤현우",
+    "student_id": "3608",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "9e3dc389-747a-4050-b182-bf5e7331a81d",
+    "name": "김서율",
+    "student_id": "3303",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "58f6acad-45f0-4dfa-901c-03e37278ea78",
+    "name": "유수영",
+    "student_id": "3311",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "0467e029-e612-44f3-8294-d4141dc8dadc",
+    "name": "안원식",
+    "student_id": "3414",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "752a48d6-8f8b-4ad6-835b-f2b34155effe",
+    "name": "한채민",
+    "student_id": "3419",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4e729827-50d9-4cae-8425-63c927c0aeeb",
+    "name": "이석호",
+    "student_id": "3610",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4266f02d-8b99-4046-b641-20a493a4827b",
+    "name": "김세환",
+    "student_id": "3602",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "87ee7147-47e3-4e18-87ed-41acbf5a3502",
+    "name": "정규인",
+    "student_id": "3110",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "4d3d503e-0a1e-4e10-9f12-1755efd0df2f",
+    "name": "이도원",
+    "student_id": "3214",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "1638474c-fbe7-49b0-9ba0-39d8167a66a7",
+    "name": "배연우",
+    "student_id": "3410",
+    "academic_year": 2025,
+    "status": "graduated"
+  },
+  {
+    "pid": "340ef8a0-b1ec-40db-becd-de67dd29e031",
+    "name": "남강현",
+    "student_id": "3102",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "d841f652-2dce-4b57-a8ca-bfee7518c5c0",
+    "name": "박우주",
+    "student_id": "3104",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "3fe38b85-490c-4f4d-a0aa-45844b334ffb",
+    "name": "백건우",
+    "student_id": "3106",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "ca5514bc-0fdb-49da-8e90-24829c65b1e0",
+    "name": "정원석",
+    "student_id": "3219",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "25b116b1-e96d-4182-9020-8ac104a406ef",
+    "name": "HAN PANG WEN",
+    "student_id": "3301",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "0a47b708-baba-4685-b06e-34b132cc804c",
+    "name": "김아진",
+    "student_id": "3304",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "6a26ebd9-a2e5-4312-967d-901faccc8e72",
+    "name": "박준배",
+    "student_id": "3308",
+    "academic_year": 2026,
+    "status": "active"
+  },
+  {
+    "pid": "82c611db-54fa-49c4-a1fc-218fa3160344",
+    "name": "이지호",
+    "student_id": "3513",
+    "academic_year": 2026,
+    "status": "active"
+  }
+]

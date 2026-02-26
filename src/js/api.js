@@ -14,6 +14,7 @@ export async function fetchStudentRecords(num) {
             .from('students')
             .select('pid')
             .eq('student_id', num)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .single();
 
         if (sError || !student) throw new Error("학생을 찾을 수 없습니다.");
@@ -77,6 +78,8 @@ export async function fetchAllStudents() {
         const { data, error } = await supabase
             .from('students')
             .select('*')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated')
             .order('student_id', { ascending: true });
 
         if (error) throw error;
@@ -106,6 +109,7 @@ export async function saveRecord(formData) {
             .from('students')
             .select('pid')
             .eq('student_id', num)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .single();
 
         if (sError || !student) throw new Error("학생을 찾을 수 없습니다.");
@@ -147,6 +151,7 @@ export async function deleteRecord(num, time) {
             .from('students')
             .select('pid')
             .eq('student_id', num)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .single();
 
         if (sError || !student) throw new Error("학생을 찾을 수 없습니다.");
@@ -177,7 +182,8 @@ export async function fetchGroupRecords(grade, classNum) {
     try {
         let query = supabase
             .from('life_records')
-            .select('*, students!inner(student_id, class_info)');
+            .select('*, students!inner(student_id, class_info, academic_year)')
+            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (grade && classNum) {
             query = query.eq('students.class_info', `${grade}-${classNum}`);
@@ -221,7 +227,8 @@ export async function fetchClassStats() {
         // 2. 반별 생활기록 건수 집계
         const { data, error } = await supabase
             .from('life_records')
-            .select('students!inner(class_info)');
+            .select('students!inner(class_info, academic_year)')
+            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (error) throw error;
 
@@ -316,6 +323,8 @@ export async function fetchStudentsByClass(grade, classNum) {
             .from('students')
             .select('*')
             .eq('class_info', classTarget)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated')
             .order('student_id', { ascending: true });
 
         if (error) throw error;
@@ -340,7 +349,8 @@ export async function bulkSaveRecords(targets, recordData) {
         const { data: students, error: sError } = await supabase
             .from('students')
             .select('pid, student_id')
-            .in('student_id', nums);
+            .in('student_id', nums)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (sError) throw sError;
 
@@ -379,7 +389,7 @@ export async function uploadEvidencePhoto(file, studentId) {
         const timestamp = new Date().getTime();
         const extension = file.name.split('.').pop();
         const fileName = `${studentId}_${timestamp}.${extension}`;
-        const filePath = `2025/${fileName}`;
+        const filePath = `${API_CONFIG.CURRENT_ACADEMIC_YEAR}/${fileName}`;
 
         const { data, error } = await supabase.storage
             .from('evidence-photos')

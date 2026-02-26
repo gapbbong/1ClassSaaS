@@ -258,6 +258,11 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.student .status-badge.graduated {
+    background: rgba(40, 167, 69, 0.9);
+    color: #fff;
+}
+
 /* 오버레이 */
 #overlay {
     position: fixed;

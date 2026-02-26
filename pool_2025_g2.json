@@ -1,0 +1,702 @@
+[
+  {
+    "id": 45,
+    "student_pid": "2fa39c5e-c47f-48ee-93d9-b6c28ac6c7ad",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 46,
+    "student_pid": "048833e1-9adc-4cac-8cf5-ae3d642ef840",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 47,
+    "student_pid": "d96b82ad-9953-4478-94a8-8aeebcc5bb02",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 48,
+    "student_pid": "b11ca283-b782-4ddc-9b33-e5162d80b849",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 49,
+    "student_pid": "351db64b-ca7f-4407-a2d5-87536def07a1",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 50,
+    "student_pid": "b28110c1-00b3-4769-8012-bef4af5e6bf8",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 51,
+    "student_pid": "f42e8060-8755-45ab-b800-56c62e37307f",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 52,
+    "student_pid": "eefaf23e-2b60-4dd0-8578-419b0606b967",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 53,
+    "student_pid": "9527c1fe-c9d3-4fbc-ac30-48a961ca16f2",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 54,
+    "student_pid": "2fd4a846-730e-4341-bc50-e35d35dfcaea",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 55,
+    "student_pid": "ba9dd6aa-6445-4882-8b84-dbf3bad509f2",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 56,
+    "student_pid": "f66bbf6e-e436-4a9b-a6cd-59ee3d06da8b",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 57,
+    "student_pid": "2b981de8-320d-4564-bb81-3c3410b3fd1d",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 58,
+    "student_pid": "5b405c78-6ab7-40ca-a5b3-57b65342b32b",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 59,
+    "student_pid": "79752b7f-0dcb-4ab4-aa52-3a4728288c8f",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 60,
+    "student_pid": "7f679b63-2956-422f-b234-b2549f769100",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 61,
+    "student_pid": "4bad9037-6092-40a2-9027-81b95447b4af",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 62,
+    "student_pid": "d0009a30-d736-429c-a33e-4bc96efba34e",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 63,
+    "student_pid": "bd69a8f0-c43e-4ebf-a606-c97d4b4c1e4b",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 64,
+    "student_pid": "7cf48cfe-2668-4fb1-b087-8acc11dab9aa",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 65,
+    "student_pid": "6647bfb3-c408-4dca-bb77-2bf5ee063f43",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 66,
+    "student_pid": "cdf2eb31-a401-474c-a503-df290d5e159f",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 67,
+    "student_pid": "ea4d9100-2ff7-4844-8e6d-16d0ca4aa6d9",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 68,
+    "student_pid": "504e1b78-baca-4fa4-a653-cddacd57b8f5",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 69,
+    "student_pid": "4f6b06bc-636e-453e-ac89-feb1d0da2669",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 70,
+    "student_pid": "42546664-bca6-4a3f-984d-c96915c76338",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 71,
+    "student_pid": "1638474c-fbe7-49b0-9ba0-39d8167a66a7",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 72,
+    "student_pid": "15815e6f-7694-4a09-aef6-c0bef9314553",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 73,
+    "student_pid": "44489af1-1bef-425d-9412-d7036489b17f",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 74,
+    "student_pid": "b83fb83d-6886-467b-ba64-723405377d36",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 75,
+    "student_pid": "385e3937-10fd-458e-aadf-71e94e9913d3",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 76,
+    "student_pid": "4139a988-2152-4233-a93c-9f7984c6ada2",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 77,
+    "student_pid": "58ca6aa4-0adb-45c0-ade8-c07671dc2070",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 78,
+    "student_pid": "f2ef0b8d-5b7b-4301-8d1b-b4b7ec3f1df2",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 79,
+    "student_pid": "5fa71afb-39e7-499d-b1dc-e35b923dd698",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 80,
+    "student_pid": "de7bf9c5-c957-4fe3-9bea-f81c9ecc26b9",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 81,
+    "student_pid": "96692730-ddab-4908-ad8f-b0a75cc82c7e",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 82,
+    "student_pid": "bb39e7a2-a144-4964-b258-0fec6067b50e",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 83,
+    "student_pid": "35b53860-a76c-4ee0-ad49-ebb738c96d34",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 84,
+    "student_pid": "a4613cc8-67cb-4222-8722-1ba9d6ddf844",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 85,
+    "student_pid": "de1695aa-b671-45bb-a44b-da2fbe21d474",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 86,
+    "student_pid": "58967875-2895-40da-b409-7aa3715ff7c3",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 87,
+    "student_pid": "cbf31b16-a75c-4afd-b81c-5b2aedc44664",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 88,
+    "student_pid": "ad31cabc-f8e8-42a9-b10a-c7aba226d24e",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 89,
+    "student_pid": "a2362619-dc7b-4cf8-9d44-ac9299c73c95",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 90,
+    "student_pid": "274c63be-5af8-4080-bb71-c488bcbd8b90",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 91,
+    "student_pid": "9ebc1caa-6607-4a0f-8d9f-6837e4aefb6a",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 92,
+    "student_pid": "aa7ad759-e356-4a51-a2c1-e09c5054cb0f",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 93,
+    "student_pid": "8bbf39cf-7928-4cbb-9a63-052b15b65360",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 179,
+    "student_pid": "340ef8a0-b1ec-40db-becd-de67dd29e031",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 180,
+    "student_pid": "3fe38b85-490c-4f4d-a0aa-45844b334ffb",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 181,
+    "student_pid": "f3dc728b-f073-4057-a4d6-2a397e7db742",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 182,
+    "student_pid": "5eb7866a-31cd-4c15-abad-d33dd4be79b1",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 183,
+    "student_pid": "1db14fa0-2956-4dc3-b03c-a1a5b901fe72",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 184,
+    "student_pid": "6e4b8e49-475e-4ea1-bf72-b5b892998ef4",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 185,
+    "student_pid": "1c6cd94d-dd44-4a1f-9514-d7942bb26ac3",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 186,
+    "student_pid": "0d3b0fcc-9577-42b6-9980-bfc23ca07cda",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 187,
+    "student_pid": "d2655a8a-46dc-4518-8e96-610acc803cfe",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 188,
+    "student_pid": "4dcd8254-03d9-49e7-8b40-a60a0964a4f0",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 189,
+    "student_pid": "4d3d503e-0a1e-4e10-9f12-1755efd0df2f",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 190,
+    "student_pid": "4b8e5ade-5367-471a-ac20-f6b71eb801a6",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 191,
+    "student_pid": "c35b09fa-aea9-4286-8266-32e2a1ff1efb",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 192,
+    "student_pid": "25b116b1-e96d-4182-9020-8ac104a406ef",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 193,
+    "student_pid": "9e3dc389-747a-4050-b182-bf5e7331a81d",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 194,
+    "student_pid": "e1e8a1cc-7259-47c4-9b29-e710848f5901",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 195,
+    "student_pid": "6a26ebd9-a2e5-4312-967d-901faccc8e72",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 196,
+    "student_pid": "7b67802a-28d9-4c61-baf1-56291231bb1a",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 197,
+    "student_pid": "0ad35e6d-b876-4591-bda8-6cb638422f6f",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 198,
+    "student_pid": "9dcdc9bc-e8e7-4f95-bc08-c35076e92322",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 199,
+    "student_pid": "dbce6798-92b0-4101-b9da-273b5465550c",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 200,
+    "student_pid": "a1787bb1-f41d-4a54-a73c-d19b348b8800",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 201,
+    "student_pid": "4f459c4e-ad60-478e-861e-7d0578832783",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 202,
+    "student_pid": "8c95ccdb-ed0f-40ca-aba7-5219acd1f586",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 203,
+    "student_pid": "28536a49-0b41-48aa-8f09-a50f35f646fe",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 204,
+    "student_pid": "3ea4a87e-d261-4a4c-b269-8df46ece18d1",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 205,
+    "student_pid": "11f4ab1e-4519-418e-baa3-49007adb8d84",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 206,
+    "student_pid": "98d6b11d-d13a-4a4a-ac55-808dca4c9b75",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 207,
+    "student_pid": "94dbbce0-1a2e-4988-9a21-66ad982dcf1d",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 208,
+    "student_pid": "13c673bf-05ed-42b9-b9d7-c60f7f2a5fc0",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 209,
+    "student_pid": "0b56d494-1e89-46b9-883a-93fe92859740",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 210,
+    "student_pid": "82c611db-54fa-49c4-a1fc-218fa3160344",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 211,
+    "student_pid": "3d3b2add-1548-40cf-9b94-31dd6f7e33e9",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 212,
+    "student_pid": "7347f788-1561-40fe-abe0-28f3dc2f120b",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 213,
+    "student_pid": "4ef20e4e-421d-42cb-871a-099bc0617a36",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 214,
+    "student_pid": "ec2773c3-2ddb-4e70-b12e-a3527e91fd1d",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 215,
+    "student_pid": "78d14b29-8797-48cf-a7fd-5b917a99adf4",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 216,
+    "student_pid": "57084924-3c58-4fcc-be0e-6a4109ec7243",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 217,
+    "student_pid": "e08f27b3-1b66-48eb-8790-bb96b4c0887a",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 218,
+    "student_pid": "577b2eed-d089-45cf-a8e7-7241f740a34f",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 219,
+    "student_pid": "9f71244d-2f90-4562-b5ae-965a8dc9e642",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 266,
+    "student_pid": "d841f652-2dce-4b57-a8ca-bfee7518c5c0",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 267,
+    "student_pid": "87ee7147-47e3-4e18-87ed-41acbf5a3502",
+    "academic_year": 2025,
+    "class_info": "2-1",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 268,
+    "student_pid": "7aef31c6-18e7-4e01-9cb7-a9b2cc2d81cb",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 269,
+    "student_pid": "ca5514bc-0fdb-49da-8e90-24829c65b1e0",
+    "academic_year": 2025,
+    "class_info": "2-2",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 270,
+    "student_pid": "0a47b708-baba-4685-b06e-34b132cc804c",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 271,
+    "student_pid": "58f6acad-45f0-4dfa-901c-03e37278ea78",
+    "academic_year": 2025,
+    "class_info": "2-3",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 272,
+    "student_pid": "0467e029-e612-44f3-8294-d4141dc8dadc",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 273,
+    "student_pid": "752a48d6-8f8b-4ad6-835b-f2b34155effe",
+    "academic_year": 2025,
+    "class_info": "2-4",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 274,
+    "student_pid": "4e729827-50d9-4cae-8425-63c927c0aeeb",
+    "academic_year": 2025,
+    "class_info": "2-5",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  },
+  {
+    "id": 275,
+    "student_pid": "4266f02d-8b99-4046-b641-20a493a4827b",
+    "academic_year": 2025,
+    "class_info": "2-6",
+    "created_at": "2026-02-26T05:53:56.949976+00:00"
+  }
+]

@@ -250,7 +250,13 @@ function appendStudentCard(student) {
     if (student["학적"] && student["학적"] !== "재학") {
         const statusBadge = document.createElement("span");
         statusBadge.className = "status-badge";
-        statusBadge.textContent = student["학적"];
+
+        if (student["학적"] === "graduated") {
+            statusBadge.classList.add("graduated");
+            statusBadge.textContent = "졸업";
+        } else {
+            statusBadge.textContent = student["학적"];
+        }
         card.appendChild(statusBadge);
     }
 
