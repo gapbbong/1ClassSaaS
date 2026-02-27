@@ -678,7 +678,7 @@ surveyForm.addEventListener("submit", async (e) => {
     modalHtml += `</ul>`;
 
     modalHtml += `<div style="margin-top:15px; padding:10px; background:#e3f2fd; border-radius:8px; text-align:center; font-weight:bold; color:#1565c0;">
-        총 ${answerCount}개의 항목이 제출됩니다.<br>내용이 맞으면 아래 버튼을 눌러주세요.
+        위 항목들을 제출합니다.<br>내용이 맞으면 아래 버튼을 눌러주세요.
     </div>`;
 
     // 모달에 내용 넣기
