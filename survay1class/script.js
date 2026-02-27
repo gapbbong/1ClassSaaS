@@ -140,6 +140,7 @@ btnVerify.addEventListener("click", async () => {
             .from('students')
             .select('*')
             .eq('student_id', num)
+            .eq('academic_year', 2026)
             .single();
 
         if (studentError || !studentData) {
@@ -529,6 +530,7 @@ function loadFromLocal() {
                     .from('students')
                     .select('pid')
                     .eq('student_id', savedNum)
+                    .eq('academic_year', 2026)
                     .single();
                 if (studentData) {
                     currentStudentPid = studentData.pid;
