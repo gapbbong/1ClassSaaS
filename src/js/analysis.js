@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initModeToggle();
     initSearch();
     initClassSelect();
+    initTeacherAuth(); // 교사 권한 초기화 추가
 
     // Check URL parameters for direct student search
     const urlParams = new URLSearchParams(window.location.search);
@@ -20,6 +21,50 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => document.getElementById("search-apply-btn").click(), 100);
     }
 });
+
+let currentTeacher = null; // 현재 접속한 교사 정보
+
+// 교사 권한 정보 초기화
+async function initTeacherAuth() {
+    try {
+        const encryptedToken = localStorage.getItem('teacher_auth_token');
+        if (!encryptedToken) return;
+
+        const bytes = CryptoJS.AES.decrypt(encryptedToken, API_CONFIG.SECRET_KEY);
+        const teacherEmail = bytes.toString(CryptoJS.enc.Utf8);
+
+        if (teacherEmail) {
+            const { data, error } = await supabase
+                .from('teachers')
+                .select('name, email, role, assigned_class')
+                .eq('email', teacherEmail)
+                .maybeSingle();
+
+            if (!error && data) {
+                currentTeacher = data;
+                console.log("Teacher Auth Initialized:", currentTeacher.name, currentTeacher.role);
+            }
+        }
+    } catch (e) {
+        console.error("Teacher Auth Initialization Failed:", e);
+    }
+}
+
+// 분석 권한 체크 (전체 권한 여부 반환)
+function hasFullAnalysisAccess(student) {
+    if (!currentTeacher) return false;
+
+    // 1. 관리자 또는 소유자 (admin, keeper)
+    if (currentTeacher.role === 'admin' || currentTeacher.email === 'keeper@kse.hs.kr') return true;
+
+    // 2. 상담 교사 (counselor)
+    if (currentTeacher.role === 'counselor') return true;
+
+    // 3. 해당 학급 담임교사
+    if (currentTeacher.assigned_class && currentTeacher.assigned_class === student.class_info) return true;
+
+    return false;
+}
 
 // 0. 모드 전환
 function initModeToggle() {
@@ -229,18 +274,29 @@ async function loadStudentAnalysis(pid) {
         .maybeSingle();
 
     if (insight) {
-        document.getElementById("loading-view").style.display = "none"; // 로딩 스피너 제거
+        document.getElementById("loading-view").style.display = "none";
         currentInsight = insight.content;
         renderResultView();
 
-        // 캐시 데이터 로드 시 모든 섹션을 업데이트 (데이터가 없어도 스피너 제거)
-        updateSectionUI('summary', currentInsight, currentInsight.tags);
-        updateSectionUI('stats', currentInsight.stats);
-        updateSectionUI('detective', currentInsight.detective || {});
-        updateSectionUI('action', currentInsight.action || "분석 데이터가 없습니다.");
+        const fullAccess = hasFullAnalysisAccess(student);
+
+        // 캐시 데이터 로드 시 권한에 따라 섹션 업데이트
+        updateSectionUI('summary', currentInsight, currentInsight.tags, fullAccess);
+        updateSectionUI('stats', currentInsight.stats, null, true); // Stats는 항상 노출 (요청사항)
+        updateSectionUI('detective', currentInsight.detective || {}, null, fullAccess);
+        updateSectionUI('action', currentInsight.action || "분석 데이터가 없습니다.", null, fullAccess);
 
         renderChart();
     } else {
+        // 기초조사 데이터 유무 선제 확인
+        const { data: survey } = await supabase.from('surveys').select('id').eq('student_pid', pid).maybeSingle();
+        if (!survey) {
+            document.getElementById("loading-view").style.display = "none";
+            alert("해당 학생의 기초조사(설문) 데이터가 없습니다. 분석을 진행할 수 없습니다.");
+            document.getElementById("welcome-view").style.display = "block";
+            return;
+        }
+
         await runBatchAIAnalysis(pid);
     }
 }
@@ -347,23 +403,25 @@ async function runBatchAIAnalysis(pid) {
         currentInsight = fullData;
 
         // 시각적 박진감을 위해 약간의 시차를 두고 UI 업데이트
+        const fullAccess = hasFullAnalysisAccess(currentStudent);
+
         setTimeout(() => {
             document.getElementById("loading-view").style.display = "none";
             renderResultView();
-            updateSectionUI('summary', currentInsight, currentInsight.tags);
+            updateSectionUI('summary', currentInsight, currentInsight.tags, fullAccess);
         }, 800);
 
         setTimeout(() => {
-            updateSectionUI('stats', currentInsight.stats);
+            updateSectionUI('stats', currentInsight.stats, null, true);
             renderChart();
         }, 300);
 
         setTimeout(() => {
-            updateSectionUI('detective', currentInsight.detective);
+            updateSectionUI('detective', currentInsight.detective, null, fullAccess);
         }, 600);
 
         setTimeout(() => {
-            updateSectionUI('action', currentInsight.action);
+            updateSectionUI('action', currentInsight.action, null, fullAccess);
         }, 900);
 
         // DB 저장
@@ -623,10 +681,27 @@ function renderResultView() {
 }
 
 // UI: Update specific section
-function updateSectionUI(type, data, extra) {
+function updateSectionUI(type, data, extra, hasAccess = true) {
     const el = document.getElementById(`sec-${type}`);
     if (!el) return;
     el.classList.remove('loading-section');
+
+    // 권한이 없는 경우 마스킹 처리 (단, 프로파일과 스태츠는 예외로 보여줌)
+    const needsAccess = ['summary', 'detective', 'action', 'counseling'];
+    if (needsAccess.includes(type) && !hasAccess) {
+        let title = "";
+        switch (type) {
+            case 'summary': title = "⭐ AI 핵심 요약"; break;
+            case 'detective': title = "🕵️ 특이점 추론"; break;
+            case 'action': title = "💡 추천 액션 플랜"; break;
+            case 'counseling': title = "상담 시급도"; break;
+        }
+        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">${title}</h3>
+                        <div style="background:#f1f5f9; padding:20px; border-radius:12px; border:1px dashed #cbd5e1; text-align:center;">
+                            <p style="color:#64748b; font-size:0.95rem; margin:0;">🔒 이 정보는 담당 교사, 상담 교사 또는 관리자만 볼 수 있습니다.</p>
+                        </div>`;
+        return;
+    }
 
     switch (type) {
         case 'summary':
@@ -717,11 +792,16 @@ function renderChart() {
 }
 
 // 상담 시급도 배너 렌더링
-function renderCounselingPriority(priority) {
+function renderCounselingPriority(priority, hasAccess = true) {
     const el = document.getElementById("sec-counseling");
     if (!el) return;
     if (!priority) {
         el.innerHTML = "";
+        return;
+    }
+
+    if (!hasAccess) {
+        updateSectionUI('counseling', null, null, false);
         return;
     }
 

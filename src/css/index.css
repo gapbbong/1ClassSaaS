@@ -4,51 +4,144 @@
 .title-bar {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    /* 기본 우측 정렬 */
+    justify-content: space-between;
+    /* 양 끝 정렬 */
     width: 100%;
     max-width: 1200px;
-    margin: 15px auto 5px auto;
-    padding: 10px 20px;
+    margin: 5px auto 5px auto;
+    padding: 5px 20px;
     box-sizing: border-box;
-    gap: 12px;
     z-index: 100;
+    position: relative;
+}
+
+.title-left {
+    flex: 1;
 }
 
 .school-name {
-    font-size: 1.45em;
-    font-weight: 800;
+    font-size: 2.4em;
+    /* 1.6em * 1.5 = 2.4em */
+    font-weight: 900;
     color: #4A90E2;
     margin: 0;
-    margin-right: auto;
-    /* 학교 이름을 맨 왼쪽으로 밀기 */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     white-space: nowrap;
+    letter-spacing: -1px;
 }
 
-/* 상단 네비게이션 액션 버튼 셋 (크기 1.5배 확대) */
+.nav-actions {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 상단 버전 정보 */
+.version-tag {
+    position: absolute;
+    top: 8px;
+    right: 20px;
+    font-size: 0.75rem;
+    color: #9aa0a6;
+    font-weight: 600;
+    z-index: 101;
+}
+
+/* 햄버거 메뉴 */
+.hamburger-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    font-size: 1.6em;
+    cursor: pointer;
+    padding: 4px 8px;
+    color: #333;
+    transition: transform 0.2s ease;
+}
+
+.hamburger-btn:active {
+    transform: scale(0.9);
+}
+
+.hamburger-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    margin-top: 8px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 1000;
+    width: fit-content;
+    min-width: 140px;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hamburger-dropdown button {
+    width: 100%;
+    padding: 12px 18px;
+    text-align: right;
+    background: none;
+    border: none;
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 1px solid #f1f3f4;
+    transition: background 0.2s;
+}
+
+.hamburger-dropdown button:hover {
+    background: #f8f9fa;
+}
+
+.hamburger-dropdown button:last-child {
+    border-bottom: none;
+}
+
+/* 상단 네비게이션 액션 버튼 셋 */
 .nav-action-btn {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: #f8f9fa;
-    border: 1px solid #eaeaea;
+    background: #ffffff;
+    border: 2px solid #f1f3f4;
+    /* 테두리 조금 더 두껍게 */
     color: #333;
     cursor: pointer;
-    padding: 7px 14px;
-    /* 25% 축소 */
-    border-radius: 12px;
-    min-width: 68px;
-    /* 25% 축소 */
+    padding: 10px 18px;
+    /* 패딩 대폭 확대 */
+    border-radius: 14px;
+    min-width: 100px;
+    /* 너비 확대 */
     transition: all 0.2s ease;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.06);
     text-decoration: none;
-}
-
-.nav-action-btn:hover {
-    background: #eef2f5;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
 }
 
 .nav-action-btn:active {
@@ -56,47 +149,48 @@
 }
 
 .nav-icon {
-    font-size: 1.4rem;
-    /* 25% 축소 */
-    margin-bottom: 2px;
+    font-size: 1.8rem;
+    /* 아이콘 크기 확대 */
+    margin-bottom: 4px;
 }
 
 .nav-text {
-    font-size: 0.85rem;
-    /* 25% 축소 */
-    font-weight: 700;
-    color: #444;
+    font-size: 1.1rem;
+    /* 텍스트 크기 확대 */
+    font-weight: 800;
+    color: #333;
     white-space: nowrap;
 }
 
 html,
 body {
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden;
+    /* 한 화면에 다 나오게 스크롤 제거 */
 }
 
 body {
     display: flex;
     flex-direction: column;
-    /* 세로 방향으로 정렬 */
     justify-content: flex-start;
     align-items: center;
     width: 100%;
-    min-height: 100vh;
+    height: 100vh;
+    padding: 0;
+    margin: 0;
 }
 
 /* 전체 그리드 영역 */
 .class-grid {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: stretch;
     flex-wrap: nowrap;
     width: 100%;
-    flex: 1;
-    padding: 10px 8px 30px 8px;
-    /* 상단 여백 확보 */
-    gap: clamp(10px, 3vw, 24px);
-    /* 간격 확대 */
+    height: calc(100vh - 80px);
+    /* 헤더 제외 남은 공간 채우기 */
+    padding: 5px 10px 15px 10px;
+    gap: 24px;
+    /* 가로 사이 간격 2배로 확대 */
     box-sizing: border-box;
 }
 
@@ -108,47 +202,53 @@ body {
 .grade-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: space-between;
     align-items: center;
-    width: clamp(180px, 30vw, 220px);
+    flex: 1;
+    height: 100%;
     padding: 0;
-    flex-shrink: 0;
 }
 
 /* 각 반(카드) */
 .class-box {
     width: 100%;
+    height: 15.5%;
+    /* 6개 반이 꽉 차도록 설정 */
 }
 
 /* 카드 섹션 */
 .class-section {
     width: 100%;
+    height: 100%;
     background: #fff;
     border: 2px solid #ddd;
     border-radius: 12px;
-    padding: clamp(1px, 0.8vw, 7px) clamp(2px, 2vw, 16px);
+    padding: 4px 10px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     text-align: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* 수직 중앙 정렬 */
 }
 
 .class-section:hover {
-    transform: scale(1.03);
+    transform: scale(1.02);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
 }
 
 /* 반 제목 */
 .class-section .class-title {
-    font-size: clamp(1.2em, 4vw, 1.7em);
+    font-size: 1.6em;
     font-weight: 800;
     color: #333;
-    margin-top: 0;
-    margin-bottom: 6px;
+    margin: 0;
+    margin-bottom: 2px;
+    /* 간격 절반으로 조절 */
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: clip;
-    /* ... 대신 잘림 처리하여 불필요한 점 노출 방지 */
+    line-height: 1.1;
 }
 
 .count-badge {
@@ -234,10 +334,13 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 6px;
-    margin: 4px 0;
-    font-size: clamp(0.8em, 2.5vw, 1em);
+    gap: 10px;
+    margin: 1px 0;
+    font-size: 1.16em;
+    /* 1.45em * 0.8 = 1.16em */
+    font-weight: 700;
     flex-wrap: nowrap;
+    line-height: 1.2;
 }
 
 /* 반응형 여백 조정 */
