@@ -479,7 +479,6 @@ function saveToLocal() {
         }
     });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    localStorage.setItem("current_student_num", currentStudentNum); // 학번 정보도 함께 저장
     console.log("자동 저장 완료: " + new Date().toLocaleTimeString());
 }
 
@@ -519,28 +518,6 @@ function loadFromLocal() {
             }
         });
         console.log("임시 저장된 데이터를 불러왔습니다.");
-
-        // 학번 정보 복구
-        const savedNum = localStorage.getItem("current_student_num");
-        if (savedNum && savedNum !== "null") {
-            currentStudentNum = savedNum;
-            // 잠시 기다렸다가 supabase 정보까지 불러오기 위해 비동기로 호출
-            (async () => {
-                const { data: studentData } = await supabase
-                    .from('students')
-                    .select('pid')
-                    .eq('student_id', savedNum)
-                    .eq('academic_year', 2026)
-                    .single();
-                if (studentData) {
-                    currentStudentPid = studentData.pid;
-                }
-            })();
-
-            // 만약 학번이 있다면 조회 단계를 건너뛰고 설문지로 바로 가도록 처리 (선택사항)
-            stepVerify.classList.add("hidden");
-            stepSurvey.classList.remove("hidden");
-        }
 
         updateSubmitButton();
     } catch (e) {
