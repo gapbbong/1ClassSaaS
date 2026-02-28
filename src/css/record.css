@@ -152,7 +152,7 @@ textarea#detail {
     /* 폰트 일관성 추가 */
     font-weight: bold;
     font-size: 15px;
-    min-height: 50px;
+    min-height: 100px;
     resize: none;
     transition: height 0.1s ease;
 }
