@@ -584,10 +584,12 @@ body {
 .action-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
+    justify-content: flex-start;
+    /* 왼쪽 정렬 */
+    gap: 12px;
     width: 100%;
-    padding: 16px;
+    padding: 16px 24px;
+    /* 왼쪽에 충분한 여백(24px) 부여 */
     border-radius: 14px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     background: #ffffff;
