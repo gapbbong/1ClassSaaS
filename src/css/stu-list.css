@@ -588,8 +588,8 @@ body {
     /* 왼쪽 정렬 */
     gap: 12px;
     width: 100%;
-    padding: 16px 24px;
-    /* 왼쪽에 충분한 여백(24px) 부여 */
+    padding: 16px 24px 16px 48px;
+    /* 왼쪽에 2배 여백(48px) 부여 */
     border-radius: 14px;
     border: 1px solid rgba(0, 0, 0, 0.06);
     background: #ffffff;
