@@ -275,7 +275,10 @@ async function loadRecords() {
 
             // 교사 이름 처리 (이메일인 경우 앞부분만 추출)
             let teacherDisplay = r.teacher || "미입력";
-            if (teacherDisplay.includes('@')) {
+            // [추가] 최지은 선생님 성함 -> assari 아이디로 변경 (2025-02-28)
+            if (teacherDisplay === "최지은") {
+                teacherDisplay = "assari";
+            } else if (teacherDisplay.includes('@')) {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
 
@@ -291,7 +294,7 @@ async function loadRecords() {
                 itemDiv.appendChild(goodDiv);
             }
 
-            if (r.bad) {
+            if (r.bad && r.bad !== "생활기록") { // '생활기록' 텍스트는 표시하지 않음
                 const badDiv = document.createElement("div");
                 badDiv.style.color = "#F44336";
                 badDiv.style.fontWeight = "bold";
