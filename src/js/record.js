@@ -46,19 +46,31 @@ function setupForm() {
     if (recordTimeInput) recordTimeInput.value = localISOTime;
 
     const mode = urlParams.get("mode");
+    const behaviorSection = document.getElementById("behavior-section");
+    const detailTextarea = document.getElementById("detail");
+
     if (mode === "counsel") {
-        const behaviorSection = document.getElementById("behavior-section");
         if (behaviorSection) behaviorSection.style.display = "none";
-        const detailTextarea = document.getElementById("detail");
         if (detailTextarea) {
             detailTextarea.placeholder = "상담 내용을 상세히 입력하세요...";
-            // 자동 높이 조절 기능 추가
-            detailTextarea.style.overflowY = "hidden";
-            detailTextarea.addEventListener("input", function () {
-                this.style.height = "auto";
-                this.style.height = (this.scrollHeight) + "px";
-            });
         }
+    }
+
+    // 모든 모드에서 자동 높이 조절 기능 추가
+    if (detailTextarea) {
+        detailTextarea.style.overflowY = "hidden";
+        detailTextarea.style.resize = "none"; // 수동 리사이즈 비활성화 (선택 사항)
+
+        detailTextarea.addEventListener("input", function () {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        });
+
+        // 초기 로딩 시에도 높이 조절 (기존 내용이 있는 경우 대비)
+        setTimeout(() => {
+            detailTextarea.style.height = "auto";
+            detailTextarea.style.height = (detailTextarea.scrollHeight) + "px";
+        }, 100);
     }
 
     // 사진 입력 및 미리보기 설정
