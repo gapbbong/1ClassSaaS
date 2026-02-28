@@ -745,13 +745,14 @@ body {
 }
 
 .student-id-badge {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: #f0f7ff !important;
+    color: #4499ff !important;
     padding: 4px 10px !important;
     border-radius: 6px !important;
     font-size: 0.9rem !important;
-    font-weight: 700 !important;
+    font-weight: 800 !important;
     font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+    border: 1px solid #e1efff !important;
 }
 
 .student-name-text {
