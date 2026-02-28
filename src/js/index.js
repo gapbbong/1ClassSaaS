@@ -435,22 +435,38 @@ function openContactModal(info) {
   title.innerText = `${info.grade}학년 ${info.class}반 교사 연락처`;
 
   // 담임/부담임 전화/문자 버튼 생성
-  body.innerHTML = `
-        <div class="teacher-contact-row">
-            <span>👤 담임: ${info.homeroom}</span>
-            <div class="teacher-contact-actions">
+  let bodyHtml = '';
+
+  // 1. 담임 정보
+  if (info.homeroom && info.homeroom !== '미정') {
+    bodyHtml += `
+      <div class="teacher-contact-row">
+          <span>👤 담임: ${info.homeroom}</span>
+          <div class="teacher-contact-actions">
+              ${info.homeroomPhone ? `
                 <a href="tel:${info.homeroomPhone}" style="color:#FF3B30">📞</a>
                 <a href="sms:${info.homeroomPhone}" style="color:#34C759">💬</a>
-            </div>
-        </div>
-        <div class="teacher-contact-row">
-            <span>👤 부담임: ${info.sub}</span>
-            <div class="teacher-contact-actions">
+              ` : '<span style="font-size:0.8rem; color:#999;">연락처 없음</span>'}
+          </div>
+      </div>`;
+  }
+
+  // 2. 부담임 정보
+  if (info.sub && info.sub !== '미정') {
+    bodyHtml += `
+      <div class="teacher-contact-row">
+          <span>👤 부담임: ${info.sub}</span>
+          <div class="teacher-contact-actions">
+              ${info.subPhone ? `
                 <a href="tel:${info.subPhone}" style="color:#FF3B30">📞</a>
                 <a href="sms:${info.subPhone}" style="color:#34C759">💬</a>
-            </div>
-        </div>
-    `;
+              ` : '<span style="font-size:0.8rem; color:#999;">연락처 없음</span>'}
+          </div>
+      </div>`;
+  }
+
+  if (!bodyHtml) bodyHtml = '<div style="padding:10px; color:#999;">등록된 교사 정보가 없습니다.</div>';
+  body.innerHTML = bodyHtml;
 
   modal.style.display = "flex";
 }
