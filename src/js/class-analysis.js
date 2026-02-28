@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderStatus(studentData);
 
         // 우리반 기록 초기화
-        initClassRecords(classInfo);
+        initClassRecords(classInfo, studentData);
 
         const doneStudents = studentData.filter(s => s.survey);
 
@@ -389,7 +389,7 @@ function renderAIAnalysis(students) {
     renderLevel("priority-l1", levels.L1);
 }
 
-async function initClassRecords(classInfo) {
+async function initClassRecords(classInfo, studentData) {
     const listElement = document.getElementById("class-records-list");
     const sortByIdBtn = document.getElementById("sort-by-id");
     const sortByDateBtn = document.getElementById("sort-by-date");
@@ -400,14 +400,14 @@ async function initClassRecords(classInfo) {
     // 초기 로드: 자동으로 기록을 가져와서 렌더링
     listElement.innerHTML = '<p class="text-muted">기록을 불러오는 중...</p>';
     records = await fetchClassRecords(classInfo);
-    renderClassRecords(records, currentSort);
+    renderClassRecords(records, currentSort, studentData);
 
     sortByIdBtn.onclick = () => {
         if (currentSort === 'id') return;
         currentSort = 'id';
         sortByIdBtn.classList.add("active");
         sortByDateBtn.classList.remove("active");
-        renderClassRecords(records, currentSort);
+        renderClassRecords(records, currentSort, studentData);
     };
 
     sortByDateBtn.onclick = () => {
@@ -415,11 +415,11 @@ async function initClassRecords(classInfo) {
         currentSort = 'date';
         sortByDateBtn.classList.add("active");
         sortByIdBtn.classList.remove("active");
-        renderClassRecords(records, currentSort);
+        renderClassRecords(records, currentSort, studentData);
     };
 }
 
-function renderClassRecords(records, sortBy) {
+function renderClassRecords(records, sortBy, allStudents = []) {
     const listElement = document.getElementById("class-records-list");
     if (records.length === 0) {
         listElement.innerHTML = '<p class="text-muted">등록된 기록이 없습니다.</p>';
@@ -439,6 +439,16 @@ function renderClassRecords(records, sortBy) {
             month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         const numStr = r.num.slice(-2).padStart(2, '0');
+
+        // 인스타 아이디 찾기
+        const student = allStudents.find(s => s.student_id.toString() === r.num.toString());
+        const instaId = student?.survey?.data?.['인스타 아이디'] || student?.survey?.data?.['인스타'] || "";
+        const cleanInstaId = instaId.replace('@', '').trim();
+        const instaIcon = cleanInstaId ? `
+            <a href="https://instagram.com/${cleanInstaId}" target="_blank" class="insta-link-sm" onclick="event.stopPropagation()">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.162 6.162 6.162 6.162-2.759 6.162-6.162-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>` : "";
+
         const tagClass = r.good ? 'good' : (r.bad ? 'bad' : '');
         const tagName = r.good || r.bad || '일반';
 
@@ -446,7 +456,7 @@ function renderClassRecords(records, sortBy) {
             <div class="record-log-item">
                 <div class="log-header">
                     <span class="student-name" onclick="location.href='record.html?num=${r.num}&name=${encodeURIComponent(r.name)}'">
-                        ${numStr}번 ${r.name}
+                        ${numStr}번 ${r.name} ${instaIcon}
                     </span>
                     <span>${dateStr}</span>
                 </div>

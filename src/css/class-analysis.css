@@ -553,3 +553,19 @@ body {
         grid-column: auto;
     }
 }
+
+/* Instagram Link Style */
+.insta-link-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #E1306C;
+    margin-left: 4px;
+    vertical-align: middle;
+    transition: transform 0.2s;
+}
+
+.insta-link-sm:hover {
+    transform: scale(1.2);
+    color: #C13584;
+}
