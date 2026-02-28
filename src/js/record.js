@@ -23,7 +23,7 @@ function setupHeader() {
         const surveyBtn = document.getElementById("viewSurveyBtn");
         if (surveyBtn) surveyBtn.style.display = "inline-flex";
     } else {
-        document.title = `${studentName} 학생 생활기록`;
+        document.title = `${studentName} 학생 기록`;
         document.getElementById("pageTitle").textContent = `${num}번 ${studentName}`;
     }
 
@@ -230,6 +230,10 @@ async function loadRecords() {
     logBox.innerHTML = ""; // 기존 내용 초기화
     logBox.className = "loading-records"; // 애니메이션 클래스 추가
 
+    // 제목에서 '생활기록' 제거 하려면 h3 텍스트 변경
+    const logHeader = document.querySelector(".record-log h3");
+    if (logHeader) logHeader.textContent = "📚 기록 내역";
+
     try {
         const data = await fetchStudentRecords(num);
 
@@ -267,7 +271,15 @@ async function loadRecords() {
             headerDiv.style.color = "#888";
             headerDiv.style.marginBottom = "5px";
             headerDiv.style.marginRight = "50px";
-            headerDiv.textContent = `📅 ${formatDate(r.time)} | 🧑‍🏫 ${r.teacher || "미입력"}`;
+            headerDiv.style.textAlign = "left"; // 왼쪽 정렬 명시
+
+            // 교사 이름 처리 (이메일인 경우 앞부분만 추출)
+            let teacherDisplay = r.teacher || "미입력";
+            if (teacherDisplay.includes('@')) {
+                teacherDisplay = teacherDisplay.split('@')[0];
+            }
+
+            headerDiv.textContent = `📅 ${formatDate(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
 
             itemDiv.appendChild(headerDiv);
 

@@ -44,7 +44,10 @@
     <!-- 자세히 -->
     <div class="label-row-with-btn">
       <label for="detail">자세히</label>
-      <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display:none;">📋 기초조사 보기</button>
+      <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display: none;"
+        onclick="openSurveyPopup(null, num)">
+        📖 위 학생의 기초조사 보기
+      </button>
     </div>
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
 
