@@ -438,6 +438,9 @@ textarea#detail {
     -webkit-tap-highlight-color: transparent;
     min-height: 80px;
     height: 80px;
+    box-sizing: border-box;
+    /* 패딩 오차 방지 */
+    margin: 0;
 }
 
 .photo-action-item:hover {

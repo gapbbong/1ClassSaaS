@@ -310,28 +310,30 @@ async function loadRecords() {
                 itemDiv.appendChild(detailDiv);
             }
 
-            // [추가] 사진/반성문 표시
+            // [추가] 사진/반성문 표시 개선 (버튼 타입)
             if (r.photos && r.photos.length > 0) {
                 const photoDiv = document.createElement("div");
-                photoDiv.style.marginTop = "10px";
-                r.photos.forEach(photoUrl => {
-                    const img = document.createElement("img");
-                    img.src = photoUrl;
-                    img.className = "record-photo-thumb";
-                    img.style.width = "80px";
-                    img.style.height = "80px";
-                    img.style.objectFit = "cover";
-                    img.style.borderRadius = "4px";
-                    img.style.cursor = "pointer";
-                    img.style.border = "1px solid #ddd";
-                    img.onclick = () => window.open(photoUrl);
-                    photoDiv.appendChild(img);
+                photoDiv.style.marginTop = "12px";
+                photoDiv.style.display = "flex";
+                photoDiv.style.alignItems = "center";
+                photoDiv.style.gap = "8px";
 
-                    const label = document.createElement("span");
-                    label.textContent = " 📷 반성문 있음 (클릭 시 확대)";
-                    label.style.fontSize = "0.8em";
-                    label.style.color = "#666";
-                    photoDiv.appendChild(label);
+                r.photos.forEach((photoUrl, index) => {
+                    const viewBtn = document.createElement("button");
+                    viewBtn.type = "button";
+                    viewBtn.className = "btn-view-photo"; // CSS 추가 필요
+                    viewBtn.style.background = "#f0f2f5";
+                    viewBtn.style.border = "1px solid #d9d9d9";
+                    viewBtn.style.borderRadius = "6px";
+                    viewBtn.style.padding = "4px 10px";
+                    viewBtn.style.fontSize = "0.85em";
+                    viewBtn.style.cursor = "pointer";
+                    viewBtn.style.display = "inline-flex";
+                    viewBtn.style.alignItems = "center";
+                    viewBtn.style.gap = "4px";
+                    viewBtn.innerHTML = `📷 사진 보기 ${r.photos.length > 1 ? index + 1 : ""}`;
+                    viewBtn.onclick = () => window.open(photoUrl);
+                    photoDiv.appendChild(viewBtn);
                 });
                 itemDiv.appendChild(photoDiv);
             }
