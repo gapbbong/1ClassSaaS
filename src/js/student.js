@@ -787,7 +787,7 @@ window.showActionModal = function (student) {
             
             <div class="action-grid" id="action-grid-main">
                 <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
-                   <span class="action-icon">🧠</span> ✨ 학생 분석
+                   <span class="action-icon">🧠</span> 학생 분석
                 </button>
                 <button class="action-btn" onclick="showCounsel(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#fff9db; border-color:#ffe066; color:#e67e22;">
                    <span class="action-icon">💬</span> 상담 기록 작성
