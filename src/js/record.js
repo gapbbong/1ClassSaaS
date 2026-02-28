@@ -401,8 +401,8 @@ function initSurveyPopup() {
 /**
  * 기초조사 팝업 열기 및 렌더링
  */
-async function openSurveyPopup(e) {
-    if (e) e.preventDefault();
+async function openSurveyPopup(e, targetId = null) {
+    if (e && e.preventDefault) e.preventDefault();
 
     const popup = document.getElementById("popup");
     const overlay = document.getElementById("overlay");
@@ -415,16 +415,18 @@ async function openSurveyPopup(e) {
     // 배경 스크롤 방지
     document.body.style.overflow = "hidden";
 
-    popup.innerHTML = `<div style="padding:20px; text-align:center;">기초조사 불러오는 중...</div>`;
+    popup.innerHTML = `<div style="padding:20px; text-align:center; color:#fff;">기초조사 불러오는 중...</div>`;
 
-    const data = await fetchSurveyData(num);
+    const activeId = targetId || num; // 인자가 있으면 해당 학번, 없으면 현재 페이지 학번
+    const data = await fetchSurveyData(activeId);
+
     if (!data) {
         popup.innerHTML = `
             <div class="popup-header">
                 <div class="popup-title-center">기초조사 오류</div>
-                <button class="close-btn">✕</button>
+                <button class="close-btn" onclick="closePopup()">✕</button>
             </div>
-            <div style="padding:20px; text-align:center;">데이터를 불러오지 못했습니다.</div>`;
+            <div style="padding:20px; text-align:center;">데이터를 불러오지 못했습니다. (${activeId})</div>`;
         return;
     }
 
@@ -491,7 +493,7 @@ async function openSurveyPopup(e) {
             </div>
             <button class="close-btn" onclick="closePopup()">✕</button>
         </div>
-        <div class="popup-quadrants-container" style="padding: 15px; box-sizing: border-box;">
+        <div class="popup-quadrants-container">
             <div class="popup-quadrant quad-1">
                 <div class="quad-label" style="background:#fff1f0; color:#cf1322;">PHOTO</div>
                 <div class="photo-wrapper">
@@ -511,7 +513,47 @@ async function openSurveyPopup(e) {
                 <div class="quad-scroll">${infoHtml4 || ". (상세 정보 없음)"}</div>
             </div>
         </div>
+        <!-- 학생 이동 플로팅 버튼 추가 -->
+        <div class="nav-floating-btn nav-prev-btn" onclick="navigateStudent(-1, '${activeId}')">〈</div>
+        <div class="nav-floating-btn nav-next-btn" onclick="navigateStudent(1, '${activeId}')">〉</div>
     `;
+}
+
+/**
+ * 학생 이동 (앞번호/뒷번호)
+ */
+let studentsList = []; // 현재 학급의 학생 목록 저장용
+async function navigateStudent(direction, currentId) {
+    // 현재 학급의 모든 학생 목록을 가져옵니다 (처음 한 번만)
+    if (studentsList.length === 0) {
+        const grade = currentId.charAt(0);
+        const classNum = currentId.slice(1, 2);
+        try {
+            const { fetchStudentsByClass } = await import('./api.js');
+            studentsList = await fetchStudentsByClass(grade, classNum);
+        } catch (e) {
+            console.error("학생 목록 로드 실패:", e);
+            return;
+        }
+    }
+
+    const currentIndex = studentsList.findIndex(s => s.student_id === currentId);
+    if (currentIndex === -1) return;
+
+    let nextIndex = currentIndex + direction;
+    if (nextIndex < 0) nextIndex = studentsList.length - 1;
+    if (nextIndex >= studentsList.length) nextIndex = 0;
+
+    const nextStudent = studentsList[nextIndex];
+
+    // 팝업만 갱신 (URL은 히스토리에 기록만 하고 실제 이동은 안 함)
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set("num", nextStudent.student_id);
+    newUrl.searchParams.set("name", nextStudent.name);
+    window.history.replaceState({ student_id: nextStudent.student_id }, "", newUrl);
+
+    // 팝업 내용 갱신
+    await openSurveyPopup(null, nextStudent.student_id);
 }
 
 /**
@@ -525,9 +567,24 @@ function closePopup() {
     document.body.style.overflow = "auto";
 }
 
+/**
+ * vFlat 앱 스토어 페이지로 이동
+ */
+function openVFlat() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    if (/android/i.test(userAgent)) {
+        window.location.href = "market://details?id=com.voyagerx.scanner";
+    } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        window.location.href = "itms-apps://itunes.apple.com/app/id1540238220";
+    } else {
+        window.open("https://vflat.com/");
+    }
+}
+
 // 전역 공개
 window.closePopup = closePopup;
 window.openSurveyPopup = openSurveyPopup;
+window.navigateStudent = navigateStudent;
 window.openVFlat = openVFlat;
 
-console.log("✅ record.js 로드 완료");
+console.log("✅ record.js 로드 완료 및 전역 함수 등록");
