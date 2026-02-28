@@ -502,6 +502,10 @@ async function showPopup(student) {
     // 배경 스크롤 방지
     document.body.style.overflow = "hidden";
 
+    // 옆반 이동 버튼 숨기기
+    const floatingControls = document.querySelector(".floating-controls");
+    if (floatingControls) floatingControls.style.display = "none";
+
     // 팝업 열 때 기초조사 데이터 추가 로딩
     let surveyRaw = {};
     try {
@@ -744,6 +748,10 @@ window.closePopup = function () {
         document.removeEventListener("keydown", window._popupKeyHandler);
         window._popupKeyHandler = null;
     }
+
+    // 옆반 이동 버튼 다시 보이기
+    const floatingControls = document.querySelector(".floating-controls");
+    if (floatingControls) floatingControls.style.display = "flex";
 }
 
 // 페이지 이동 및 모달 액션

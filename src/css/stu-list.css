@@ -666,17 +666,18 @@ body {
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    width: 90vw !important;
-    max-width: 900px !important;
-    height: 85vh !important;
-    max-height: 800px !important;
+    width: 95vw !important;
+    max-width: 1000px !important;
+    height: 90vh !important;
+    max-height: 900px !important;
     background: #fff !important;
     z-index: 1000 !important;
-    border-radius: 30px !important;
+    border-radius: 24px !important;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: 24px !important;
+    padding: 0 !important;
+    /* 패딩 제거 */
     box-sizing: border-box !important;
     animation: popupFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow: hidden !important;
@@ -805,12 +806,12 @@ body {
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
 }
 
-/* Quadrants Container */
 .popup-quadrants-container {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: 45% 55% !important;
-    gap: 16px !important;
+    gap: 0 !important;
+    /* 간격 제거하여 꽉 채움 */
     flex: 1 !important;
     min-height: 0 !important;
     height: 100% !important;
@@ -829,21 +830,29 @@ body {
 .quad-1 {
     background-color: #fff !important;
     border-left: 5px solid #ff4d4f !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-right: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
 }
 
 .quad-2 {
     background-color: #fff !important;
     border-left: 5px solid #52c41a !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
 }
 
 .quad-3 {
     background-color: #fff !important;
     border-left: 5px solid #1890ff !important;
+    border-right: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
 }
 
 .quad-4 {
     background-color: #fff !important;
     border-left: 5px solid #722ed1 !important;
+    border-radius: 0 !important;
 }
 
 .quad-inner {
@@ -926,10 +935,14 @@ body {
 }
 
 .nav-arrow-btn {
-    background: rgba(255, 255, 255, 0.9) !important;
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
     border: 1px solid #e2e8f0 !important;
-    width: 44px !important;
-    height: 44px !important;
+    width: 48px !important;
+    height: 48px !important;
     border-radius: 50% !important;
     display: flex !important;
     align-items: center !important;
@@ -937,8 +950,16 @@ body {
     cursor: pointer !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
     transition: all 0.2s !important;
-    z-index: 20 !important;
+    z-index: 1010 !important;
     flex-shrink: 0 !important;
+}
+
+.nav-arrow-btn.left {
+    left: 20px !important;
+}
+
+.nav-arrow-btn.right {
+    right: 20px !important;
 }
 
 .nav-arrow-btn svg {
