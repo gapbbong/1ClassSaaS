@@ -22,7 +22,7 @@ export async function fetchStudentRecords(num) {
         // 2. 해당 pid를 가진 생활기록을 가져옵니다.
         const { data, error } = await supabase
             .from('life_records')
-            .select('*')
+            .select('*, students!inner(name, photo_url)')
             .eq('student_pid', student.pid)
             .order('created_at', { ascending: false });
 
@@ -32,6 +32,8 @@ export async function fetchStudentRecords(num) {
         return data.map(r => ({
             id: r.id,
             num: num,
+            name: r.students.name,
+            photo: r.students.photo_url,
             time: r.created_at,
             good: r.is_positive ? r.category : null,
             bad: !r.is_positive ? r.category : null,
@@ -182,8 +184,9 @@ export async function fetchGroupRecords(grade, classNum) {
     try {
         let query = supabase
             .from('life_records')
-            .select('*, students!inner(student_id, class_info, academic_year)')
-            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
+            .select('*, students!inner(student_id, name, photo_url, class_info, academic_year)')
+            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('category', '상담');
 
         if (grade && classNum) {
             query = query.eq('students.class_info', `${grade}-${classNum}`);
@@ -199,11 +202,12 @@ export async function fetchGroupRecords(grade, classNum) {
         return data.map(r => ({
             id: r.id,
             num: r.students.student_id,
-            name: "", // student_id만으로 충분하거나 나중에 병합
+            name: r.students.name,
             time: r.created_at,
             good: r.is_positive ? r.category : null,
             bad: !r.is_positive ? r.category : null,
             detail: r.content,
+            photo: r.students.photo_url,
             teacher: r.teacher_email_prefix || "선생님"
         }));
     } catch (error) {
@@ -220,7 +224,8 @@ export async function fetchClassStats() {
         // 1. 전체 생활기록 건수 조회
         const { count: grandTotal, error: gError } = await supabase
             .from('life_records')
-            .select('*', { count: 'exact', head: true });
+            .select('*', { count: 'exact', head: true })
+            .neq('category', '상담');
 
         if (gError) throw gError;
 
@@ -228,7 +233,8 @@ export async function fetchClassStats() {
         const { data, error } = await supabase
             .from('life_records')
             .select('students!inner(class_info, academic_year)')
-            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
+            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('category', '상담');
 
         if (error) throw error;
 
@@ -408,5 +414,41 @@ export async function uploadEvidencePhoto(file, studentId) {
     } catch (error) {
         console.error("Upload Error:", error);
         throw new Error("사진 업로드에 실패했습니다.");
+    }
+}
+
+/**
+ * 특정 학생의 기초조사 데이터를 가져옵니다.
+ * @param {string} num - 학번
+ */
+export async function fetchSurveyData(num) {
+    if (!num) return null;
+    try {
+        // 1. 학번으로 학생 정보를 먼저 가져옵니다 (pid가 필요)
+        const { data: student, error: sError } = await supabase
+            .from('students')
+            .select('*')
+            .eq('student_id', num)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .single();
+
+        if (sError || !student) return null;
+
+        // 2. 해당 pid를 가진 기초조사 데이터를 가져옵니다.
+        const { data, error } = await supabase
+            .from('surveys')
+            .select('*')
+            .eq('student_pid', student.pid)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        return {
+            student: mapStudentData(student),
+            survey: data ? { ...data, ...(data.data || {}) } : null
+        };
+    } catch (error) {
+        console.error("Fetch Survey Error:", error);
+        return null;
     }
 }

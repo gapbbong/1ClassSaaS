@@ -100,15 +100,18 @@ function setupHeader(classInfo) {
     const teacherInfoElement = document.getElementById("teacher-info");
     const info = classInfo ? classInfo.find(c => c.grade === grade && c.class === classNum) : null;
     if (info) {
-        // 교사 이름 클릭 → 연락처 모달 방식으로 변경
+        // 교사 이름 클릭 시 즉시 전화 연결로 변경 (사용자 요청)
+        const hrPhone = info.homeroomPhone || "";
+        const subPhone = info.subPhone || "";
+
         teacherInfoElement.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center;">
-                <button class="teacher-contact-btn" onclick="showTeacherModal(${JSON.stringify(info).replace(/"/g, '&quot;')})">
+                <button class="teacher-contact-btn" onclick="if('${hrPhone}') window.location.href='tel:${hrPhone}'; else alert('연락처가 등록되지 않았습니다.');">
                     <span class="teacher-badge homeroom">담임</span>
                     <span class="teacher-name">${info.homeroom}</span>
                 </button>
                 ${info.sub ? `
-                <button class="teacher-contact-btn" onclick="showTeacherModal(${JSON.stringify(info).replace(/"/g, '&quot;')}, true)">
+                <button class="teacher-contact-btn" onclick="if('${subPhone}') window.location.href='tel:${subPhone}'; else alert('연락처가 등록되지 않았습니다.');">
                     <span class="teacher-badge sub">부담임</span>
                     <span class="teacher-name">${info.sub}</span>
                 </button>` : ''}
@@ -263,7 +266,10 @@ function loadStudents() {
             // 번호순 정렬
             filtered.sort((a, b) => a["번호"] - b["번호"]);
 
-            filtered.forEach(student => {
+            // [추가] 전역 캐시에 저장 (팝업 이동용)
+            window.allStudents_Cache = filtered;
+
+            filtered.forEach((student, index) => {
                 const container = document.createElement("div");
                 container.className = "student";
 
@@ -358,85 +364,84 @@ function loadStudents() {
                 container.appendChild(imgContainer);
                 container.appendChild(nameDiv);
 
-                // 롱 프레스 및 클릭 로직 구현
+                // 롱 프레스 및 클릭 로직 구현 (고스트 터치 완벽 방지)
                 let pressTimer;
                 let isLongPress = false;
-                let isScrolling = false;
-                let touchStartX = 0;
-                let touchStartY = 0;
+                let moved = false;
+                let startX, startY;
 
-                const startPress = (e) => {
+                const onStart = (e) => {
+                    const touch = e.type.indexOf('touch') === 0 ? e.touches[0] : e;
+                    startX = touch.clientX;
+                    startY = touch.clientY;
+                    moved = false;
                     isLongPress = false;
-                    isScrolling = false;
-
-                    // 터치 이벤트인 경우 시작 위치 기록
-                    if (e.type === 'touchstart' && e.touches.length > 0) {
-                        touchStartX = e.touches[0].clientX;
-                        touchStartY = e.touches[0].clientY;
-                    }
 
                     container.classList.add("pressing");
+                    clearTimeout(pressTimer);
                     pressTimer = setTimeout(() => {
                         isLongPress = true;
                         container.classList.remove("pressing");
                         container.classList.add("long-pressed");
-                        // 진동 피드백 (지원되는 경우)
                         if (navigator.vibrate) navigator.vibrate(50);
                         showActionModal(student);
-                    }, 600); // 600ms 동안 누르면 롱 프레스
+                    }, 600);
                 };
 
-                const cancelPress = (e) => {
+                const onMove = (e) => {
+                    if (!startX || !startY) return;
+                    const touch = e.type.indexOf('touch') === 0 ? e.touches[0] : e;
+                    const dx = Math.abs(touch.clientX - startX);
+                    const dy = Math.abs(touch.clientY - startY);
+
+                    // 8px 이상 움직이면 드래그로 간주
+                    if (dx > 8 || dy > 8) {
+                        moved = true;
+                        clearTimeout(pressTimer);
+                        container.classList.remove("pressing");
+                    }
+                };
+
+                const onEnd = (e) => {
+                    if (!startX || !startY) return; // 해당 요소에서 시작하지 않았으면 무시
                     clearTimeout(pressTimer);
                     container.classList.remove("pressing");
                     container.classList.remove("long-pressed");
-                    if (e && (e.type === "touchmove" || e.type === "mouseleave")) {
-                        isScrolling = true;
-                    }
-                };
 
-                const handleRelease = (e) => {
-                    clearTimeout(pressTimer);
-                    container.classList.remove("pressing");
-
-                    // 롱 프레스가 아니었고 스크롤 중이 아니었을 때만 팝업 실행
-                    if (!isLongPress && !isScrolling) {
-                        showPopup(student);
-                    }
-                    isLongPress = false;
-                    isScrolling = false;
-                };
-
-                const handleTouchMove = (e) => {
-                    if (e.touches.length > 0) {
-                        const moveX = e.touches[0].clientX;
-                        const moveY = e.touches[0].clientY;
-
-                        // 10px 이상 움직이면 스크롤 중으로 판단하고 이벤트 취소
-                        if (Math.abs(moveX - touchStartX) > 10 || Math.abs(moveY - touchStartY) > 10) {
-                            cancelPress();
+                    // 롱프레스가 아니었고, 드래그도 아니었을 경우에만 팝업 표시
+                    if (!isLongPress && !moved) {
+                        // touchend에서만 호출하여 mouseup과의 중복(고스트 터치) 방지
+                        if (e.type === 'touchend') {
+                            e.preventDefault();
+                            showPopup(student);
+                        } else if (e.type === 'mouseup' && e.which === 1) {
+                            // 터치 기기가 아닐 때만 mouseup으로 처리
+                            showPopup(student);
                         }
                     }
+                    startX = startY = null;
                 };
 
-                // 마우스 이벤트
-                container.addEventListener("mousedown", startPress);
-                container.addEventListener("mouseup", handleRelease);
-                container.addEventListener("mouseleave", cancelPress);
+                // 이벤트 등록
+                container.addEventListener("mousedown", onStart);
+                container.addEventListener("mousemove", onMove);
+                container.addEventListener("mouseup", onEnd);
 
-                // 터치 이벤트
-                container.addEventListener("touchstart", (e) => {
-                    startPress(e);
-                }, { passive: true });
-                container.addEventListener("touchend", (e) => {
-                    // 터치 시에만 브라우저 기본 동작 방지 (필요 시)
-                    handleRelease(e);
+                // 마우스가 요소를 벗어나면 타이머 취소
+                container.addEventListener("mouseleave", () => {
+                    clearTimeout(pressTimer);
+                    container.classList.remove("pressing");
+                    container.classList.remove("long-pressed");
+                    startX = startY = null;
                 });
-                container.addEventListener("touchmove", handleTouchMove, { passive: true });
 
-                // 우클릭 이벤트 (PC 환경 지원)
+                container.addEventListener("touchstart", onStart, { passive: false });
+                container.addEventListener("touchmove", onMove, { passive: true });
+                container.addEventListener("touchend", onEnd, { passive: false });
+
+                // 우클릭 이벤트 (PC)
                 container.addEventListener("contextmenu", (e) => {
-                    e.preventDefault(); // 기본 우클릭 메뉴 방지
+                    e.preventDefault();
                     showActionModal(student);
                 });
 
@@ -493,6 +498,9 @@ async function showPopup(student) {
     overlay.style.display = "block";
     popup.style.display = "block";
     popup.className = "student-detail-popup";
+
+    // 배경 스크롤 방지
+    document.body.style.overflow = "hidden";
 
     // 팝업 열 때 기초조사 데이터 추가 로딩
     let surveyRaw = {};
@@ -553,7 +561,7 @@ async function showPopup(student) {
             <span class="detail-label">${label}</span>
             <span class="detail-value">
                 ${displayVal} 
-                ${(isPhone && valStr !== ".") ? `<a href="tel:${valStr}" class="contact-icon">📞</a><a href="sms:${valStr}" class="contact-icon">💬</a>` : ''} 
+                ${(isPhone && valStr !== ".") ? `<a href="tel:${valStr}" class="contact-icon">📞</a>` : ''} 
             </span>
         </div>`;
     };
@@ -604,64 +612,128 @@ async function showPopup(student) {
     const escapedStudent = JSON.stringify(student).replace(/"/g, '&quot;');
     const photoImg = imgSrc ? `<img src="${imgSrc}" onerror="this.src='${fallbackImgSrc}'" alt="${student["이름"]} 사진">` : `<div class="no-photo-placeholder">📷<br>사진 없음</div>`;
 
+    // 현재 반 학생들 목록 가져오기 (이동 버튼용)
+    const studentsInClass = Array.from(document.querySelectorAll('.student')).map(el => {
+        // 이 부분은 loadStudents에서 데이터를 전역 변수에 담아두는 것이 좋지만, 
+        // 현재 구조를 유지하며 DOM에서 데이터를 유추하거나 다시 fetch하는 대신 
+        // 간단한 인덱스 기반 이동을 위해 popup 호출 시 index를 넘겨받는 식으로 개선할 수 있습니다.
+        // 여기서는 student 객체 자체를 사용하여 이전/다음 번호를 찾습니다.
+        return null; // 나중에 보완
+    });
+
     popup.innerHTML = `
         <div class="popup-header">
-            <h3><span class="popup-num">${student["학번"]}</span> ${student["이름"]}</h3>
-            <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
-            <button class="popup-close-btn" onclick="closePopup()">✕</button>
+            <div class="popup-title-center">
+                <span class="student-id-badge">${student["학번"]}</span>
+                <span class="student-name-text">${student["이름"]}</span>
+                <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
+            </div>
+            <button class="close-btn" onclick="closePopup()">✕</button>
         </div>
-        <div class="popup-quadrants-container">
-            <div class="popup-quadrant quad-1">
-                <div class="quad-inner">
-                    <div class="quad-label">사진</div>
-                    <div class="photo-wrapper">${photoImg}</div>
+        
+        <div class="popup-content-layout">
+            <!-- 왼쪽 이동 버튼 -->
+            <button class="nav-arrow-btn left" id="popup-prev-btn">
+                <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+
+            <div class="popup-quadrants-container">
+                <div class="popup-quadrant quad-1">
+                    <div class="quad-inner">
+                        <div class="quad-label">사진</div>
+                        <div class="photo-wrapper">${photoImg}</div>
+                    </div>
                 </div>
-            </div>
-            <div class="popup-quadrant quad-2">
-                <div class="quad-inner">
-                    <div class="quad-label">기본 정보</div>
-                    <div class="quad-scroll">
-                        ${infoHtml2 || '<div class="no-data-msg">-</div>'}
+                <div class="popup-quadrant quad-2">
+                    <div class="quad-inner">
+                        <div class="quad-label">기본 정보</div>
+                        <div class="quad-scroll">
+                            ${infoHtml2 || '<div class="no-data-msg">-</div>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="popup-quadrant quad-3">
+                    <div class="quad-inner">
+                        <div class="quad-label">연락처 및 가족</div>
+                        <div class="quad-scroll">
+                            ${infoHtml3 || '<div class="no-data-msg">-</div>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="popup-quadrant quad-4">
+                    <div class="quad-inner">
+                        <div class="quad-label">상세 기초조사</div>
+                        <div class="quad-scroll">
+                            ${infoHtml4 || '<div class="no-data-msg">정보 없음</div>'}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="popup-quadrant quad-3">
-                <div class="quad-inner">
-                    <div class="quad-label">연락처 및 가족</div>
-                    <div class="quad-scroll">
-                        ${infoHtml3 || '<div class="no-data-msg">-</div>'}
-                    </div>
-                </div>
-            </div>
-            <div class="popup-quadrant quad-4">
-                <div class="quad-inner">
-                    <div class="quad-label">상세 기초조사</div>
-                    <div class="quad-scroll">
-                        ${infoHtml4 || '<div class="no-data-msg">정보 없음</div>'}
-                    </div>
-                </div>
-            </div>
+
+            <!-- 오른쪽 이동 버튼 -->
+            <button class="nav-arrow-btn right" id="popup-next-btn">
+                <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+            </button>
         </div>
     `;
 
-
+    // 이동 버튼 이벤트 바인딩
+    setupPopupNavigation(student);
 
     // 팝업 열릴 때 전역 키보드 이벤트 리스너 등록
     window._popupKeyHandler = function (e) {
         if (popup.style.display === "block") {
-            if (e.key === "Escape" || e.key === "Enter" || e.key === " ") {
+            if (e.key === "Escape") {
                 e.preventDefault();
                 closePopup();
+            } else if (e.key === "ArrowLeft") {
+                document.getElementById("popup-prev-btn")?.click();
+            } else if (e.key === "ArrowRight") {
+                document.getElementById("popup-next-btn")?.click();
             }
         }
     };
     document.addEventListener("keydown", window._popupKeyHandler);
 }
 
+// 팝업 내 번호 이동 로직 완성
+function setupPopupNavigation(currentStudent) {
+    const prevBtn = document.getElementById("popup-prev-btn");
+    const nextBtn = document.getElementById("popup-next-btn");
+    if (!prevBtn || !nextBtn || !window.allStudents_Cache) return;
+
+    const currentIndex = window.allStudents_Cache.findIndex(s => s.pid === currentStudent.pid);
+    if (currentIndex === -1) return;
+
+    // 이전 학생
+    if (currentIndex > 0) {
+        prevBtn.onclick = () => {
+            const prevStudent = window.allStudents_Cache[currentIndex - 1];
+            showPopup(prevStudent);
+        };
+    } else {
+        prevBtn.style.visibility = "hidden";
+    }
+
+    // 다음 학생
+    if (currentIndex < window.allStudents_Cache.length - 1) {
+        nextBtn.onclick = () => {
+            const nextStudent = window.allStudents_Cache[currentIndex + 1];
+            showPopup(nextStudent);
+        };
+    } else {
+        nextBtn.style.visibility = "hidden";
+    }
+}
+
 window.closePopup = function () {
     console.log("Close popup button clicked");
     const popup = document.getElementById("popup");
     const overlay = document.getElementById("overlay");
+
+    // 배경 스크롤 해제
+    document.body.style.overflow = "";
+
     if (popup) {
         popup.style.display = "none";
         popup.className = "";
@@ -679,6 +751,12 @@ window.showRecord = function (student) {
     const name = encodeURIComponent(student["이름"]);
     const num = encodeURIComponent(student["학번"]);
     window.location.href = `record.html?num=${num}&name=${name}`;
+}
+
+window.showCounsel = function (student) {
+    const name = encodeURIComponent(student["이름"]);
+    const num = encodeURIComponent(student["학번"]);
+    window.location.href = `record.html?num=${num}&name=${name}&mode=counsel`;
 }
 
 window.goToAnalysis = function (student) {
@@ -701,7 +779,10 @@ window.showActionModal = function (student) {
             
             <div class="action-grid" id="action-grid-main">
                 <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
-                   <span class="action-icon">🧠</span> ✨ AI 학생 분석
+                   <span class="action-icon">🧠</span> ✨ 학생 분석
+                </button>
+                <button class="action-btn" onclick="showCounsel(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#fff9db; border-color:#ffe066; color:#e67e22;">
+                   <span class="action-icon">💬</span> 상담 기록 작성
                 </button>
                 <button class="action-btn" onclick="showRecord(${JSON.stringify(student).replace(/"/g, '&quot;')})">
                    <span class="action-icon">📒</span> 생활기록 작성

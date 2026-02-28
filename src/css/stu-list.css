@@ -165,9 +165,9 @@ body {
 }
 
 .student-name {
-    margin-top: 7px;
-    /* 10px -> 7px */
-    padding: 2px 4px;
+    margin-top: 1px;
+    /* 3px -> 1px 초밀착 조정 */
+    padding: 0px 4px 4px 4px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -300,39 +300,38 @@ body {
 
 .floating-controls button {
     pointer-events: auto;
-    /* 버튼은 클릭 가능 */
-    font-size: 36px;
-    /* 75%로 축소 (48px -> 36px) */
-    font-weight: 900;
-    /* 아주 두껍게 */
-    width: 48px;
-    /* 75%로 축소 (64px -> 48px) */
-    height: 48px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: #4A90E2;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.25s ease;
-    opacity: 0.8;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    border: 1px solid #e2e8f0 !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.25s ease !important;
 }
 
-.floating-controls button:hover {
-    background-color: #4A90E2;
-    color: #fff;
-    opacity: 1;
-    transform: scale(1.15) translateY(-2px);
-    box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
+.floating-controls button svg {
+    width: 28px !important;
+    height: 28px !important;
+    fill: #4A90E2 !important;
+}
+
+.floating-controls buttonOption:hover {
+    background-color: #4A90E2 !important;
+    transform: scale(1.15) !important;
+}
+
+.floating-controls button:hover svg {
+    fill: #fff !important;
 }
 
 .floating-controls button:active {
-    transform: scale(0.95);
+    transform: scale(0.95) !important;
 }
 
 #home-btn,
@@ -695,89 +694,115 @@ body {
     }
 }
 
-.popup-header {
-    position: relative !important;
-    display: flex !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    gap: 16px !important;
+.popup-header-wrapper {
+    padding: 0 0 16px 0 !important;
     border-bottom: 2px solid #f1f5f9 !important;
-    padding: 0 50px 16px 0 !important;
     flex-shrink: 0 !important;
-    flex-wrap: wrap !important;
 }
 
-.popup-header h3 {
-    margin: 0;
-    font-size: 1.6em;
-    font-weight: 800;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.popup-num {
-    background: #eef2f6;
-    color: #007aff;
-    padding: 4px 10px;
-    border-radius: 8px;
-    font-size: 0.8em;
-}
-
-.popup-header-actions {
-    display: flex;
-    gap: 12px;
-}
-
-.popup-record-btn {
-    background: #007aff !important;
-    color: white !important;
-    border: none !important;
-    padding: 8px 16px !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    cursor: pointer !important;
-    transition: 0.22s !important;
+.popup-header {
     display: flex !important;
     align-items: center !important;
-    gap: 8px !important;
-    position: relative !important;
-    white-space: nowrap !important;
-    z-index: 10 !important;
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2) !important;
-    font-size: 0.9em !important;
+    justify-content: space-between !important;
+    padding: 12px 20px !important;
+    border-bottom: 2px solid #f1f5f9 !important;
+    background: #fff !important;
+    gap: 15px !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
 }
 
-.popup-record-btn:hover {
-    background: #0056b3 !important;
-    transform: translateY(-2px) !important;
-    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3) !important;
-}
-
-.popup-close-btn {
-    background: #f1f3f4 !important;
-    border: none !important;
-    width: 44px !important;
-    height: 44px !important;
-    border-radius: 50% !important;
-    cursor: pointer !important;
-    font-size: 1.4em !important;
+.home-link {
+    font-size: 1.4rem !important;
+    text-decoration: none !important;
+    flex-shrink: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    transition: 0.2s !important;
-    z-index: 99999 !important;
-    position: absolute !important;
-    top: 15px !important;
-    right: 15px !important;
-    pointer-events: auto !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    width: 38px !important;
+    height: 38px !important;
+    background: #f8fafc !important;
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s !important;
 }
 
-.popup-close-btn:hover {
-    background: #e2e4e7 !important;
-    transform: rotate(90deg) !important;
+.home-link:hover {
+    background: #e2e8f0 !important;
+    transform: translateY(-2px) !important;
+}
+
+.popup-title-center {
+    flex: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+}
+
+.student-id-badge {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    padding: 4px 10px !important;
+    border-radius: 6px !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+}
+
+.student-name-text {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    letter-spacing: -0.02em !important;
+}
+
+.popup-record-btn {
+    background: #3b82f6 !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 8px 14px !important;
+    border-radius: 20px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-left: 5px !important;
+}
+
+.popup-record-btn:hover {
+    box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3) !important;
+}
+
+.popup-header .close-btn {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid #e2e8f0 !important;
+    font-size: 1.1rem !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.popup-header .close-btn:hover {
+    background: #fff !important;
+    color: #ef4444 !important;
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Quadrants Container */
@@ -879,38 +904,84 @@ body {
     border-radius: 12px;
 }
 
+
+
+.floating-controls button:hover svg {
+    fill: #fff !important;
+}
+
+.floating-controls button:active {
+    transform: scale(0.95) !important;
+}
+
 /* Detail Row Styling */
-.detail-info-row {
-    background: #f8fafc !important;
-    padding: 8px 12px !important;
-    border-radius: 12px !important;
-    margin-bottom: 6px !important;
-    border: 1px solid #f1f5f9 !important;
+.popup-content-layout {
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
-    text-align: left !important;
+    gap: 10px !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    position: relative !important;
+    margin-top: 16px !important;
+}
+
+.nav-arrow-btn {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #e2e8f0 !important;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.2s !important;
+    z-index: 20 !important;
+    flex-shrink: 0 !important;
+}
+
+.nav-arrow-btn svg {
+    width: 28px !important;
+    height: 28px !important;
+    fill: #4A90E2 !important;
+}
+
+.nav-arrow-btn:hover {
+    background: #4A90E2 !important;
+    transform: scale(1.1) !important;
+}
+
+.nav-arrow-btn:hover svg {
+    fill: #fff !important;
+}
+
+.detail-info-row {
+    display: flex !important;
+    padding: 8px 0 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    align-items: center !important;
 }
 
 .detail-label {
-    font-size: 0.75em !important;
+    width: 45px !important;
+    /* 110px에서 최종적으로 45px로 축소 */
+    font-size: 0.75rem !important;
+    color: #000 !important;
+    /* 검정색으로 변경 */
     font-weight: 800 !important;
-    color: #000000 !important;
-    flex: 0 0 50px !important;
-    border-right: 1px solid #e2e8f0;
-    padding-right: 8px;
-    margin-right: 4px;
-    word-break: keep-all;
-    text-transform: uppercase;
+    /* 더 진하게 변경 */
+    flex-shrink: 0 !important;
+    letter-spacing: -0.05em;
 }
 
 .detail-value {
-    font-size: 1.05em !important;
-    font-weight: 600 !important;
+    flex: 1 !important;
+    font-size: 0.95rem !important;
     color: #1e293b !important;
-    word-break: break-word !important;
-    flex: 3 !important;
-    padding-left: 4px;
+    font-weight: 700 !important;
+    word-break: break-all !important;
+    padding-left: 8px !important;
 }
 
 .contact-icon {
@@ -945,46 +1016,63 @@ body {
         top: 0 !important;
         left: 0 !important;
         transform: none !important;
-        padding: 10px !important;
-        gap: 10px !important;
+        padding: 5px !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    .popup-header {
+        padding: 10px 15px !important;
+        gap: 8px !important;
+    }
+
+    .student-name-text {
+        font-size: 1.1rem !important;
+    }
+
+    .popup-record-btn {
+        padding: 6px 10px !important;
+        font-size: 0.75rem !important;
+    }
+
+    .popup-content-layout {
+        flex: 1 !important;
+        margin-top: 8px !important;
+        gap: 5px !important;
     }
 
     .popup-quadrants-container {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
-        grid-template-rows: 30% 70% !important;
+        grid-template-rows: auto 1fr !important;
         gap: 8px !important;
-        overflow: hidden !important;
-    }
-
-    .popup-quadrant {
-        min-height: 0 !important;
-        margin-bottom: 0 !important;
+        flex: 1 !important;
+        overflow-y: auto !important;
     }
 
     .quad-label {
-        padding: 6px 10px !important;
-        font-size: 0.7em !important;
-    }
-
-    .quad-scroll {
-        padding: 8px !important;
+        padding: 8px 12px !important;
+        font-size: 0.75em !important;
     }
 
     .detail-info-row {
-        padding: 8px 10px !important;
-        margin-bottom: 6px !important;
+        padding: 6px 0 !important;
     }
 
     .detail-label {
-        font-size: 0.65em !important;
+        width: 42px !important;
+        font-size: 0.7rem !important;
+        color: #000 !important;
+        font-weight: 800 !important;
     }
 
     .detail-value {
-        font-size: 0.9em !important;
+        font-size: 0.85rem !important;
+        padding-left: 5px !important;
     }
 
-    .popup-header h3 {
-        font-size: 1.25em !important;
+    .nav-arrow-btn {
+        width: 36px !important;
+        height: 36px !important;
     }
 }

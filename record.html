@@ -7,6 +7,7 @@
   <title>학생 생활기록</title>
   <link rel="stylesheet" href="src/css/main.css">
   <link rel="stylesheet" href="src/css/record.css">
+  <link rel="stylesheet" href="src/css/stu-list.css">
 </head>
 
 <body>
@@ -14,7 +15,9 @@
   <!-- 상단 헤더 -->
   <div class="header-row">
     <button type="button" class="btn btn-back" aria-label="뒤로가기"></button>
-    <h2 id="pageTitle">...</h2>
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <h2 id="pageTitle" style="margin:0;">...</h2>
+    </div>
     <button type="submit" form="recordForm" class="btn btn-save" id="submitBtn">기록 저장</button>
   </div>
 
@@ -23,7 +26,7 @@
     <input type="hidden" id="recordTime">
 
     <!-- 잘한 일 / 못한 일 -->
-    <div class="behavior-row">
+    <div class="behavior-row" id="behavior-section">
       <div class="behavior-group-good">
         <label for="good">잘한 일</label>
         <select id="good">
@@ -39,14 +42,21 @@
     </div>
 
     <!-- 자세히 -->
-    <label for="detail">자세히</label>
+    <div class="label-row-with-btn">
+      <label for="detail">자세히</label>
+      <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display:none;">📋 기초조사 보기</button>
+    </div>
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
 
 
-    <!-- 반성문 / 사진 첨부 -->
+    <!-- 사진 첨부 -->
     <div class="photo-attachment-section">
-      <label for="photoInput">📸 반성문/사진 첨부</label>
-      <input type="file" id="photoInput" accept="image/*" capture="environment">
+      <label for="photoInput" class="left-align-label">📸 사진첨부(반성문이나 개인수첩 기록등)</label>
+      <div id="vflat-notice" class="vflat-notice" onclick="openVFlat()">
+        💡 <span>vFlat 앱</span>을 사용하시면 더 깔끔하게 저장됩니다.<br>
+        <span class="sub-text">(터치 시 설치 페이지 이동)</span>
+      </div>
+      <input type="file" id="photoInput" accept="image/*">
       <div id="photoPreviewContainer" class="photo-preview-container">
         <!-- 사진 미리보기가 여기에 표시됩니다 -->
       </div>
@@ -57,6 +67,10 @@
     <h3>📚 기록 내역</h3>
     <div id="logContainer">⏳ 기록을 불러오는 중입니다...</div>
   </div>
+
+  <!-- 기초조사 팝업 레이어 -->
+  <div id="overlay"></div>
+  <div id="popup"></div>
 
   <script type="module" src="src/js/record.js"></script>
 </body>

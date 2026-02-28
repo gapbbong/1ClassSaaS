@@ -189,8 +189,8 @@ body {
     height: calc(100vh - 80px);
     /* 헤더 제외 남은 공간 채우기 */
     padding: 5px 10px 15px 10px;
-    gap: 24px;
-    /* 가로 사이 간격 2배로 확대 */
+    gap: 48px;
+    /* 가로 사이 간격 2배로 확대 (24px -> 48px) */
     box-sizing: border-box;
 }
 
@@ -212,8 +212,8 @@ body {
 /* 각 반(카드) */
 .class-box {
     width: 100%;
-    height: 15.5%;
-    /* 6개 반이 꽉 차도록 설정 */
+    height: 14.5%;
+    /* 높이를 15.5%에서 14.5%로 줄여 상하 간격을 더 확보 */
 }
 
 /* 카드 섹션 */

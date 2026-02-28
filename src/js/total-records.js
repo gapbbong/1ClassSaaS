@@ -57,24 +57,10 @@ async function loadRecords(grade, classNum) {
         container.innerHTML = '';
         container.classList.add('loading-records');
 
-        // 기록 데이터와 학생 명단을 병렬로 호출
-        const [records, students] = await Promise.all([
-            fetchGroupRecords(grade, classNum),
-            fetchAllStudents()
-        ]);
+        // 기록 데이터 호출 (API에서 이름/사진이 포함되어 옴)
+        const records = await fetchGroupRecords(grade, classNum);
 
         allRecords = records;
-
-        // 학생 사진 맵 생성
-        const studentPhotoMap = {};
-        students.forEach(s => {
-            if (s["학번"]) studentPhotoMap[String(s["학번"])] = s["사진저장링크"];
-        });
-
-        // 각 기록에 사진 정보 병합
-        allRecords.forEach(record => {
-            record.photo = studentPhotoMap[String(record.num)] || "";
-        });
 
         // 로딩 종료
         container.classList.remove('loading-records');
@@ -131,7 +117,8 @@ function createRecordCard(record) {
         timeStr = rawTime.substring(0, 16);
     }
 
-    const photoUrl = getThumbnailUrl(extractDriveId(record.photo));
+    const driveId = extractDriveId(record.photo);
+    const photoUrl = driveId ? getThumbnailUrl(driveId) : (record.photo || "https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png");
 
     div.innerHTML = `
         <div class="card-inner">
@@ -146,8 +133,8 @@ function createRecordCard(record) {
                 </div>
                 <div class="log-content">${record.detail || '상세 내용 없음'}</div>
                 <div class="deed-tags">
-                    ${record.good ? `<span class="tag tag-good">${record.good}</span>` : ''}
-                    ${record.bad ? `<span class="tag tag-bad">${record.bad}</span>` : ''}
+                    ${record.good && !['기록', '생활기록', '일반'].includes(record.good) ? `<span class="tag tag-good">${record.good}</span>` : ''}
+                    ${record.bad && !['기록', '생활기록', '일반'].includes(record.bad) ? `<span class="tag tag-bad">${record.bad}</span>` : ''}
                 </div>
             </div>
         </div>

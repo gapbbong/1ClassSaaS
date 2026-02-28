@@ -61,7 +61,7 @@ async function loadTodayRecords() {
         .from('life_records')
         .select(`
             id, created_at, category, content, teacher_name,
-            students!inner ( student_id, name, class_info )
+            students!inner ( student_id, name, photo_url, class_info )
         `)
         .eq('category', '근태')
         .or('content.ilike.%조퇴%,content.ilike.%외출%')

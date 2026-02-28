@@ -1,4 +1,4 @@
-import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto } from './api.js';
+import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData } from './api.js';
 import { formatDate } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
@@ -12,12 +12,20 @@ document.addEventListener("DOMContentLoaded", () => {
     setupForm();
     loadSettings();
     loadRecords();
+    initSurveyPopup();
 });
 
 function setupHeader() {
-    document.title = `${studentName} 학생 생활기록`;
-    // 사용자 요청: "학생 생활기록" 제거
-    document.getElementById("pageTitle").textContent = `${num}번 ${studentName}`;
+    const mode = urlParams.get("mode");
+    if (mode === "counsel") {
+        document.title = `${studentName} 학생 상담 기록`;
+        document.getElementById("pageTitle").textContent = `${num}번 ${studentName} (상담)`;
+        const surveyBtn = document.getElementById("viewSurveyBtn");
+        if (surveyBtn) surveyBtn.style.display = "inline-flex";
+    } else {
+        document.title = `${studentName} 학생 생활기록`;
+        document.getElementById("pageTitle").textContent = `${num}번 ${studentName}`;
+    }
 
     // 뒤로가기 버튼
     const backBtn = document.querySelector(".btn-back");
@@ -36,6 +44,22 @@ function setupForm() {
     const localISOTime = new Date(now - offset).toISOString().slice(0, 16);
     const recordTimeInput = document.getElementById("recordTime");
     if (recordTimeInput) recordTimeInput.value = localISOTime;
+
+    const mode = urlParams.get("mode");
+    if (mode === "counsel") {
+        const behaviorSection = document.getElementById("behavior-section");
+        if (behaviorSection) behaviorSection.style.display = "none";
+        const detailTextarea = document.getElementById("detail");
+        if (detailTextarea) {
+            detailTextarea.placeholder = "상담 내용을 상세히 입력하세요...";
+            // 자동 높이 조절 기능 추가
+            detailTextarea.style.overflowY = "hidden";
+            detailTextarea.addEventListener("input", function () {
+                this.style.height = "auto";
+                this.style.height = (this.scrollHeight) + "px";
+            });
+        }
+    }
 
     // 사진 입력 및 미리보기 설정
     const photoInput = document.getElementById("photoInput");
@@ -77,11 +101,16 @@ function setupForm() {
                 formData.append("name", studentName);
                 formData.append("time", recordTimeInput.value);
 
-                // 셀렉트 박스에서 값 수집
-                const goodVal = document.getElementById("good").value;
-                const badVal = document.getElementById("bad").value;
-                if (goodVal) formData.append("good", goodVal);
-                if (badVal) formData.append("bad", badVal);
+                // 모드에 따라 값 수집
+                const mode = urlParams.get("mode");
+                if (mode === "counsel") {
+                    formData.append("good", "상담");
+                } else {
+                    const goodVal = document.getElementById("good").value;
+                    const badVal = document.getElementById("bad").value;
+                    if (goodVal) formData.append("good", goodVal);
+                    if (badVal) formData.append("bad", badVal);
+                }
 
                 formData.append("detail", document.getElementById("detail").value);
 
@@ -350,3 +379,155 @@ async function loadSettings() {
         if (badSelect) badSelect.innerHTML = '<option value="">데이터 로드 실패</option>';
     }
 }
+
+/**
+ * 기초조사 팝업 초기화 및 이벤트 바인딩 (이벤트 위임 방식)
+ */
+function initSurveyPopup() {
+    const surveyBtn = document.getElementById("viewSurveyBtn");
+    if (surveyBtn) {
+        surveyBtn.onclick = openSurveyPopup;
+    }
+
+    // 이벤트 위임: 문서 전체에서 클릭을 감지하여 팝업 닫기 처리
+    document.addEventListener("click", (e) => {
+        // 닫기 버튼(✕) 또는 배경(overlay) 클릭 시
+        if (e.target.closest(".close-btn") || e.target.id === "overlay") {
+            closePopup();
+        }
+    });
+}
+
+/**
+ * 기초조사 팝업 열기 및 렌더링
+ */
+async function openSurveyPopup(e) {
+    if (e) e.preventDefault();
+
+    const popup = document.getElementById("popup");
+    const overlay = document.getElementById("overlay");
+    if (!popup || !overlay) return;
+
+    overlay.style.display = "block";
+    popup.style.display = "block";
+    popup.className = "student-detail-popup";
+
+    // 배경 스크롤 방지
+    document.body.style.overflow = "hidden";
+
+    popup.innerHTML = `<div style="padding:20px; text-align:center;">기초조사 불러오는 중...</div>`;
+
+    const data = await fetchSurveyData(num);
+    if (!data) {
+        popup.innerHTML = `
+            <div class="popup-header">
+                <div class="popup-title-center">기초조사 오류</div>
+                <button class="close-btn">✕</button>
+            </div>
+            <div style="padding:20px; text-align:center;">데이터를 불러오지 못했습니다.</div>`;
+        return;
+    }
+
+    const { student, survey } = data;
+    const surveyData = survey || {};
+    // 정규화된 키 추가
+    for (let k in surveyData) {
+        if (typeof k === 'string') {
+            surveyData[k.toUpperCase()] = surveyData[k];
+        }
+    }
+
+    const intimacyMap = { "1": "거의 모름", "2": "조금 암", "3": "보통", "4": "친함", "5": "매우 친함" };
+    const getValue = (primary, secondary, ...keys) => {
+        for (const key of keys) {
+            if (primary && primary[key] && primary[key] !== "null" && primary[key] !== "undefined") return primary[key];
+            if (secondary && secondary[key] && secondary[key] !== "null" && secondary[key] !== "undefined") return secondary[key];
+        }
+        return ".";
+    };
+
+    const createInfoRow = (label, val) => {
+        let valStr = String(val || "").trim();
+        if (valStr === "" || valStr === "null" || valStr === "." || valStr === "없음") valStr = ".";
+        let displayVal = valStr;
+        if (label.includes("친밀도") && intimacyMap[valStr]) displayVal = intimacyMap[valStr];
+
+        return `<div class="detail-info-row">
+            <span class="detail-label">${label}</span>
+            <span class="detail-value" style="font-weight:700;">${displayVal}</span>
+        </div>`;
+    };
+
+    // 2사분면: 기본 정보
+    let infoHtml2 = "";
+    infoHtml2 += createInfoRow("연락처", getValue(student, surveyData, "연락처", "contact", "학생폰"));
+    infoHtml2 += createInfoRow("인스타", getValue(student, surveyData, "인스타", "instagram", "insta"));
+    infoHtml2 += createInfoRow("집주소", getValue(student, surveyData, "주소", "집주소", "address"));
+    infoHtml2 += createInfoRow("학적", getValue(student, surveyData, "학적", "status"));
+    infoHtml2 += createInfoRow("성별", getValue(student, surveyData, "성별", "gender"));
+
+    // 3사분면: 가족관계
+    let infoHtml3 = "";
+    infoHtml3 += createInfoRow("주보호자 관계", getValue(surveyData, {}, "주보호자 관계", "보호자관계"));
+    infoHtml3 += createInfoRow("주보호자 연락처", getValue(surveyData, {}, "주보호자 연락처", "보호자연락처"));
+    infoHtml3 += createInfoRow("거주가족", getValue(surveyData, {}, "거주가족", "가족구성"));
+
+    // 4사분면: 상세 기초조사
+    let infoHtml4 = "";
+    const excludeKeys = ["번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "이름", "student_id", "photo_url", "data", "student_pid", "id", "submitted_at", "PID", "CREATED_AT", "UPDATED_AT"];
+    for (let key in surveyData) {
+        if (!excludeKeys.includes(key) && key === key.toLowerCase() && surveyData[key] && surveyData[key] !== ".") {
+            infoHtml4 += createInfoRow(key, surveyData[key]);
+        }
+    }
+
+    const imgSrc = student["사진저장링크"] || "";
+
+    popup.innerHTML = `
+        <div class="popup-header">
+            <div class="popup-title-center">
+                <span class="student-id-badge">${student["학번"]}</span>
+                <span class="student-name-text">${student["이름"]} 기초조사</span>
+            </div>
+            <button class="close-btn" onclick="closePopup()">✕</button>
+        </div>
+        <div class="popup-quadrants-container" style="padding: 15px; box-sizing: border-box;">
+            <div class="popup-quadrant quad-1">
+                <div class="quad-label" style="background:#fff1f0; color:#cf1322;">PHOTO</div>
+                <div class="photo-wrapper">
+                    ${imgSrc ? `<img src="${imgSrc}" style="max-width:100%; border-radius:12px;">` : `<div class="no-photo-placeholder">사진 없음</div>`}
+                </div>
+            </div>
+            <div class="popup-quadrant quad-2">
+                <div class="quad-label" style="background:#f6ffed; color:#389e0d;">BASIC INFO</div>
+                <div class="quad-scroll">${infoHtml2}</div>
+            </div>
+            <div class="popup-quadrant quad-3">
+                <div class="quad-label" style="background:#e6f7ff; color:#096dd9;">FAMILY & CONTACT</div>
+                <div class="quad-scroll">${infoHtml3}</div>
+            </div>
+            <div class="popup-quadrant quad-4">
+                <div class="quad-label" style="background:#f9f0ff; color:#531dab;">SURVEY DETAILS</div>
+                <div class="quad-scroll">${infoHtml4 || ". (상세 정보 없음)"}</div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 팝업 닫기
+ */
+function closePopup() {
+    const popup = document.getElementById("popup");
+    const overlay = document.getElementById("overlay");
+    if (popup) popup.style.display = "none";
+    if (overlay) overlay.style.display = "none";
+    document.body.style.overflow = "auto";
+}
+
+// 전역 공개
+window.closePopup = closePopup;
+window.openSurveyPopup = openSurveyPopup;
+window.openVFlat = openVFlat;
+
+console.log("✅ record.js 로드 완료");

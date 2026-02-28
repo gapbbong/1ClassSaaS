@@ -10,8 +10,8 @@
     align-items: center;
     margin-top: 20px;
     /* 최상단 여백 추가 */
-    margin-bottom: 25px;
-    padding-bottom: 15px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
     border-bottom: 2px solid #eee;
     width: 100%;
     /* 너비 꽉 채우기 */
@@ -81,8 +81,8 @@
 /* 폼 영역 */
 form {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 15px 20px;
+    border-radius: 12px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
@@ -93,6 +93,31 @@ label {
     font-weight: bold;
     font-size: 15px;
     color: #333;
+    text-align: left !important;
+}
+
+.label-row-with-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.label-row-with-btn label {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.left-align-label {
+    text-align: left !important;
+}
+
+.vflat-notice .sub-text {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-top: 2px;
+    display: block;
 }
 
 select,
@@ -127,14 +152,15 @@ textarea#detail {
     /* 폰트 일관성 추가 */
     font-weight: bold;
     font-size: 15px;
-    min-height: 80px;
-    resize: vertical;
+    min-height: 50px;
+    resize: none;
+    transition: height 0.1s ease;
 }
 
 /* 기록 내역 영역 */
 .record-log {
     margin-top: 30px;
-    padding-top: 20px;
+    padding: 20px 15px 0 15px;
 }
 
 .record-log h3 {
@@ -258,4 +284,78 @@ textarea#detail {
     66% {
         content: " ...";
     }
+}
+
+/* 기초조사 보기 버튼 스타일 */
+.btn-survey-view {
+    background: #f0f7ff !important;
+    color: #0f52ba !important;
+    border: 1px solid #cce4f7 !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    box-shadow: 0 4px 10px rgba(15, 82, 186, 0.15) !important;
+}
+
+.btn-survey-view:hover {
+    background: #e1effe !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(15, 82, 186, 0.2) !important;
+}
+
+.btn-survey-view:active {
+    transform: translateY(0) !important;
+}
+
+/* 팝업 레이아웃 보정 (record용) */
+.student-detail-popup {
+    max-height: 90vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 5000 !important;
+    /* 항상 최상위 보장 */
+}
+
+#overlay {
+    z-index: 4999 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+.close-btn {
+    padding: 10px !important;
+    line-height: 1 !important;
+    font-size: 1.5rem !important;
+    cursor: pointer !important;
+    z-index: 5100 !important;
+}
+
+/* vFlat 안내 문구 스타일 */
+.vflat-notice {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 4px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e1;
+    display: inline-block;
+}
+
+.vflat-notice span {
+    color: #3b82f6;
+    font-weight: 800;
+    text-decoration: underline;
+}
+
+.vflat-notice:hover {
+    background: #f1f5f9;
+    color: #1e293b;
 }
