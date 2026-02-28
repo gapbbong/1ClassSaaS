@@ -20,8 +20,8 @@
 }
 
 .school-name {
-    font-size: 2.4em;
-    /* 1.6em * 1.5 = 2.4em */
+    font-size: 2.2em;
+    /* 2.4em에서 약간 축소하여 겹침 방지 */
     font-weight: 900;
     color: #4A90E2;
     margin: 0;
@@ -241,12 +241,12 @@ body {
 
 /* 반 제목 */
 .class-section .class-title {
-    font-size: 1.6em;
+    font-size: 1.3em;
+    /* 1.6em * 0.8 = 1.28em (약 1.3em) */
     font-weight: 800;
     color: #333;
     margin: 0;
     margin-bottom: 2px;
-    /* 간격 절반으로 조절 */
     white-space: nowrap;
     line-height: 1.1;
 }
@@ -336,8 +336,8 @@ body {
     align-items: center;
     gap: 10px;
     margin: 1px 0;
-    font-size: 1.16em;
-    /* 1.45em * 0.8 = 1.16em */
+    font-size: 0.93em;
+    /* 1.16em * 0.8 = 0.928em (약 0.93em) */
     font-weight: 700;
     flex-wrap: nowrap;
     line-height: 1.2;
@@ -355,6 +355,27 @@ body {
 }
 
 @media (max-width: 600px) {
+    .title-bar {
+        padding: 5px 10px;
+    }
+
+    .school-name {
+        font-size: 1.6em;
+        position: static;
+        transform: none;
+        flex: 1;
+        text-align: center;
+    }
+
+    .title-left,
+    .nav-actions {
+        flex: none;
+    }
+
+    .nav-actions {
+        gap: 6px;
+    }
+
     .class-grid {
         gap: 5px;
     }

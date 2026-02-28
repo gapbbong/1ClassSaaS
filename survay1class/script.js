@@ -38,7 +38,19 @@ let pendingSurveyData = null; // 모달 확인 대기 중인 데이터 저장용
 
 // 로딩 토글
 function toggleLoading(show) {
-    loadingOverlay.classList.toggle("hidden", !show);
+    if (loadingOverlay) loadingOverlay.classList.toggle("hidden", !show);
+}
+
+// LocalStorage 지원 여부 확인
+function isStorageAvailable() {
+    try {
+        const test = '__storage_test__';
+        localStorage.setItem(test, test);
+        localStorage.removeItem(test);
+        return true;
+    } catch (e) {
+        return false;
+    }
 }
 
 // 자동 하이픈 함수
@@ -448,6 +460,9 @@ function updateSubmitButton() {
     }
 }
 
+// iOS Safari 자동 완성(Autofill) 대응을 위한 주기적 체크 (영향 최소화)
+setInterval(updateSubmitButton, 2000);
+
 // 초기 상태 설정
 updateSubmitButton();
 
@@ -478,12 +493,34 @@ function saveToLocal() {
             data[key] = value;
         }
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    console.log("자동 저장 완료: " + new Date().toLocaleTimeString());
+
+    if (!isStorageAvailable()) return;
+
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        console.log("자동 저장 완료: " + new Date().toLocaleTimeString());
+    } catch (e) {
+        console.warn("자동 저장 실패 (저장 공간 부족 또는 시크릿 모드)");
+    }
 }
+
+// 인앱 브라우저 체크 및 안내
+function checkInAppBrowser() {
+    const ua = navigator.userAgent.toLowerCase();
+    const isInApp = /kakao|instagram|naver|line/i.test(ua);
+
+    if (isInApp) {
+        const guideDiv = document.createElement('div');
+        guideDiv.style.cssText = 'background:#fff3cd; color:#856404; padding:12px; font-size:0.85rem; text-align:center; border-bottom:1px solid #ffeeba; position:sticky; top:0; z-index:9999;';
+        guideDiv.innerHTML = '⚠️ <b>인앱 브라우저</b>에서는 주소 검색 등이 원활하지 않을 수 있습니다.<br>우측 상단 메뉴를 눌러 <b>"다른 브라우저로 열기"</b> 또는 <b>"Safari/Chrome으로 열기"</b>를 권장합니다.';
+        document.body.prepend(guideDiv);
+    }
+}
+checkInAppBrowser();
 
 // 2. 불러오기 함수
 function loadFromLocal() {
+    if (!isStorageAvailable()) return;
     const saved = localStorage.getItem(STORAGE_KEY);
     if (!saved) return;
 
