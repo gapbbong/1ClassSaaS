@@ -100,7 +100,7 @@ label {
     display: flex;
     align-items: center;
     gap: 15px;
-    margin-top: 5px;
+    margin-top: 25px;
     margin-bottom: 5px;
 }
 
@@ -315,11 +315,38 @@ textarea#detail {
 
 /* 팝업 레이아웃 보정 (record용) */
 .student-detail-popup {
-    max-height: 90vh !important;
+    max-height: 100vh !important;
+    width: 100vw !important;
+    max-width: none !important;
+    height: 100vh !important;
+    max-height: none !important;
+    border-radius: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     z-index: 5000 !important;
-    /* 항상 최상위 보장 */
+    padding: 0 !important;
+    /* 패딩 완전 제거 */
+}
+
+.popup-quadrants-container {
+    padding: 0 !important;
+    /* 내부 패딩 제거 */
+    gap: 2px !important;
+    /* 사분면 사이 아주 미세한 간격만 유지 */
+    flex: 1 !important;
+}
+
+.popup-quadrant {
+    border-radius: 0 !important;
+    /* 사각 모서리로 꽉 채움 */
+    border: none !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+/* 1,3사분면 왼쪽 / 2,4사분면 오른쪽 밀착 */
+.quad-1,
+.quad-3 {
+    border-right: 1px solid #f1f5f9 !important;
 }
 
 #overlay {
@@ -332,7 +359,42 @@ textarea#detail {
     line-height: 1 !important;
     font-size: 1.5rem !important;
     cursor: pointer !important;
+    z-index: 5200 !important;
+}
+
+/* 학생 이동 플로팅 버튼 */
+.nav-floating-btn {
+    position: fixed !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 45px !important;
+    height: 45px !important;
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(5px) !important;
+    border: 1px solid #ddd !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.5rem !important;
+    color: #3399ff !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
     z-index: 5100 !important;
+    cursor: pointer !important;
+    font-weight: bold !important;
+}
+
+.nav-prev-btn {
+    left: 10px !important;
+}
+
+.nav-next-btn {
+    right: 10px !important;
+}
+
+.nav-floating-btn:active {
+    transform: translateY(-50%) scale(0.9) !important;
+    background: #fff !important;
 }
 
 /* vFlat 안내 문구 스타일 */
