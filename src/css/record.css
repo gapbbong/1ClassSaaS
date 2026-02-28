@@ -402,13 +402,67 @@ textarea#detail {
     font-size: 0.85rem;
     color: #64748b;
     margin-top: 4px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
     cursor: pointer;
     background: #f8fafc;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     border: 1px dashed #cbd5e1;
-    display: inline-block;
+    display: block;
+    text-align: center;
+}
+
+/* 커스텀 파일 업로드 영역 */
+.photo-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.custom-file-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 30px 20px;
+    background: #f1f8ff;
+    border: 2px dashed #3399ff;
+    border-radius: 16px;
+    color: #3399ff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-file-label:hover {
+    background: #e6f2ff;
+    transform: translateY(-2px);
+}
+
+.custom-file-label:active {
+    transform: scale(0.98);
+}
+
+.upload-icon {
+    font-size: 32px;
+}
+
+.upload-text {
+    font-weight: 800;
+    font-size: 1.05rem;
+}
+
+.file-name-display {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-style: italic;
+    background: #f8fafc;
+    padding: 6px 15px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
 }
 
 .vflat-notice span {

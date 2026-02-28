@@ -81,14 +81,20 @@ function setupForm() {
     if (photoInput) {
         photoInput.addEventListener("change", async (e) => {
             const file = e.target.files[0];
-            if (!file) return;
+            const nameDisplay = document.getElementById("fileNameDisplay");
 
-            selectedFile = await resizeImage(file, 1200); // 가로 1200px로 리사이징
+            if (!file) {
+                if (nameDisplay) nameDisplay.textContent = "선택된 파일 없음";
+                return;
+            }
+
+            if (nameDisplay) nameDisplay.textContent = `📄 ${file.name}`;
+            selectedFile = await resizeImage(file, 1200);
 
             // 미리보기 표시
             const reader = new FileReader();
             reader.onload = (re) => {
-                photoPreviewContainer.innerHTML = `<img src="${re.target.result}" style="max-width:100%; border-radius:8px; margin-top:10px; cursor:pointer;" onclick="window.open(this.src)">`;
+                photoPreviewContainer.innerHTML = `<img src="${re.target.result}" style="max-width:100%; border-radius:12px; margin-top:15px; cursor:pointer;" onclick="window.open(this.src)">`;
             };
             reader.readAsDataURL(selectedFile);
         });

@@ -6,8 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>학생 생활기록</title>
   <link rel="stylesheet" href="src/css/main.css">
-  <link rel="stylesheet" href="src/css/record.css">
   <link rel="stylesheet" href="src/css/stu-list.css">
+  <link rel="stylesheet" href="src/css/record.css">
 </head>
 
 <body>
@@ -49,14 +49,23 @@
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
 
 
-    <!-- 사진 첨부 -->
     <div class="photo-attachment-section">
-      <label for="photoInput" class="left-align-label">📸 사진첨부(반성문이나 개인수첩 기록등)</label>
+      <label class="left-align-label">📸 사진 첨부 (반성문, 수첩 기록 등)</label>
+
       <div id="vflat-notice" class="vflat-notice" onclick="openVFlat()">
         💡 <span>vFlat 앱</span>을 사용하시면 더 깔끔하게 저장됩니다.<br>
         <span class="sub-text">(터치 시 설치 페이지 이동)</span>
       </div>
-      <input type="file" id="photoInput" accept="image/*">
+
+      <div class="photo-upload-container">
+        <label for="photoInput" class="custom-file-label">
+          <span class="upload-icon">📷</span>
+          <span class="upload-text">카메라 촬영 또는 갤러리 파일 선택</span>
+        </label>
+        <input type="file" id="photoInput" accept="image/*" style="display:none;">
+        <div id="fileNameDisplay" class="file-name-display">선택된 파일 없음</div>
+      </div>
+
       <div id="photoPreviewContainer" class="photo-preview-container">
         <!-- 사진 미리보기가 여기에 표시됩니다 -->
       </div>
