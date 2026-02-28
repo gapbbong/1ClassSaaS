@@ -74,30 +74,43 @@ function setupForm() {
     }
 
     // 사진 입력 및 미리보기 설정
-    const photoInput = document.getElementById("photoInput");
     const photoPreviewContainer = document.getElementById("photoPreviewContainer");
-    let selectedFile = null;
 
-    if (photoInput) {
-        photoInput.addEventListener("change", async (e) => {
-            const file = e.target.files[0];
-            const nameDisplay = document.getElementById("fileNameDisplay");
+    // 사진 입력 처리 (카메라 및 갤러리)
+    const cameraInput = document.getElementById("cameraInput");
+    const galleryInput = document.getElementById("galleryInput");
+    const nameDisplay = document.getElementById("fileNameDisplay");
+    let selectedFile = null; // Keep this declaration here
 
-            if (!file) {
-                if (nameDisplay) nameDisplay.textContent = "선택된 파일 없음";
-                return;
+    async function handleFileSelect(file) {
+        if (!file) {
+            if (nameDisplay) {
+                nameDisplay.textContent = "선택된 파일 없음";
+                nameDisplay.style.display = "none";
             }
+            return;
+        }
 
-            if (nameDisplay) nameDisplay.textContent = `📄 ${file.name}`;
-            selectedFile = await resizeImage(file, 1200);
+        if (nameDisplay) {
+            nameDisplay.textContent = `📄 ${file.name}`;
+            nameDisplay.style.display = "block";
+        }
 
-            // 미리보기 표시
-            const reader = new FileReader();
-            reader.onload = (re) => {
-                photoPreviewContainer.innerHTML = `<img src="${re.target.result}" style="max-width:100%; border-radius:12px; margin-top:15px; cursor:pointer;" onclick="window.open(this.src)">`;
-            };
-            reader.readAsDataURL(selectedFile);
-        });
+        selectedFile = await resizeImage(file, 1200);
+
+        // 미리보기 표시
+        const reader = new FileReader();
+        reader.onload = (re) => {
+            photoPreviewContainer.innerHTML = `<img src="${re.target.result}" style="max-width:100%; border-radius:12px; margin-top:0px; cursor:pointer;" onclick="window.open(this.src)">`;
+        };
+        reader.readAsDataURL(selectedFile);
+    }
+
+    if (cameraInput) {
+        cameraInput.addEventListener("change", (e) => handleFileSelect(e.target.files[0]));
+    }
+    if (galleryInput) {
+        galleryInput.addEventListener("change", (e) => handleFileSelect(e.target.files[0]));
     }
 
     if (form) {

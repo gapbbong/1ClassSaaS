@@ -52,19 +52,29 @@
     <div class="photo-attachment-section">
       <label class="left-align-label">📸 사진 첨부 (반성문, 수첩 기록 등)</label>
 
-      <div id="vflat-notice" class="vflat-notice" onclick="openVFlat()">
-        💡 <span>vFlat 앱</span>을 사용하시면 더 깔끔하게 저장됩니다.<br>
-        <span class="sub-text">(터치 시 설치 페이지 이동)</span>
+      <!-- 사진 첨부 3단 버튼 -->
+      <div class="photo-action-grid">
+        <label for="cameraInput" class="photo-action-item">
+          <div class="action-icon-circle" style="background: #fff0f6; color: #eb2f96;">📸</div>
+          <span class="action-label">카메라</span>
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+        </label>
+
+        <div class="photo-action-item" onclick="openVFlat()">
+          <div class="action-icon-circle" style="background: #e6f7ff; color: #1890ff;">✨</div>
+          <span class="action-label">vFlat</span>
+        </div>
+
+        <label for="galleryInput" class="photo-action-item">
+          <div class="action-icon-circle" style="background: #f6ffed; color: #52c41a;">🖼️</div>
+          <span class="action-label">갤러리</span>
+          <input type="file" id="galleryInput" accept="image/*, image/heic, image/heif" style="display:none;">
+        </label>
       </div>
 
-      <div class="photo-upload-container">
-        <label for="photoInput" class="custom-file-label">
-          <span class="upload-icon">📷</span>
-          <span class="upload-text">카메라 촬영 또는 갤러리 파일 선택</span>
-        </label>
-        <input type="file" id="photoInput" accept="image/*, image/heic, image/heif" style="display:none;">
-        <div id="fileNameDisplay" class="file-name-display">선택된 파일 없음</div>
-      </div>
+      <!-- 선택된 파일 표시 전용 (통합 관리) -->
+      <div id="fileNameDisplay" class="file-name-display" style="display:none; margin-top:10px; text-align:center;">선택된
+        파일 없음</div>
 
       <div id="photoPreviewContainer" class="photo-preview-container">
         <!-- 사진 미리보기가 여기에 표시됩니다 -->
