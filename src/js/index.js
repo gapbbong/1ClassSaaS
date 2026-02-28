@@ -1,5 +1,5 @@
 import { isLightColor } from './utils.js';
-import { fetchClassStats, fetchClassInfo } from './api.js';
+import { fetchClassStats, fetchClassInfo, getTeacherProfile } from './api.js';
 import { API_CONFIG } from './config.js';
 
 // CryptoJS 임포트 (Vite 환경)
@@ -106,6 +106,9 @@ function initHeaderMenu() {
       hamburgerDropdown.style.display = "none";
     });
   }
+
+  // [추가] '우리반 분석' 메뉴 권한 제어
+  checkClassAnalysisPermission();
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
@@ -506,4 +509,37 @@ function initContactModal() {
   });
 }
 
+/**
+ * '우리반 분석' 메뉴의 노출 여부를 결정합니다.
+ */
+async function checkClassAnalysisPermission() {
+  const encrypted = localStorage.getItem('teacher_auth_token');
+  if (!encrypted) return;
 
+  try {
+    const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+    const email = bytes.toString(CryptoJS.enc.Utf8);
+
+    const teacher = await getTeacherProfile(email);
+    const menuBtn = document.getElementById("menu-class-analysis");
+    if (menuBtn && teacher && (teacher.role === 'homeroom_teacher' || teacher.role === 'admin' || email === 'assari@kse.hs.kr')) {
+      menuBtn.style.display = "block";
+
+      // 링크 설정: assigned_class가 있으면 해당 반으로, 없는데 관리자면 1-1로
+      let g = "1", c = "1";
+      if (teacher.assigned_class) {
+        [g, c] = teacher.assigned_class.split('-');
+      } else if (teacher.role === 'admin' || email === 'assari@kse.hs.kr') {
+        // 관리자인데 담임반이 없는 경우 기본 1-1
+        g = "1"; c = "1";
+      }
+
+      menuBtn.onclick = (e) => {
+        e.preventDefault();
+        location.href = `class-analysis.html?grade=${g}&class=${c}`;
+      };
+    }
+  } catch (e) {
+    console.warn("Permission check failed", e);
+  }
+}

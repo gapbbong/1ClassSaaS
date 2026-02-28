@@ -224,7 +224,7 @@ function setupEventListeners(classInfo) {
         if (isMyClass) {
             surveyBtn.style.display = "flex";
             surveyBtn.addEventListener("click", () => {
-                window.location.href = `class-survey.html?grade=${grade || 1}&class=${classNum || 1}`;
+                window.location.href = `class-analysis.html?grade=${grade}&class=${classNum}`;
             });
         } else {
             surveyBtn.style.display = "none";

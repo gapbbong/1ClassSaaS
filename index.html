@@ -16,7 +16,7 @@
 
 <body>
     <!-- 상단 버전 정보 -->
-    <div class="version-tag">v1.1.45</div>
+    <div class="version-tag">v1.1.47</div>
 
     <!-- 제목 및 검색 버튼 영역 -->
     <div class="title-bar">
@@ -38,8 +38,10 @@
             <div class="hamburger-menu">
                 <button id="hamburger-btn" class="hamburger-btn" aria-label="메뉴 열기">☰</button>
                 <div id="hamburger-dropdown" class="hamburger-dropdown">
-                    <button onclick="location.href='analysis.html'">학생 분석</button>
                     <button onclick="location.href='check-survey.html'">기초조사 제출 현황</button>
+                    <button id="menu-class-analysis" style="display: none;"
+                        onclick="location.href='class-analysis.html'">우리반 분석</button>
+                    <button onclick="location.href='analysis.html'">학생 분석</button>
                     <button onclick="location.href='search.html'">학생 검색</button>
                     <button id="logout-btn" style="color: #FF3B30;">로그아웃</button>
                 </div>

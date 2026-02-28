@@ -1,0 +1,460 @@
+import { fetchClassSurveys, getTeacherProfile, fetchClassRecords } from './api.js';
+import CryptoJS from 'crypto-js';
+
+const SECRET_KEY = 'oneclass25-secret-auth-key';
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    let grade = urlParams.get('grade');
+    let classNum = urlParams.get('class');
+
+    // 로그인 정보 확인
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    let userEmail = "";
+    if (encrypted) {
+        try {
+            const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
+            userEmail = bytes.toString(CryptoJS.enc.Utf8);
+        } catch (e) { }
+    }
+
+    if (userEmail) {
+        const profile = await getTeacherProfile(userEmail);
+        if (profile) {
+            // URL에 학급 정보가 없으면 내 담당 학급으로 설정
+            if (!grade || !classNum) {
+                if (profile.assigned_class) {
+                    [grade, classNum] = profile.assigned_class.split('-');
+                } else if (profile.role === 'admin' || userEmail === 'assari@kse.hs.kr') {
+                    // 관리자인데 학급 정보 없으면 기본 1-1
+                    grade = "1"; classNum = "1";
+                }
+            }
+        }
+    }
+
+    if (!grade || !classNum) {
+        alert("학급 정보가 없습니다. 관리자에게 문의하거나 담임 학급을 확인해주세요.");
+        location.href = 'index.html';
+        return;
+    }
+
+    const classInfo = `${grade}-${classNum}`;
+    document.getElementById("class-title").innerText = `${classInfo}반 분석 리포트`;
+
+    let studentData = [];
+    const loadingOverlay = document.getElementById("loading-overlay");
+
+    try {
+        // 데이터 가져오기
+        studentData = await fetchClassSurveys(classInfo);
+        renderStatus(studentData);
+
+        // 우리반 기록 초기화
+        initClassRecords(classInfo);
+
+        const doneStudents = studentData.filter(s => s.survey);
+
+        if (doneStudents.length < studentData.length) {
+            document.getElementById("incomplete-notice").classList.remove("hidden");
+        } else {
+            // 모두 완료했다면 바로 분석
+            startAnalysis(doneStudents);
+        }
+
+        document.getElementById("force-analyze-btn").onclick = () => {
+            document.getElementById("incomplete-notice").classList.add("hidden");
+            startAnalysis(doneStudents);
+        };
+
+    } catch (error) {
+        console.error("Analysis Load Error:", error);
+        alert("데이터를 불러오는 중 오류가 발생했습니다.");
+    } finally {
+        loadingOverlay.classList.add("hidden");
+    }
+});
+
+function renderStatus(data) {
+    const doneCount = data.filter(s => s.survey).length;
+    const pendingCount = data.length - doneCount;
+
+    document.getElementById("done-count").innerText = doneCount;
+    document.getElementById("pending-count").innerText = pendingCount;
+
+    const totalStatus = document.getElementById("total-status");
+    if (pendingCount === 0) {
+        totalStatus.innerText = "제출 완료";
+        totalStatus.style.backgroundColor = "#34c759";
+    } else {
+        totalStatus.innerText = "진행 중";
+        totalStatus.style.backgroundColor = "#ff9500";
+    }
+
+    if (pendingCount > 0) {
+        // 미제출자 명단: 학번순 정렬 (마지막 2자리 기준) 후 'XX번 이름' 형식으로 표시
+        const pendingStudents = data.filter(s => !s.survey)
+            .sort((a, b) => {
+                const numA = parseInt(a.student_id.toString().slice(-2));
+                const numB = parseInt(b.student_id.toString().slice(-2));
+                return numA - numB;
+            });
+
+        const container = document.getElementById("pending-names");
+        container.innerHTML = pendingStudents.map(s => {
+            const numStr = s.student_id ? s.student_id.toString().slice(-2).padStart(2, '0') : '??';
+            return `<span class="name-tag">${numStr}번 ${s.name}</span>`;
+        }).join('');
+        document.getElementById("pending-list-container").classList.remove("hidden");
+    }
+}
+
+function startAnalysis(doneStudents) {
+    document.getElementById("analysis-results").classList.remove("hidden");
+
+    // 1. 통계 계산
+    renderStats(doneStudents);
+
+    // 2. AI 분석 (리더십 / 상담)
+    renderAIAnalysis(doneStudents);
+}
+
+function renderStats(students) {
+    const surveys = students.map(s => s.survey?.data || {});
+    const total = students.length;
+
+    // 1. 기본 정보 그룹
+    // 성별
+    const genderMap = { "남": 0, "여": 0 };
+    surveys.forEach(d => { if (d['성별']) genderMap[d['성별']]++; });
+    renderBarChart("stats-gender", [
+        { label: "남학생", count: genderMap["남"], color: "#007aff" },
+        { label: "여학생", count: genderMap["여"], color: "#ff2d55" }
+    ], total);
+
+    // 혈액형
+    const bloodMap = { "A": 0, "B": 0, "O": 0, "AB": 0 };
+    surveys.forEach(d => { if (d['혈액형']) bloodMap[d['혈액형']]++; });
+    renderBarChart("stats-blood", [
+        { label: "A형", count: bloodMap["A"], color: "#ff3b30" },
+        { label: "B형", count: bloodMap["B"], color: "#5856d6" },
+        { label: "O형", count: bloodMap["O"], color: "#ff9500" },
+        { label: "AB형", count: bloodMap["AB"], color: "#34c759" }
+    ], total);
+
+    // MBTI E vs I
+    const eiMap = { "E (외향)": 0, "I (내향)": 0 };
+    surveys.forEach(d => {
+        const m = (d['MBTI'] || "").toUpperCase();
+        if (m.startsWith('E')) eiMap["E (외향)"]++;
+        else if (m.startsWith('I')) eiMap["I (내향)"]++;
+    });
+    renderBarChart("stats-mbti-ei", [
+        { label: "E (외향)", count: eiMap["E (외향)"], color: "#ff2d55" },
+        { label: "I (내향)", count: eiMap["I (내향)"], color: "#5856d6" }
+    ], total);
+
+    // MBTI N vs S
+    const nsMap = { "N (직관)": 0, "S (감각)": 0 };
+    surveys.forEach(d => {
+        const m = (d['MBTI'] || "").toUpperCase();
+        if (m[1] === 'N') nsMap["N (직관)"]++;
+        else if (m[1] === 'S') nsMap["S (감각)"]++;
+    });
+    renderBarChart("stats-mbti-ns", [
+        { label: "N (직관)", count: nsMap["N (직관)"], color: "#af52de" },
+        { label: "S (감각)", count: nsMap["S (감각)"], color: "#ffcc00" }
+    ], total);
+
+    // 2. 가족 및 생활 그룹
+    // 형제 관계
+    const siblingCounts = { "외동": 0, "첫째": 0, "둘째": 0, "셋째+": 0 };
+    surveys.forEach(d => {
+        const s = d['형제'] || "";
+        if (s.includes("외동")) siblingCounts["외동"]++;
+        else if (s.includes("첫째")) siblingCounts["첫째"]++;
+        else if (s.includes("둘째")) siblingCounts["둘째"]++;
+        else if (s.match(/[셋넷다섯]째/)) siblingCounts["셋째+"]++;
+    });
+    renderBarChart("stats-siblings", [
+        { label: "외동", count: siblingCounts["외동"], color: "#5ac8fa" },
+        { label: "첫째", count: siblingCounts["첫째"], color: "#4cd964" },
+        { label: "둘째", count: siblingCounts["둘째"], color: "#ffcc00" },
+        { label: "셋째 이상", count: siblingCounts["셋째+"], color: "#8e8e93" }
+    ], total);
+
+    // 거주 가족
+    renderFrequencyChart("stats-family", surveys, '거주가족', "#5856d6", 4);
+
+    // 반려동물
+    renderFrequencyChart("stats-pets", surveys, '반려동물', "#ff9500", 4);
+
+    // 등교 수단
+    renderFrequencyChart("stats-commute", surveys, '등교수단', "#34c759", 4);
+
+    // 3. 학습 및 진로 그룹
+    // 졸업 후 진로
+    renderFrequencyChart("stats-postgrad", surveys, '졸업후진로', "#007aff", 4);
+
+    // 종교
+    renderFrequencyChart("stats-religion", surveys, '종교', "#af52de", 4);
+
+    // 출신 중학교 TOP 5
+    renderTopList("stats-schools", surveys, '출신중', 5);
+
+    // 게임 TOP 5
+    renderTopList("stats-games", surveys, '자주하는게임', 5, true);
+
+    // 키워드 태그 (꿈, 취미/특기)
+    renderKeywordTags("stats-dreams", surveys, '나의꿈');
+    renderKeywordTags("stats-hobbies", surveys, ['취미', '특기']);
+}
+
+function renderBarChart(containerId, data, total) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (data.every(d => d.count === 0)) {
+        container.innerHTML = '<p class="text-muted" style="font-size:0.8rem;">데이터 없음</p>';
+        return;
+    }
+
+    container.innerHTML = data.map(item => {
+        const percent = total > 0 ? (item.count / total * 100) : 0;
+        return `
+            <div class="chart-bar-row">
+                <div class="label-row">
+                    <span>${item.label}</span>
+                    <span>${item.count}명 (${Math.round(percent)}%)</span>
+                </div>
+                <div class="chart-bar-bg">
+                    <div class="chart-bar-fill" style="width: ${percent}%; background-color: ${item.color};"></div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function renderFrequencyChart(id, surveys, field, color, limit) {
+    const map = {};
+    surveys.forEach(d => {
+        const val = d[field] || "미응답";
+        if (val !== "없음" && val !== "해당없음") {
+            map[val] = (map[val] || 0) + 1;
+        }
+    });
+    const data = Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([label, count]) => ({ label, count, color }));
+    renderBarChart(id, data, surveys.length);
+}
+
+function renderTopList(id, surveys, field, limit, split = false) {
+    const map = {};
+    surveys.forEach(d => {
+        const val = d[field];
+        if (val && val !== "없음" && val !== "X" && val !== "미응답") {
+            if (split) {
+                const items = val.split(/[,\/\s]+/).filter(x => x.length > 1);
+                items.forEach(item => { map[item] = (map[item] || 0) + 1; });
+            } else {
+                map[val] = (map[val] || 0) + 1;
+            }
+        }
+    });
+    const top = Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit);
+
+    const container = document.getElementById(id);
+    if (!container) return;
+
+    container.innerHTML = top.length > 0
+        ? top.map(([name, count]) => `<div class="list-item"><span>${name}</span> <strong>${count}명</strong></div>`).join('')
+        : '<p class="text-muted">데이터 없음</p>';
+}
+
+function renderKeywordTags(id, surveys, fields) {
+    const fieldList = Array.isArray(fields) ? fields : [fields];
+    const map = {};
+    surveys.forEach(d => {
+        fieldList.forEach(f => {
+            const val = d[f];
+            if (val && val !== "없음" && val !== "X" && val !== "미응답") {
+                const words = val.split(/[,\/\s]+/).filter(x => x.length > 1);
+                words.forEach(word => { map[word] = (map[word] || 0) + 1; });
+            }
+        });
+    });
+    const top = Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+    const container = document.getElementById(id);
+    if (!container) return;
+
+    container.innerHTML = top.length > 0
+        ? top.map(([word]) => `<span class="tag">${word}</span>`).join('')
+        : '<p class="text-muted">데이터 없음</p>';
+}
+
+function renderAIAnalysis(students) {
+    // 1. 리더십 분석 (전과 동일)
+    const leaderKeywords = ["리더", "적극", "책임", "반장", "회장", "성실", "목표", "열정", "희생", "배려", "성실"];
+    const scoredStudents = students.map(s => {
+        let score = 0;
+        const d = s.survey?.data || {};
+        const text = (d['자신의장점'] || "") + (d['특기'] || "") + (d['1년다짐'] || "") + (d['나의꿈'] || "");
+        leaderKeywords.forEach(kw => {
+            if (text.includes(kw)) score += 1;
+        });
+        if ((d['MBTI'] || "").toUpperCase().startsWith('E')) score += 0.5;
+        return { ...s, score };
+    }).sort((a, b) => b.score - a.score);
+
+    const leadershipList = document.getElementById("leadership-list");
+    const updateLeadership = (count) => {
+        const top = scoredStudents.slice(0, count);
+        leadershipList.innerHTML = top.map((s, i) => `
+            <div class="ai-item">
+                <span class="rank">${i + 1}위</span>
+                <span class="student-tag" onclick="location.href='record.html?num=${s.student_id}&name=${encodeURIComponent(s.name)}'">
+                    ${s.student_id ? s.student_id.toString().slice(-2).padStart(2, '0') : '??'}번 ${s.name}
+                </span>
+                <span class="text-muted" style="font-size:0.75rem;">(추천 근거: ${s.score > 0 ? '리더십 키워드 감지' : '잠재적 역량'})</span>
+            </div>
+        `).join('');
+    };
+
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll(".toggle-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            updateLeadership(parseInt(btn.dataset.count));
+        };
+    });
+    updateLeadership(3);
+
+    // 2. 상담 시급도 분석 (개선된 로직)
+    // - L4 (위험): 위험 키워드 감지 OR 부모 친밀도 매우 낮음(1이하) OR 고립(친한 친구 없음)
+    // - L3 (주의): 주의 키워드 감지 OR 보건 특이점 존재 OR 텍스트 길음
+    // - L2 (관심): 단점/바라는점 등에 10자 이상 작성
+    // - L1 (보통): 특이사항 없음
+
+    const riskKeywords = ["죽고", "자살", "우울", "폭력", "가정", "불화", "가출", "괴롭힘", "왕따", "힘들어", "지침", "포기", "질병", "아픔"];
+    const highKeywords = ["진로", "성적", "성격", "친구", "스트레스", "대인관계", "불안", "걱정", "고민"];
+
+    const levels = { L4: [], L3: [], L2: [], L1: [] };
+
+    students.forEach(s => {
+        const d = s.survey?.data || {};
+        const text = (d['선생님바라는점'] || "") + (d['보건특이점'] || "") + (d['자신의단점'] || "");
+        const parentIntimacy = parseInt(d['주보호자친밀도']) || 5;
+        const friends = d['친한친구'] || "";
+        const healthFlag = (d['보건특이점'] || "").replace("없음", "").replace("해당없음", "").trim();
+
+        let level = "L1";
+
+        // 1순위: 위험 키워드 또는 부모 친밀도 매우 낮음 또는 교우관계 고립
+        if (riskKeywords.some(kw => text.includes(kw)) || parentIntimacy <= 1 || (friends === "없음" || friends === ".")) {
+            level = "L4";
+        }
+        // 2순위: 주의 키워드 또는 보건 특이점 또는 장문(고민 가능성)
+        else if (highKeywords.some(kw => text.includes(kw)) || healthFlag.length > 0 || text.length > 50) {
+            level = "L3";
+        }
+        // 3순위: 단순 기록 존재
+        else if (text.length > 10 && text !== "없음" && text !== "해당없음") {
+            level = "L2";
+        }
+
+        levels[level].push(s);
+    });
+
+    const renderLevel = (id, list) => {
+        const container = document.getElementById(id);
+        if (!container) return;
+        container.innerHTML = list.length > 0
+            ? list.map(s => `
+                <span class="student-tag" onclick="location.href='record.html?num=${s.student_id}&name=${encodeURIComponent(s.name)}&mode=counsel'">
+                    ${s.student_id ? s.student_id.toString().slice(-2).padStart(2, '0') : '??'}번 ${s.name}
+                </span>`).join('')
+            : '<span class="text-muted" style="font-size:0.8rem;">대상자 없음</span>';
+    };
+
+    renderLevel("priority-l4", levels.L4);
+    renderLevel("priority-l3", levels.L3);
+    renderLevel("priority-l2", levels.L2);
+    renderLevel("priority-l1", levels.L1);
+}
+
+async function initClassRecords(classInfo) {
+    const listElement = document.getElementById("class-records-list");
+    const sortByIdBtn = document.getElementById("sort-by-id");
+    const sortByDateBtn = document.getElementById("sort-by-date");
+
+    let records = [];
+    let currentSort = 'id'; // 'id' or 'date'
+
+    // 초기 로드: 자동으로 기록을 가져와서 렌더링
+    listElement.innerHTML = '<p class="text-muted">기록을 불러오는 중...</p>';
+    records = await fetchClassRecords(classInfo);
+    renderClassRecords(records, currentSort);
+
+    sortByIdBtn.onclick = () => {
+        if (currentSort === 'id') return;
+        currentSort = 'id';
+        sortByIdBtn.classList.add("active");
+        sortByDateBtn.classList.remove("active");
+        renderClassRecords(records, currentSort);
+    };
+
+    sortByDateBtn.onclick = () => {
+        if (currentSort === 'date') return;
+        currentSort = 'date';
+        sortByDateBtn.classList.add("active");
+        sortByIdBtn.classList.remove("active");
+        renderClassRecords(records, currentSort);
+    };
+}
+
+function renderClassRecords(records, sortBy) {
+    const listElement = document.getElementById("class-records-list");
+    if (records.length === 0) {
+        listElement.innerHTML = '<p class="text-muted">등록된 기록이 없습니다.</p>';
+        return;
+    }
+
+    const sorted = [...records].sort((a, b) => {
+        if (sortBy === 'id') {
+            return a.num.localeCompare(b.num);
+        } else {
+            return new Date(b.time) - new Date(a.time);
+        }
+    });
+
+    listElement.innerHTML = sorted.map(r => {
+        const dateStr = new Date(r.time).toLocaleString('ko-KR', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const numStr = r.num.slice(-2).padStart(2, '0');
+        const tagClass = r.good ? 'good' : (r.bad ? 'bad' : '');
+        const tagName = r.good || r.bad || '일반';
+
+        return `
+            <div class="record-log-item">
+                <div class="log-header">
+                    <span class="student-name" onclick="location.href='record.html?num=${r.num}&name=${encodeURIComponent(r.name)}'">
+                        ${numStr}번 ${r.name}
+                    </span>
+                    <span>${dateStr}</span>
+                </div>
+                <div class="log-content">
+                    <span class="tag ${tagClass}">${tagName}</span>
+                    ${r.detail}
+                </div>
+            </div>
+        `;
+    }).join('');
+}

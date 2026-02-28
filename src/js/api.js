@@ -334,6 +334,116 @@ export async function fetchClassInfo() {
 }
 
 /**
+ * 현재 로그인한 교사의 프로필 정보를 가져옵니다.
+ * @param {string} email - 교사 이메일
+ */
+export async function getTeacherProfile(email) {
+    if (!email) return null;
+    try {
+        const { data, error } = await supabase
+            .from('teachers')
+            .select('*')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error("Get Teacher Profile Error:", error);
+        return null;
+    }
+}
+
+/**
+ * 특정 학급의 모든 설문 데이터를 가져옵니다.
+ * @param {string} classInfo - '1-1' 형식
+ */
+export async function fetchClassSurveys(classInfo) {
+    try {
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid, student_id, name')
+            .eq('class_info', classInfo)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated');
+
+        if (sError) throw sError;
+        if (!students || students.length === 0) return [];
+
+        const studentPids = students.map(s => s.pid);
+
+        const { data: surveys, error: surveyError } = await supabase
+            .from('surveys')
+            .select('*')
+            .in('student_pid', studentPids)
+            .order('submitted_at', { ascending: false });
+
+        if (surveyError) throw surveyError;
+
+        // 학생별로 가장 최근 설문 하나만 추출
+        const latestSurveysMap = new Map();
+        surveys.forEach(s => {
+            if (!latestSurveysMap.has(s.student_pid)) {
+                latestSurveysMap.set(s.student_pid, s);
+            }
+        });
+
+        // 학생 정보와 설문 데이터 결합
+        return students.map(s => ({
+            ...s,
+            survey: latestSurveysMap.get(s.pid) || null
+        }));
+
+    } catch (error) {
+        console.error("Fetch Class Surveys Error:", error);
+        return [];
+    }
+}
+
+/**
+ * 특정 학급의 모든 생활기록을 가져옵니다.
+ * @param {string} classInfo - '1-1' 형식
+ */
+export async function fetchClassRecords(classInfo) {
+    try {
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid')
+            .eq('class_info', classInfo)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated');
+
+        if (sError) throw sError;
+        if (!students || students.length === 0) return [];
+
+        const studentPids = students.map(s => s.pid);
+
+        const { data, error } = await supabase
+            .from('life_records')
+            .select('*, students!inner(name, student_id, photo_url)')
+            .in('student_pid', studentPids)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return data.map(r => ({
+            id: r.id,
+            num: r.students.student_id,
+            name: r.students.name,
+            photo: r.students.photo_url,
+            time: r.created_at,
+            good: r.is_positive ? r.category : null,
+            bad: !r.is_positive ? r.category : null,
+            detail: r.content,
+            teacher: r.teacher_email_prefix
+        }));
+    } catch (error) {
+        console.error("Fetch Class Records Error:", error);
+        return [];
+    }
+}
+
+/**
  * 특정 반의 학생 목록만 가져옵니다. (Supabase 버전)
  */
 export async function fetchStudentsByClass(grade, classNum) {
