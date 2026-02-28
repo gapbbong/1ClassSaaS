@@ -395,7 +395,7 @@ async function initClassRecords(classInfo, studentData) {
     const sortByDateBtn = document.getElementById("sort-by-date");
 
     let records = [];
-    let currentSort = 'id'; // 'id' or 'date'
+    let currentSort = 'date'; // 'id' or 'date'
 
     // 초기 로드: 자동으로 기록을 가져와서 렌더링
     listElement.innerHTML = '<p class="text-muted">기록을 불러오는 중...</p>';
