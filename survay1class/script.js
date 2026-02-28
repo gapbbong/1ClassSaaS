@@ -742,8 +742,8 @@ btnModalConfirm.addEventListener("click", async () => {
     toggleLoading(true);
 
     try {
-        // [수정] Supabase surveys 테이블에 데이터 저장
-        const { error } = await supabase
+        // 1. 설문 데이터 저장
+        const { error: surveyError } = await supabase
             .from('surveys')
             .insert([
                 {
@@ -752,8 +752,10 @@ btnModalConfirm.addEventListener("click", async () => {
                 }
             ]);
 
-        // (옵션) students 마스터 테이블 정보 업데이트
-        await supabase
+        if (surveyError) throw surveyError;
+
+        // 2. 학생 마스터 테이블 정보 업데이트 (성공 시에만)
+        const { error: studentError } = await supabase
             .from('students')
             .update({
                 contact: pendingSurveyData['학생폰'],
@@ -763,22 +765,25 @@ btnModalConfirm.addEventListener("click", async () => {
             })
             .eq('pid', currentStudentPid);
 
-        if (!error) {
-            stepSurvey.classList.add("hidden");
-            stepDone.classList.remove("hidden");
-            window.scrollTo(0, 0);
-        } else {
-            console.error("Supabase Error:", error);
-            let errorReason = "알 수 없는 데이터베이스 오류";
-            if (error.code === '23505') errorReason = "이미 설문을 제출한 학번이거나 중복된 데이터입니다.";
-            else if (error.code === '42P01') errorReason = "데이터베이스 테이블(surveys)을 찾을 수 없습니다.";
-            else if (error.code === '23503') errorReason = "학생 정보(pid)가 마스터 테이블과 일치하지 않습니다.";
-            alert(`[오류 코드: ${error.code}]\n제출에 실패했습니다.\n사유: ${errorReason}\n선생님께 이 화면(오류 코드)을 보여주세요.`);
+        if (studentError) {
+            console.warn("Student Info Update Warning:", studentError);
+            // 학생 마스터 정보 업데이트 실패는 선택 사항일 수 있으나 로깅해둠
         }
-    } catch (err) {
-        console.error("Network/Unexpected Error:", err);
-        let networkReason = err.message || "원인을 알 수 없음";
-        alert(`[시스템 오류]\n서버와 통신하거나 데이터를 저장하는 중 문제가 발생했습니다.\n상세: ${networkReason}\n\n(입력한 내용은 폰에 저장되어 있으니, 와이파이나 데이터를 확인 후 새로고침해서 다시 시도하거나 선생님께 문의해주세요.)`);
+
+        // 3. 성공 처리
+        stepSurvey.classList.add("hidden");
+        stepDone.classList.remove("hidden");
+        window.scrollTo(0, 0);
+
+    } catch (error) {
+        console.error("Submission Error:", error);
+        let errorReason = "알 수 없는 데이터베이스 오류";
+        if (error.code === '23505') errorReason = "이미 설문을 제출한 학번이거나 중복된 데이터입니다.";
+        else if (error.code === '42P01') errorReason = "데이터베이스 테이블(surveys)을 찾을 수 없습니다.";
+        else if (error.code === '23503') errorReason = "학생 정보(pid)가 마스터 테이블과 일치하지 않습니다.";
+        else if (error.message) errorReason = error.message;
+
+        alert(`[제출 실패]\n사유: ${errorReason}\n\n잠시 후 다시 시도해 보시고, 계속 안되면 선생님께 문의해주세요.`);
     } finally {
         toggleLoading(false);
         pendingSurveyData = null;

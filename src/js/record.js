@@ -273,12 +273,9 @@ async function loadRecords() {
             headerDiv.style.marginRight = "50px";
             headerDiv.style.textAlign = "left"; // 왼쪽 정렬 명시
 
-            // 교사 이름 처리 (이메일인 경우 앞부분만 추출)
+            // 교사 이름 처리
             let teacherDisplay = r.teacher || "미입력";
-            // [추가] 최지은 선생님 성함 -> assari 아이디로 변경 (2025-02-28)
-            if (teacherDisplay === "최지은") {
-                teacherDisplay = "assari";
-            } else if (teacherDisplay.includes('@')) {
+            if (teacherDisplay.includes('@')) {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
 

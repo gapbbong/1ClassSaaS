@@ -29,17 +29,22 @@ export async function fetchStudentRecords(num) {
         if (error) throw error;
 
         // UI 호환성을 위해 데이터 매핑
-        return data.map(r => ({
-            id: r.id,
-            num: num,
-            name: r.students.name,
-            photo: r.students.photo_url,
-            time: r.created_at,
-            good: r.is_positive ? r.category : null,
-            bad: !r.is_positive ? r.category : null,
-            detail: r.content,
-            teacher: r.teacher_email_prefix || "선생님"
-        }));
+        return data.map(r => {
+            let teacher = r.teacher_email_prefix || "선생님";
+            if (teacher === "최지은") teacher = "assari"; // 특정 교사 성함 매핑
+
+            return {
+                id: r.id,
+                num: num,
+                name: r.students.name,
+                photo: r.students.photo_url,
+                time: r.created_at,
+                good: r.is_positive ? r.category : null,
+                bad: !r.is_positive ? r.category : null,
+                detail: r.content,
+                teacher: teacher
+            };
+        });
     } catch (error) {
         console.error("Supabase Fetch Records Error:", error);
         throw new Error("기록을 불러오지 못했습니다.");
@@ -118,6 +123,10 @@ export async function saveRecord(formData) {
 
         const photos = formData.get("photos"); // JSON string of array
 
+        // [추가] 기록 교사 매핑 (2025-02-28)
+        let teacherValue = teacher;
+        if (teacherValue === "최지은") teacherValue = "assari";
+
         // 2. life_records에 삽입합니다.
         const { error } = await supabase
             .from('life_records')
@@ -126,7 +135,7 @@ export async function saveRecord(formData) {
                 category: good || bad || "일반",
                 content: detail || "",
                 is_positive: !!good,
-                teacher_email_prefix: teacher,
+                teacher_email_prefix: teacherValue,
                 photos: photos ? JSON.parse(photos) : null,
                 created_at: time ? new Date(time).toISOString() : new Date().toISOString()
             });
@@ -199,17 +208,22 @@ export async function fetchGroupRecords(grade, classNum) {
         if (error) throw error;
 
         // UI 호환성을 위해 데이터 매핑
-        return data.map(r => ({
-            id: r.id,
-            num: r.students.student_id,
-            name: r.students.name,
-            time: r.created_at,
-            good: r.is_positive ? r.category : null,
-            bad: !r.is_positive ? r.category : null,
-            detail: r.content,
-            photo: r.students.photo_url,
-            teacher: r.teacher_email_prefix || "선생님"
-        }));
+        return data.map(r => {
+            let teacher = r.teacher_email_prefix || "선생님";
+            if (teacher === "최지은") teacher = "assari"; // 특정 교사 성함 매핑
+
+            return {
+                id: r.id,
+                num: r.students.student_id,
+                name: r.students.name,
+                time: r.created_at,
+                good: r.is_positive ? r.category : null,
+                bad: !r.is_positive ? r.category : null,
+                detail: r.content,
+                photo: r.students.photo_url,
+                teacher: teacher
+            };
+        });
     } catch (error) {
         console.error("Supabase Fetch Group Records Error:", error);
         throw new Error("그룹 기록을 불러오지 못했습니다.");
@@ -361,14 +375,19 @@ export async function bulkSaveRecords(targets, recordData) {
         if (sError) throw sError;
 
         // 2. 삽입할 데이터 배열 생성
-        const insertData = students.map(s => ({
-            student_pid: s.pid,
-            category: recordData.good || recordData.bad || "일반",
-            content: recordData.detail || "",
-            is_positive: !!recordData.good,
-            teacher_email_prefix: recordData.teacher,
-            created_at: new Date().toISOString()
-        }));
+        const insertData = students.map(s => {
+            let teacherValue = recordData.teacher;
+            if (teacherValue === "최지은") teacherValue = "assari";
+
+            return {
+                student_pid: s.pid,
+                category: recordData.good || recordData.bad || "일반",
+                content: recordData.detail || "",
+                is_positive: !!recordData.good,
+                teacher_email_prefix: teacherValue,
+                created_at: new Date().toISOString()
+            };
+        });
 
         // 3. 일괄 삽입
         const { error } = await supabase
@@ -434,11 +453,13 @@ export async function fetchSurveyData(num) {
 
         if (sError || !student) return null;
 
-        // 2. 해당 pid를 가진 기초조사 데이터를 가져옵니다.
+        // 2. 해당 pid를 가진 기초조사 데이터를 최신순으로 가져옵니다.
         const { data, error } = await supabase
             .from('surveys')
             .select('*')
             .eq('student_pid', student.pid)
+            .order('submitted_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
         if (error) throw error;
