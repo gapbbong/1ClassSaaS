@@ -36,7 +36,7 @@ async function initTeacherAuth() {
         const teacherEmail = bytes.toString(CryptoJS.enc.Utf8);
 
         if (teacherEmail) {
-            console.log("Teacher email found in token:", teacherEmail);
+            console.log("Teacher auth token found.");
             const { data, error } = await supabase
                 .from('teachers')
                 .select('name, email, role, assigned_class')
@@ -45,9 +45,9 @@ async function initTeacherAuth() {
 
             if (!error && data) {
                 currentTeacher = data;
-                console.log("Teacher Auth Initialized:", currentTeacher.name, currentTeacher.role);
+                console.log("Teacher Auth Initialized (Role):", currentTeacher.role);
             } else {
-                console.warn("Teacher record not found for email:", teacherEmail);
+                console.warn("Teacher record not found for the given token.");
             }
         }
     } catch (e) {
@@ -1146,12 +1146,13 @@ async function startBatchAnalysis() {
     stopRequested = false;
     updateBatchUI("미분석 학생 조회 중...", "running");
     document.getElementById("batch-progress-container").style.display = "block";
+    document.getElementById("overall-status-board").style.display = "block";
 
     try {
         // 1. 현재 학년도의 모든 학생 가져오기
         const { data: students, error: sError } = await supabase
             .from('students')
-            .select('pid, student_id, name')
+            .select('pid, student_id, name, class_info')
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (sError) throw sError;
@@ -1172,6 +1173,9 @@ async function startBatchAnalysis() {
         const submissionSet = new Set(surveys.map(s => s.student_pid));
 
         batchQueue = students.filter(s => submissionSet.has(s.pid) && !analyzedSet.has(s.pid));
+
+        // 반별 통계 및 현황판 초기화
+        initClassStatusBoard(students, submissionSet, analyzedSet);
 
         if (batchQueue.length === 0) {
             alert("분석할 새로운 대상이 없습니다.");
@@ -1209,11 +1213,23 @@ async function processNextInBatch() {
     const currentNum = batchCurrentIndex + 1;
     const progressPerc = Math.round((currentNum / total) * 100);
 
+    // 반별 카운트 및 UI 업데이트 로직
+    let classStatusText = "";
+    if (student.class_info && window.batchClassStats && window.batchClassStats[student.class_info]) {
+        window.batchClassStats[student.class_info].current_session++;
+        const cStats = window.batchClassStats[student.class_info];
+        // 학생이름 옆에 붙일 텍스트도 학급 전체 기준으로 변경
+        classStatusText = ` (${student.class_info} ${cStats.done + cStats.current_session}명 / 전체 ${cStats.class_total}명)`;
+    }
+
     // UI 업데이트
     document.getElementById("batch-progress-bar").style.width = `${progressPerc}%`;
     document.getElementById("batch-progress-percent").innerText = `${currentNum}/${total}`;
-    document.getElementById("batch-current-target").innerText = `현재: ${student.student_id} ${student.name} 분석 중...`;
+    document.getElementById("batch-current-target").innerText = `현재: ${student.student_id} ${student.name} 분석 중...${classStatusText}`;
     document.getElementById("batch-status-badge").innerText = `진행 중 (${progressPerc}%)`;
+
+    // 현황판 UI 해당 반 슬롯 업데이트
+    if (student.class_info) updateSlotStatus(student.class_info, 'progress');
 
     try {
         await runSilentAIAnalysis(student.pid, student.name);
@@ -1288,4 +1304,104 @@ async function runSilentAIAnalysis(pid, name) {
     ]);
 
     console.log(`[Batch Success] ${name} 분석 완료`);
+
+    // 현황판 UI 완료 체크
+    if (sInfo.data.class_info && window.batchClassStats && window.batchClassStats[sInfo.data.class_info]) {
+        const cStats = window.batchClassStats[sInfo.data.class_info];
+        if (cStats.current_session >= cStats.session_target) {
+            updateSlotStatus(sInfo.data.class_info, 'complete');
+        }
+    }
+}
+
+// ==========================================
+// 현황판 구성용 헬퍼 함수
+// ==========================================
+function initClassStatusBoard(allStudents, submissionSet, analyzedSet) {
+    // 1~3학년 1~6반 구조 생성
+    const structure = {
+        '1학년': ['1-1', '1-2', '1-3', '1-4', '1-5', '1-6'],
+        '2학년': ['2-1', '2-2', '2-3', '2-4', '2-5', '2-6'],
+        '3학년': ['3-1', '3-2', '3-3', '3-4', '3-5', '3-6']
+    };
+
+    // 반별 분석 진행 상태 계산을 위한 통계 객체 복구 및 생성
+    window.batchClassStats = {};
+    const classUiState = {};
+
+    Object.values(structure).flat().forEach(className => {
+        // class_total: 학급의 전체 학생 수 (제출여부 무관)
+        // done: 완전히 분석 완료된 수
+        // pending: 제출했지만 아직 이번 세션에서 분석 안 단 수
+        // current_session: 이번 [자동 분석 시작]을 누르고 나서 지금까지 완료된/진행중인 실시간 수
+        // session_target: 이번 세션에 처리할 총 인원
+        window.batchClassStats[className] = { class_total: 0, done: 0, pending: 0, current_session: 0, session_target: 0 };
+    });
+
+    allStudents.forEach(st => {
+        const cName = st.class_info;
+        if (!cName || !window.batchClassStats[cName]) return;
+
+        window.batchClassStats[cName].class_total++; // 반 전체 학생 수 누적
+
+        const hasSubmitted = submissionSet.has(st.pid);
+        const hasAnalyzed = analyzedSet.has(st.pid);
+
+        if (hasSubmitted && !hasAnalyzed) {
+            // 이번 배치 타겟
+            window.batchClassStats[cName].session_target++;
+            window.batchClassStats[cName].pending++;
+        } else if (hasAnalyzed) {
+            // 과거를 포함하여 이미 분석 완료된 수
+            window.batchClassStats[cName].done++;
+        }
+    });
+
+    // 화면 그리기
+    for (let grade = 1; grade <= 3; grade++) {
+        const container = document.getElementById(`grade-${grade}-slots`);
+        if (!container) continue;
+        container.innerHTML = ''; // 초기화
+
+        structure[`${grade}학년`].forEach(className => {
+            const stats = window.batchClassStats[className];
+            let stateClass = 'pending';
+            let labelCount = `${stats.done} / ${stats.class_total}`;
+
+            if (stats.pending > 0) {
+                // 해야할 학생이 있음 (이번 타겟이 존재)
+                stateClass = 'pending';
+            } else if (stats.done > 0 && stats.pending === 0) {
+                // 이번 처리할 게 없고, (과거) 분석해둔 게 있다면
+                stateClass = 'complete';
+            }
+
+            const slot = document.createElement('div');
+            slot.className = `class-slot ${stateClass}`;
+            slot.id = `slot-${className}`;
+            slot.innerHTML = `
+                <span class="class-name">${className}</span>
+                <span class="class-count">${labelCount}</span>
+            `;
+            container.appendChild(slot);
+        });
+    }
+}
+
+function updateSlotStatus(className, state) {
+    const slot = document.getElementById(`slot-${className}`);
+    if (!slot) return;
+
+    const stats = window.batchClassStats[className];
+    if (!stats) return;
+
+    const displayDone = stats.done + stats.current_session;
+
+    if (state === 'progress') {
+        slot.className = 'class-slot progress';
+        slot.querySelector('.class-count').innerText = `${displayDone} / ${stats.class_total}`;
+    } else if (state === 'complete') {
+        slot.className = 'class-slot complete';
+        slot.querySelector('.class-count').innerText = `${displayDone} / ${stats.class_total}`;
+    }
 }

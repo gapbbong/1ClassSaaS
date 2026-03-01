@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Omni-Perspective | AI 학생 분석</title>
     <link rel="stylesheet" href="src/css/analysis.css">
+    <link rel="stylesheet" href="src/css/analysis_board.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
@@ -139,6 +140,29 @@
                     <div id="batch-progress-bar" class="progress-bar-fill"></div>
                 </div>
                 <p id="batch-current-target" class="current-target">대상 확인 중...</p>
+
+                <!-- 18개 반 현황판 (학년별 3열, 반별 6행) -->
+                <div id="overall-status-board" class="overall-status-board" style="display: none; margin-top: 20px;">
+                    <h4 style="text-align:center; color:#475569; margin-bottom:12px; font-size:0.95rem;">📊 전교생 자동 분석
+                        현황판</h4>
+                    <div class="status-grid-container">
+                        <!-- 1학년 열 -->
+                        <div class="grade-column" id="grade-1-col">
+                            <div class="grade-title">1학년</div>
+                            <div class="class-slots" id="grade-1-slots"></div>
+                        </div>
+                        <!-- 2학년 열 -->
+                        <div class="grade-column" id="grade-2-col">
+                            <div class="grade-title">2학년</div>
+                            <div class="class-slots" id="grade-2-slots"></div>
+                        </div>
+                        <!-- 3학년 열 -->
+                        <div class="grade-column" id="grade-3-col">
+                            <div class="grade-title">3학년</div>
+                            <div class="class-slots" id="grade-3-slots"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

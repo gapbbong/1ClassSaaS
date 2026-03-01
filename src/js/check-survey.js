@@ -54,7 +54,7 @@ async function initClassDropdown() {
                         loadClassSurveyStatus();
                     }, 100);
                 } else {
-                    console.log("선생님 배정 학급 정보 없음 또는 조회 실패:", error);
+                    console.log("선생님 배정 학급 정보 없음 또는 조회 실패");
                 }
             }
         }

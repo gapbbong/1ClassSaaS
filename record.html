@@ -42,11 +42,16 @@
     </div>
 
     <!-- 자세히 -->
-    <div class="label-row-with-btn">
-      <label for="detail">자세히</label>
+    <div class="label-row-with-btn" style="display: flex; gap: 8px; justify-content: flex-start; flex-wrap: wrap;">
+      <label for="detail" style="margin-right: auto;">자세히</label>
+      <button type="button" class="btn-survey-view"
+        style="color: #03c75a; border-color: #03c75a; background-color: #f0fdf4;"
+        onclick="window.open('https://clovanote.naver.com', '_blank')">
+        🟢 클로바노트 열기
+      </button>
       <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display: none;"
         onclick="openSurveyPopup(null, num)">
-        📖 위 학생의 기초조사 보기
+        📖 기초조사 보기
       </button>
     </div>
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
