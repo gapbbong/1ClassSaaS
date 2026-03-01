@@ -93,10 +93,12 @@ function loadSummaryTable(data) {
         else if (grade >= 2 && [4, 5, 6].includes(cls)) major = "전자제어과";
 
         const key = `${grade}-${major}`;
-        if (!summary[key]) summary[key] = { grade, major, 남: 0, 여: 0 };
+        if (!summary[key]) summary[key] = { grade, major, 남: 0, 여: 0, 위탁: 0 };
 
         if (gender === "남" || gender === "남자") summary[key].남++;
         else if (gender === "여" || gender === "여자") summary[key].여++;
+
+        if (status.includes("위탁")) summary[key].위탁++;
     });
 
     const deptOrder = ["IoT전기과", "게임콘텐츠과", "전자제어과"];
@@ -114,45 +116,50 @@ function loadSummaryTable(data) {
 
     let html = `
     <table class="summary-table">
-      <tr><th>학년/학과</th><th>남</th><th>여</th><th>과별합</th></tr>
+      <tr><th>학년/학과</th><th>남</th><th>여</th><th>위탁</th><th>과별합</th></tr>
   `;
 
-    let totalM = 0, totalF = 0;
+    let totalM = 0, totalF = 0, totalW = 0;
 
     for (const grade in grouped) {
         const rows = grouped[grade];
-        let subM = 0, subF = 0;
+        let subM = 0, subF = 0, subW = 0;
 
         rows.forEach(r => {
-            const sum = r.남 + r.여;
+            const sum = r.남 + r.여 + r.위탁;
             subM += r.남;
             subF += r.여;
+            subW += r.위탁;
             html += `<tr>
         <td>${r.grade}학년 ${r.major}</td>
         <td>${r.남}</td>
         <td>${r.여}</td>
+        <td>${r.위탁}</td>
         <td>${sum}</td>
       </tr>`;
         });
 
-        const subTotal = subM + subF;
+        const subTotal = subM + subF + subW;
         html += `<tr class="subtotal">
       <td><b>${grade}학년 성별합계</b></td>
       <td><b>${subM}</b></td>
       <td><b>${subF}</b></td>
+      <td><b>${subW}</b></td>
       <td><b>${subTotal}</b></td>
     </tr>`;
 
         totalM += subM;
         totalF += subF;
+        totalW += subW;
     }
 
-    const grandTotal = totalM + totalF;
+    const grandTotal = totalM + totalF + totalW;
     html += `
     <tr class="grandtotal">
       <td><b>전교생</b></td>
       <td><b>${totalM}</b></td>
       <td><b>${totalF}</b></td>
+      <td><b>${totalW}</b></td>
       <td><b>${grandTotal}</b></td>
     </tr>
   </table>
@@ -188,7 +195,7 @@ function loadSummaryTable(data) {
     let classTable = `
   <h4>🧾 학년별 반별 인원 현황</h4>
   <table class="summary-table">
-    <tr><th>학년</th><th>반</th><th>남</th><th>여</th><th>합계</th><th>위탁</th></tr>
+    <tr><th>학년-반</th><th>남</th><th>여</th><th>위탁</th><th>합계</th></tr>
 `;
 
     Object.keys(classSummary)
@@ -202,12 +209,15 @@ function loadSummaryTable(data) {
             const v = classSummary[key];
             classTable += `
       <tr>
-        <td>${grade}</td>
-        <td>${cls}</td>
+        <td>
+          <a href="stu-list.html?grade=${grade}&class=${cls}" style="color: #007aff; text-decoration: none; font-weight: bold;">
+            ${grade}-${cls}
+          </a>
+        </td>
         <td>${v.male}</td>
         <td>${v.female}</td>
-        <td>${v.total}</td>
         <td>${v.witak}</td>
+        <td>${v.total}</td>
       </tr>
     `;
         });

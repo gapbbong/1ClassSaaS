@@ -1,5 +1,5 @@
 import { fetchGroupRecords, fetchAllStudents } from './api.js';
-import { extractDriveId, getThumbnailUrl } from './utils.js';
+import { extractDriveId, getThumbnailUrl, formatRelativeWithPeriod } from './utils.js';
 
 let allRecords = []; // 로드된 전체 기록 데이터 보관
 let currentSort = 'num'; // 현재 정렬 상태 ('num' or 'time')
@@ -109,27 +109,27 @@ function createRecordCard(record) {
     div.className = 'log-card';
 
     // 시간 포맷
-    let rawTime = record.time || '';
-    let timeStr = rawTime;
-    if (typeof rawTime === 'string' && rawTime.includes('T')) {
-        timeStr = rawTime.replace('T', ' ').substring(0, 16);
-    } else if (typeof rawTime === 'string' && rawTime.length > 16) {
-        timeStr = rawTime.substring(0, 16);
-    }
+    const timeStr = formatRelativeWithPeriod(record.time);
 
-    const driveId = extractDriveId(record.photo);
-    const photoUrl = driveId ? getThumbnailUrl(driveId) : (record.photo || "https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png");
+    // 기록 유형에 따른 배경색 클래스 결정
+    let typeClass = 'type-neutral';
+    if (record.bad && !['기록', '생활기록', '일반'].includes(record.bad)) {
+        typeClass = 'type-bad';
+    } else if (record.good && !['기록', '생활기록', '일반'].includes(record.good)) {
+        typeClass = 'type-good';
+    }
 
     div.innerHTML = `
         <div class="card-inner">
             <div class="student-photo-area">
                 <img src="${photoUrl}" alt="${record.name}" class="student-photo" 
                      onerror="if(!this.dataset.retry){this.dataset.retry=true; const fid='${extractDriveId(record.photo)}'; if(fid) this.src='https://drive.google.com/thumbnail?id='+fid+'&sz=w500';} else {this.src='https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png'}">
+                <div class="photo-badge ${typeClass}">${timeStr}</div>
             </div>
             <div class="record-info-area">
                 <div class="log-header">
                     <span class="student-info">${record.num} ${record.name}</span>
-                    <span class="log-time">${timeStr}</span>
+                    <span class="log-time" style="display:none;">${timeStr}</span>
                 </div>
                 <div class="log-content">${record.detail || '상세 내용 없음'}</div>
                 <div class="deed-tags">

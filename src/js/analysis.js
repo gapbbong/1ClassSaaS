@@ -132,117 +132,225 @@ async function initClassSelect() {
     }
 }
 
-// 1. 학생 검색 기능 (학번/이름 분리)
+// 1. 학생 검색 기능 (학번/이름 통합 및 연동)
 function initSearch() {
-    const idInput = document.getElementById("search-id");
-    const nameInput = document.getElementById("search-name");
+    const primaryInput = document.getElementById("search-id"); // 앞쪽: 학번 또는 이름
+    const secondaryInput = document.getElementById("search-name"); // 뒷쪽: 연동 정보 (학번 -> 이름, 이름 -> 학번)
     const applyBtn = document.getElementById("search-apply-btn");
     const resultsDropdown = document.getElementById("search-results");
 
-    // 이름 입력 시 실시간 드롭다운
-    nameInput.addEventListener("input", async (e) => {
-        const searchQuery = e.target.value.trim();
-        if (searchQuery.length < 2) {
+    let isInternalUpdate = false;
+
+    // 앞쪽 입력칸 이벤트 (통합 검색)
+    primaryInput.addEventListener("input", async (e) => {
+        if (isInternalUpdate) return;
+        const query = e.target.value.trim();
+
+        if (query.length === 0) {
+            secondaryInput.value = "";
             resultsDropdown.style.display = "none";
             return;
         }
 
-        const { data } = await supabase
-            .from('students')
-            .select('pid, student_id, name, class_info, gender, photo_url')
-            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
-            .ilike('name', `%${searchQuery}%`)
-            .limit(10);
+        // 1. 학번 입력 감지 (숫자 4자리)
+        if (/^\d{4}$/.test(query)) {
+            try {
+                const { data } = await supabase
+                    .from('students')
+                    .select('pid, name, student_id')
+                    .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+                    .eq('student_id', query)
+                    .maybeSingle();
 
-        if (data && data.length > 0) renderSearchResults(data);
-        else resultsDropdown.style.display = "none";
+                if (data) {
+                    secondaryInput.value = data.name;
+                    resultsDropdown.style.display = "none";
+                } else {
+                    secondaryInput.value = "기록 없음";
+                }
+            } catch (err) {
+                console.error("ID lookup failed:", err);
+            }
+            return;
+        }
+
+        // 2. 이름 입력 감지 (2글자 이상)
+        if (query.length >= 2 && !/^\d+$/.test(query)) {
+            const { data } = await supabase
+                .from('students')
+                .select('pid, student_id, name, class_info, gender, photo_url')
+                .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+                .ilike('name', `%${query}%`)
+                .limit(10);
+
+            if (data && data.length > 0) {
+                renderSearchResults(data, query);
+
+                // 정확히 일치하는 이름이 1명뿐일 때 뒷칸에 학번 채우기
+                const exactMatches = data.filter(s => s.name === query);
+                if (exactMatches.length === 1) {
+                    secondaryInput.value = exactMatches[0].student_id;
+                    secondaryInput.style.backgroundColor = "#f1f5f9";
+                } else if (exactMatches.length > 1) {
+                    secondaryInput.value = "동명이인 선택 필요";
+                    secondaryInput.style.backgroundColor = "#fff5f5";
+                } else {
+                    secondaryInput.value = "검색 중...";
+                }
+            } else {
+                resultsDropdown.style.display = "none";
+                secondaryInput.value = "결과 없음";
+            }
+        } else {
+            resultsDropdown.style.display = "none";
+        }
     });
 
     // 조회 버튼 클릭 및 엔터키 처리
     const handleLookup = async () => {
-        const sid = idInput.value.trim();
-        const sname = nameInput.value.trim();
+        const primaryVal = primaryInput.value.trim();
+        const secondaryVal = secondaryInput.value.trim();
 
-        if (!sid && !sname) return alert("학번 또는 이름을 입력해주세요.");
+        if (!primaryVal) return alert("학번 또는 이름을 입력해주세요.");
 
-        let query = supabase.from('students')
-            .select('pid, student_id, name, class_info, gender, photo_url')
+        // 이미 연동된 정보가 있다면 해당 pid로 로드 시도
+        // (정확한 연동을 위해 DB 재확인)
+        let queryBuilder = supabase.from('students')
+            .select('pid')
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
-        if (sid) {
-            query = query.eq('student_id', sid);
-        } else if (sname) {
-            query = query.ilike('name', `%${sname}%`);
+        if (/^\d{4}$/.test(primaryVal)) {
+            queryBuilder = queryBuilder.eq('student_id', primaryVal);
+        } else {
+            queryBuilder = queryBuilder.eq('name', primaryVal);
+            if (/^\d{4}$/.test(secondaryVal)) {
+                queryBuilder = queryBuilder.eq('student_id', secondaryVal);
+            }
         }
 
-        const { data } = await query.limit(20);
+        const { data } = await queryBuilder.limit(2);
 
         if (!data || data.length === 0) {
-            alert("검색 결과가 없습니다.");
+            alert("학생을 찾을 수 없습니다. 입력을 확인해주세요.");
             return;
         }
 
         if (data.length === 1) {
             loadStudentAnalysis(data[0].pid);
-            idInput.value = "";
-            nameInput.value = "";
             resultsDropdown.style.display = "none";
         } else {
-            renderSearchResults(data);
+            // 동명이인 등의 경우 드롭다운에서 선택 유도
+            alert("동명이인이 있습니다. 아래 목록에서 매칭되는 학생을 선택해주세요.");
+            primaryInput.dispatchEvent(new Event('input')); // 드롭다운 다시 띄우기
         }
     };
 
     applyBtn.addEventListener("click", handleLookup);
 
-    [idInput, nameInput].forEach(el => {
-        el.addEventListener("keydown", (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                handleLookup();
-            }
-        });
+    primaryInput.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleLookup();
+        }
     });
+
+    // 뒷쪽 입력칸(출력용) 클릭 시 앞쪽으로 포커스 유도
+    secondaryInput.addEventListener("click", () => primaryInput.focus());
 }
 
-function renderSearchResults(students) {
+function renderSearchResults(students, queryName = "") {
     const resultsDropdown = document.getElementById("search-results");
-    resultsDropdown.innerHTML = students.map(s => {
+    const primaryInput = document.getElementById("search-id");
+    const secondaryInput = document.getElementById("search-name");
+
+    // 정확히 이름이 일치하는 동명이인 체크
+    const exactMatches = students.filter(s => s.name === queryName);
+    const isDuplicateName = exactMatches.length > 1;
+
+    let html = "";
+    if (isDuplicateName) {
+        html += `
+            <div style="padding:12px 16px; background:#fff5f5; color:#e53e3e; font-size:0.9rem; font-weight:bold; border-bottom:1px solid #fed7d7; display:flex; align-items:center; gap:8px;">
+                <span>⚠️ 동명이인이 있습니다. 학생을 선택해주세요.</span>
+            </div>
+        `;
+    }
+
+    // 그리드 컨테이너 시작
+    html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px;">`;
+
+    html += students.map(s => {
         let photoUrl = "";
-        const driveId = extractDriveId(s.photo_url);
+        const driveId = extractDriveId(s.photo_url || "");
         if (driveId) {
             photoUrl = getThumbnailUrl(driveId);
         } else if (s.photo_url && s.photo_url.startsWith('http')) {
             photoUrl = s.photo_url;
-        } else if (s.photo_url) {
-            const { data } = supabase.storage.from('student_photos').getPublicUrl(s.photo_url);
-            photoUrl = data.publicUrl;
         }
 
+        // 사진 크기 대폭 확대 (기존 56px -> 96px)
         let photoHtml = photoUrl
-            ? `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;"><img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='👤'"></div>`
-            : `<div style="width:32px; height:32px; border-radius:50%; background:#eee; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0;">👤</div>`;
+            ? `<div style="width:96px; height:96px; border-radius:16px; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; border:1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);"><img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.parentElement.innerHTML='👤'"></div>`
+            : `<div style="width:96px; height:96px; border-radius:16px; background:#f8fafc; display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; border:1px solid #e2e8f0; font-size: 2.5rem; color: #cbd5e1;">👤</div>`;
 
         return `
-            <div class="search-item" data-pid="${s.pid}" style="display:flex; align-items:center; gap:10px; padding:10px 16px;">
+            <div class="search-item" data-pid="${s.pid}" data-sid="${s.student_id}" data-name="${s.name}" 
+                style="display:flex; align-items:center; gap:20px; padding:20px; border:1px solid #edf2f7; border-radius:20px; cursor:pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); background: white; min-height: 130px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                 ${photoHtml}
-                <div>
-                    <strong>${s.name}</strong> (${s.student_id})<br>
-                    <small style="color:#666;">${s.class_info}</small>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-weight:800; color:#1a202c; font-size:1.2rem; margin-bottom:6px; letter-spacing: -0.02em;">${s.name}</div>
+                    <div style="color:#4a5568; font-size:1rem; font-weight: 500; margin-bottom:4px;">학번: ${s.student_id}</div>
+                    <div style="display: inline-block; padding: 4px 10px; background: #edf2f7; border-radius: 8px; color: #718096; font-size:0.9rem; font-weight: 600;">${s.class_info}</div>
                 </div>
             </div>
         `;
     }).join('');
+
+    html += `</div>`; // 그리드 컨테이너 종료
+
+    resultsDropdown.innerHTML = html;
+
+    // 드롭다운 너비 및 스타일 조정
+    resultsDropdown.style.width = "100%";
+    resultsDropdown.style.maxWidth = "600px";
     resultsDropdown.style.display = "block";
 
     resultsDropdown.querySelectorAll(".search-item").forEach(item => {
+        item.addEventListener("mouseenter", () => {
+            item.style.borderColor = "#4A90E2";
+            item.style.backgroundColor = "#f0f7ff";
+            item.style.transform = "translateY(-1px)";
+            item.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+        });
+        item.addEventListener("mouseleave", () => {
+            item.style.borderColor = "#edf2f7";
+            item.style.backgroundColor = "white";
+            item.style.transform = "translateY(0)";
+            item.style.boxShadow = "none";
+        });
         item.addEventListener("click", () => {
-            loadStudentAnalysis(item.getAttribute("data-pid"));
+            const pid = item.getAttribute("data-pid");
+            const sid = item.getAttribute("data-sid");
+            const name = item.getAttribute("data-name");
+
+            // 앞쪽(Source)에 이름, 뒷쪽(Target)에 학번을 채워줌 (또는 그 반대로 해도 되지만 일관성을 위함)
+            // 사용자가 이름을 쳤다면 [이름] [학번]이 되고, 학번을 쳤다면 [학번] [이름]이 되는 식
+            const currentVal = primaryInput.value.trim();
+            if (/^\d+$/.test(currentVal)) {
+                primaryInput.value = sid;
+                secondaryInput.value = name;
+            } else {
+                primaryInput.value = name;
+                secondaryInput.value = sid;
+            }
+
+            secondaryInput.style.backgroundColor = "#f1f5f9";
+            loadStudentAnalysis(pid);
             resultsDropdown.style.display = "none";
-            document.getElementById("search-id").value = "";
-            document.getElementById("search-name").value = "";
         });
     });
 }
+
 
 // 2. 학생 분석 데이터 로드 (캐시 우선)
 async function loadStudentAnalysis(pid) {

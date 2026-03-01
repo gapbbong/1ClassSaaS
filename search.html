@@ -4,13 +4,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>학생 검색</title>
+  <title>학생 현황 및 검색</title>
   <link rel="stylesheet" href="src/css/main.css">
   <link rel="stylesheet" href="src/css/search.css">
 </head>
 
 <body>
-  <h2>🔍 학생 검색</h2>
+  <button id="home-btn" title="메인으로" onclick="location.href='index.html'">🏠</button>
+  <h2>🔍 학생 현황 및 검색</h2>
 
   <div class="search-container">
     <form id="searchForm" class="search-form">
@@ -18,7 +19,8 @@
         <option value="이름" selected>이름</option>
         <option value="학번">학번</option>
         <option value="출신중">출신중</option>
-        <option value="학생폰">연락처(통합)</option>
+        <option value="학생폰">연락처</option>
+        <option value="집주소">주소</option>
       </select>
       <input type="text" id="keyword" placeholder="검색어 입력..." required />
       <button type="submit">검색</button>

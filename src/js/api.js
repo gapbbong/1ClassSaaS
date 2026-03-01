@@ -430,12 +430,14 @@ export async function fetchDetailedRecordCounts(classInfo) {
             countMap[pid] = { good: 0, normal: 0, bad: 0 };
         });
 
+        const neutralCategories = ['기록', '생활기록', '일반'];
+
         data.forEach(r => {
             if (countMap[r.student_pid]) {
-                if (r.is_positive) {
-                    countMap[r.student_pid].good++;
-                } else if (r.category === '일반') {
+                if (neutralCategories.includes(r.category)) {
                     countMap[r.student_pid].normal++;
+                } else if (r.is_positive) {
+                    countMap[r.student_pid].good++;
                 } else {
                     countMap[r.student_pid].bad++;
                 }

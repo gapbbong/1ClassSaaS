@@ -1,5 +1,5 @@
 import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData } from './api.js';
-import { formatDate } from './utils.js';
+import { formatRelativeWithPeriod } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
 
@@ -279,7 +279,7 @@ async function loadRecords() {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
 
-            headerDiv.textContent = `📅 ${formatDate(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
+            headerDiv.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
 
             itemDiv.appendChild(headerDiv);
 
@@ -335,12 +335,24 @@ async function loadRecords() {
                 itemDiv.appendChild(photoDiv);
             }
 
-            // 삭제 버튼
-            const delBtn = document.createElement("button");
-            delBtn.className = "btn-delete";
-            delBtn.textContent = "🗑 삭제";
-            delBtn.onclick = () => handleDelete(r.num, r.time);
-            itemDiv.appendChild(delBtn);
+            // [추가] 삭제 버튼 노출 권한 체크 (기록한 선생님만)
+            let currentUser = "";
+            const encrypted = localStorage.getItem('teacher_auth_token');
+            if (encrypted) {
+                try {
+                    const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+                    const email = bytes.toString(CryptoJS.enc.Utf8);
+                    if (email) currentUser = email.split('@')[0];
+                } catch (e) { console.error(e); }
+            }
+
+            if (currentUser && r.teacher && (r.teacher === currentUser || r.teacher.split('@')[0] === currentUser)) {
+                const delBtn = document.createElement("button");
+                delBtn.className = "btn-delete";
+                delBtn.textContent = "🗑 삭제";
+                delBtn.onclick = () => handleDelete(r.num, r.time);
+                itemDiv.appendChild(delBtn);
+            }
 
             logBox.appendChild(itemDiv);
         });

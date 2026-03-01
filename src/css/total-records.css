@@ -137,6 +137,36 @@
 
 .student-photo-area {
     flex-shrink: 0;
+    position: relative;
+}
+
+.photo-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 800;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.type-good {
+    background-color: #007aff;
+    /* 파란색 */
+}
+
+.type-bad {
+    background-color: #ff3b30;
+    /* 빨간색 */
+}
+
+.type-neutral {
+    background-color: #000;
+    /* 검정색 */
 }
 
 .student-photo {

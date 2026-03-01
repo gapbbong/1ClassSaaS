@@ -320,28 +320,48 @@ function loadStudents() {
 
                 imgContainer.appendChild(img);
 
-                // [추가] 학적 상태 배지 (자퇴, 전출, 졸업 등)
+                // [추가] 학적 상태 배지 (자퇴, 전출, 졸업, 숙려제 등)
                 if (status && status !== "재학") {
                     const statusBadge = document.createElement("div");
                     statusBadge.className = "status-badge";
 
-                    if (status === "graduated") {
+                    if (status.startsWith("숙려제")) {
+                        // 숙려제|시작일|종료일 형식 파싱
+                        const parts = status.split('|');
+                        const startDate = parts[1];
+                        const endDate = parts[2];
+
+                        if (startDate && endDate) {
+                            const now = new Date();
+                            now.setHours(0, 0, 0, 0);
+                            const start = new Date(startDate);
+                            const end = new Date(endDate);
+                            end.setHours(23, 59, 59, 999);
+
+                            if (now >= start && now <= end) {
+                                statusBadge.classList.add("cooling-off");
+                                statusBadge.textContent = "숙려제";
+                                imgContainer.appendChild(statusBadge);
+                            }
+                        }
+                    } else if (status === "graduated") {
                         statusBadge.classList.add("graduated");
                         statusBadge.textContent = "졸업";
+                        imgContainer.appendChild(statusBadge);
                     } else {
                         statusBadge.textContent = status;
+                        imgContainer.appendChild(statusBadge);
                     }
-                    imgContainer.appendChild(statusBadge);
                 }
 
-                // [수정] 상세 기록 건수 배지 (3색: 파랑-일반/잘함-검정-못함)
-                // 3색 배지 구현: 파랑(잘한일), 검정(일반), 빨강(지도)
+                // [수정] 상세 기록 건수 배지 (3색 분리 표시: 파랑(잘한일)-검정(일반)-빨강(지도))
                 const counts = detailedCounts[student.pid] || { good: 0, normal: 0, bad: 0 };
                 if (counts.good > 0 || counts.normal > 0 || counts.bad > 0) {
                     const recordBadge = document.createElement("div");
                     recordBadge.className = "record-badge-multi";
 
                     let badgeHtml = "";
+                    // 요청 순서: 잘한일(파랑) -> 일반(검정) -> 잘못한일(빨강)
                     if (counts.good > 0) badgeHtml += `<span class="badge-good">${counts.good}</span>`;
                     if (counts.normal > 0) badgeHtml += `<span class="badge-normal">${counts.normal}</span>`;
                     if (counts.bad > 0) badgeHtml += `<span class="badge-bad">${counts.bad}</span>`;
@@ -792,10 +812,17 @@ window.showActionModal = function (student) {
     modal.id = "action-modal";
     modal.className = "guidance-tooltip-overlay";
     modal.innerHTML = `
-        <div class="guidance-tooltip-content" style="max-width: 350px;">
-            <h3 style="margin-bottom: 20px;">[${displayNum}번] ${student["이름"]} 기록 메뉴</h3>
+        <div class="guidance-tooltip-content" style="background: white; width: 95%; max-width: 480px; border-radius: 32px; padding: 30px 20px 25px; position: relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+            <!-- 상단 타이틀 및 X 버튼 통합 헤더 -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 25px; padding: 0 40px; position: relative;">
+                <h2 id="action-modal-title" style="font-size: 1.4rem; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -1px; text-align: center;">
+                    [${displayNum}번] ${student["이름"]} 기록 메뉴
+                </h2>
+                <!-- 상단 X 닫기 버튼 -->
+                <button onclick="this.closest('.guidance-tooltip-overlay').remove()" style="position: absolute; right: 0; background: #f1f5f9; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1rem; color: #64748b; cursor: pointer; transition: all 0.2s; z-index: 10;">✕</button>
+            </div>
             
-            <div class="action-grid" id="action-grid-main">
+            <div id="action-grid-main" style="display: flex; flex-direction: column; gap: 12px;">
                 <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
                    <span class="action-icon">🧠</span> 학생 분석
                 </button>
@@ -812,10 +839,6 @@ window.showActionModal = function (student) {
                    <span class="action-icon">🪪</span> 학적상태 변경
                 </button>
             </div>
-            
-            <div class="guidance-tooltip-footer" style="margin-top:20px;">
-                <button class="close-tooltip-btn" onclick="this.closest('.guidance-tooltip-overlay').remove()">닫기</button>
-            </div>
         </div>
     `;
 
@@ -827,100 +850,541 @@ window.openAttendanceModal = function (student) {
     const grid = document.getElementById("action-grid-main");
     if (!grid) return;
 
+    // 타이틀 변경
+    const titleEl = document.getElementById("action-modal-title");
+    if (titleEl) {
+        const displayNum = student["번호"] || (student["학번"] ? String(student["학번"]).slice(-2) : "??");
+        titleEl.textContent = `[${displayNum}번] ${student["이름"]} 조퇴/외출 기록`;
+    }
+
     grid.innerHTML = `
-        <button class="action-btn" onclick="saveAttendance(${JSON.stringify(student).replace(/"/g, '&quot;')}, '조퇴')" style="background:#fff3cd; color:#856404; border-color:#ffeeba;">
-           <span class="action-icon">🏃</span> 바로 조퇴 기록
-        </button>
-        <div class="action-input-group">
-            <label>외출 기록 (시작 시간 ~ 종료 시간)</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <input type="time" id="out-start-time" required> 
-                <span>~</span> 
-                <input type="time" id="out-end-time" required>
+        <div class="attendance-input-card" style="background: #f8fafc; padding: 25px 15px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; width: 100%;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                <!-- 조퇴/외출 토글 (중앙 배치) -->
+                <div class="attendance-type-toggle" id="attendance-type-toggle" data-current="외출" style="display: flex; background: #e2e8f0; padding: 4px; border-radius: 12px; height: 52px; width: 240px; cursor: pointer; position: relative;">
+                    <div class="type-slider" style="position: absolute; top: 4px; left: 4px; width: 116px; height: 44px; background: white; border-radius: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
+                    <div class="type-option active" data-value="외출" style="flex:1; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; z-index: 1; color: #1e293b; text-align: center;">외출</div>
+                    <div class="type-option" data-value="조퇴" style="flex:1; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800; z-index: 1; color: #64748b; text-align: center;">조퇴</div>
+                </div>
             </div>
-            <button class="action-submit-btn" onclick="saveAttendance(${JSON.stringify(student).replace(/"/g, '&quot;')}, '외출')">외출 기록 저장</button>
+            
+            <div class="attendance-input-grid" style="display: flex; gap: 15px;">
+                <!-- 시작 시간 그룹 -->
+                <div class="attendance-input-col" style="flex:1;">
+                    <div class="attendance-input-label">시작 시간</div>
+                    <div class="ampm-toggle-container" id="ampm-toggle" data-current="오전" style="margin-bottom: 8px; width: 100%; height: 47px;">
+                        <div class="ampm-toggle-slider" style="border-radius: 12px;"></div>
+                        <div class="ampm-toggle-option active" data-value="오전" style="font-size: 0.95rem;">오전</div>
+                        <div class="ampm-toggle-option" data-value="오후" style="font-size: 0.95rem;">오후</div>
+                    </div>
+                    <!-- 시작 시간 퀵 버튼 추가 -->
+                    <div style="display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; width: 100%;">
+                        <div class="time-quick-group" style="display: flex; gap: 4px; width: 100%;">
+                            <button class="time-quick-btn" onclick="adjustTime('out-start-time', 'SET_ZERO')" style="flex:1; height: 47px; font-size: 0.9rem; border-radius: 10px;">정각</button>
+                            <button class="time-quick-btn" onclick="adjustTime('out-start-time', 10)" style="flex:1; height: 47px; font-size: 0.9rem; border-radius: 10px;">+10분</button>
+                            <button class="time-quick-btn" onclick="adjustTime('out-start-time', -10)" style="flex:1; height: 47px; font-size: 0.9rem; border-radius: 10px;">-10분</button>
+                        </div>
+                        <div class="time-quick-group" style="display: flex; gap: 4px; width: 100%;">
+                            <button class="time-quick-btn" onclick="adjustTime('out-start-time', 60)" style="flex:1; height: 47px; font-size: 0.9rem; border-radius: 10px;">+1시간</button>
+                            <button class="time-quick-btn" onclick="adjustTime('out-start-time', -60)" style="flex:1; height: 47px; font-size: 0.9rem; border-radius: 10px;">-1시간</button>
+                        </div>
+                    </div>
+                    <input type="time" id="out-start-time" class="no-ampm-input" style="width:100%; padding:14px; border-radius:16px; border:1.5px solid #e2e8f0; font-family:inherit; font-size:1.3rem; text-align:center; background: #ffffff; font-weight: 800; color: #1e293b;" required> 
+                </div>
+                
+                <div style="padding-bottom:18px; color:#cbd5e1; font-weight:900; font-size: 1.2rem;">~</div>
+                
+                <!-- 종료 시간 그룹 (조퇴 시 숨김 처리 고려) -->
+                <div class="attendance-input-col" id="end-time-section" style="flex:1;">
+                    <div class="attendance-input-label">종료 시간</div>
+                    <div class="time-quick-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; width: 100%; margin-top: 55px;">
+                        <button class="time-quick-btn" onclick="adjustTime('out-end-time', 30)" style="height: 47px; font-size: 0.9rem; border-radius: 10px; line-height: 1.2;">+30분</button>
+                        <button class="time-quick-btn" onclick="adjustTime('out-end-time', -30)" style="height: 47px; font-size: 0.9rem; border-radius: 10px; line-height: 1.2;">-30분</button>
+                        <button class="type-dependent-btn" onclick="adjustTime('out-end-time', 60)" style="height: 47px; font-size: 0.9rem; border-radius: 10px; background:white; border:1px solid #e2e8f0; color:#475569; line-height: 1.2;">+1시간</button>
+                        <button class="type-dependent-btn" onclick="adjustTime('out-end-time', -60)" style="height: 47px; font-size: 0.9rem; border-radius: 10px; background:white; border:1px solid #e2e8f0; color:#475569; line-height: 1.2;">-1시간</button>
+                    </div>
+                    <input type="time" id="out-end-time" class="no-ampm-input" style="width:100%; padding:14px; border-radius:16px; border:1.5px solid #e2e8f0; font-family:inherit; font-size:1.3rem; text-align:center; background: #ffffff; font-weight: 800; color: #1e293b;" required>
+                </div>
+            </div>
         </div>
+
+        <button id="attendance-submit-btn" class="action-submit-btn" onclick="saveAttendance(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background: #3b82f6; margin-top: 10px; font-weight: 800; font-size: 1.25rem;">
+            🏃 외출 기록 저장
+        </button>
     `;
+
+    // 현재 시간 세팅 (시작 시간 기본값)
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('out-start-time').value = `${hh}:${mm}`;
+
+    // 오전/오후 토글 로직
+    const ampmToggle = document.getElementById("ampm-toggle");
+    const ampmOptions = ampmToggle.querySelectorAll(".ampm-toggle-option");
+
+    let currentAmPm = "오전";
+
+    ampmToggle.onclick = (e) => {
+        currentAmPm = (currentAmPm === "오전") ? "오후" : "오전";
+        ampmToggle.classList.toggle("pm", currentAmPm === "오후");
+        ampmOptions.forEach(opt => {
+            opt.classList.toggle("active", opt.getAttribute("data-value") === currentAmPm);
+        });
+        ampmToggle.setAttribute("data-current", currentAmPm);
+
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(8);
+        }
+    };
+
+    // 조퇴/외출 토글 로직
+    const typeToggle = document.getElementById("attendance-type-toggle");
+    const typeOptions = typeToggle.querySelectorAll(".type-option");
+    const typeSlider = typeToggle.querySelector(".type-slider");
+    const endTimeSection = document.getElementById("end-time-section");
+    const submitBtn = document.getElementById("attendance-submit-btn");
+
+    const updateAttendanceTypeUI = (type) => {
+        typeOptions.forEach(opt => {
+            const isActive = opt.getAttribute("data-value") === type;
+            opt.classList.toggle("active", isActive);
+            opt.style.color = isActive ? '#1e293b' : '#64748b';
+        });
+        typeSlider.style.transform = type === "조퇴" ? "translateX(100%)" : "translateX(0)";
+        typeToggle.setAttribute("data-current", type);
+
+        if (type === "조퇴") {
+            endTimeSection.style.display = "none";
+            submitBtn.innerHTML = `🏠 조퇴 기록 저장`;
+            submitBtn.style.background = "#fefce8";
+            submitBtn.style.color = "#a16207";
+            submitBtn.style.borderColor = "#fef08a";
+            submitBtn.style.boxShadow = "0 2px 4px rgba(254, 240, 138, 0.2)";
+        } else {
+            endTimeSection.style.display = "block";
+            submitBtn.innerHTML = `🏃 외출 기록 저장`;
+            submitBtn.style.background = "#3b82f6";
+            submitBtn.style.color = "white";
+            submitBtn.style.borderColor = "transparent";
+            submitBtn.style.boxShadow = "0 12px 24px rgba(0, 122, 255, 0.25)";
+        }
+    };
+
+    typeToggle.onclick = (e) => {
+        const currentType = typeToggle.getAttribute("data-current");
+        const newType = currentType === "외출" ? "조퇴" : "외출";
+        updateAttendanceTypeUI(newType);
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(8);
+        }
+    };
+
+    // 초기 UI 설정 (기본값 '외출')
+    updateAttendanceTypeUI(typeToggle.getAttribute("data-current"));
 };
 
-window.saveAttendance = async function (student, type) {
-    let detailMsg = type;
-    if (type === '외출') {
-        const start = document.getElementById('out-start-time').value;
-        const end = document.getElementById('out-end-time').value;
-        if (!start || !end) {
-            alert("외출 시간을 모두 입력해주세요.");
+// 시간 가산/설정 함수
+window.adjustTime = function (inputId, minutesToAdd) {
+    const input = document.getElementById(inputId);
+    const startTimeInput = document.getElementById('out-start-time');
+
+    // 사용자가 입력칸을 직접 수정했을 수 있으므로, 매 클릭 시 최신 값을 즉시 파싱합니다.
+    let baseTimeStr = input.value;
+
+    // 만약 종료 시간(input)이 비어있다면, 현재 설정된 시작 시간을 기준으로 계산합니다.
+    if (!baseTimeStr) {
+        baseTimeStr = startTimeInput.value;
+    }
+
+    // 만약 시작 시간도 없다면 현재 시각을 기준으로 합니다.
+    if (!baseTimeStr) {
+        const now = new Date();
+        baseTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} `;
+    }
+
+    let [hours, minutes] = baseTimeStr.split(':').map(Number);
+
+    if (minutesToAdd === 'SET_ZERO') {
+        // '정각' 요청: 분이 0이면 그대로, 0보다 크면 다음 시 00분으로 올림
+        if (minutes > 0) {
+            hours = (hours + 1) % 24;
+        }
+        minutes = 0;
+    } else {
+        // 일반 가산 요청
+        const date = new Date();
+        date.setHours(hours);
+        date.setMinutes(minutes + minutesToAdd);
+        hours = date.getHours();
+        minutes = date.getMinutes();
+    }
+
+    const newHH = String(hours).padStart(2, '0');
+    const newMM = String(minutes).padStart(2, '0');
+    input.value = `${newHH}:${newMM}`;
+};
+
+window.saveAttendance = async function (student) {
+    const typeToggle = document.getElementById('attendance-type-toggle');
+    const selectedType = typeToggle ? typeToggle.getAttribute('data-current') : '외출';
+
+    const start = document.getElementById('out-start-time').value;
+    const end = document.getElementById('out-end-time').value;
+    const ampm = document.getElementById('ampm-toggle')?.getAttribute("data-current") || "";
+
+    let detailMsg = "";
+    if (selectedType === '조퇴') {
+        if (!start) {
+            window.showToast("조퇴 시간을 입력해주세요.", "error");
             return;
         }
-        detailMsg = `외출 (${start} ~ ${end})`;
+        detailMsg = `${ampm} 조퇴(${start}~)`;
+    } else { // 외출
+        if (!start || !end) {
+            window.showToast("외출 시간을 모두 입력해주세요.", "error");
+            return;
+        }
+
+        // 시간 유효성 검사 (외출 시에만)
+        const startVal = start.replace(':', '');
+        const endVal = end.replace(':', '');
+        if (parseInt(endVal) <= parseInt(startVal)) {
+            window.showToast("종료 시간은 시작 시간보다 늦어야 합니다.", "error");
+            return;
+        }
+
+        // [추가] 00:00 가 12:00로 보이도록 보정 (사용자 가독성용)
+        const formatTime = (t) => {
+            let [h, m] = t.split(':').map(Number);
+            if (h === 0) h = 12; // 00시는 12시로 표시
+            else if (h > 12) h -= 12; // 13시 이상은 12를 뺌
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        };
+
+        const displayStart = formatTime(start);
+        const displayEnd = formatTime(end);
+
+        detailMsg = `${ampm} 외출(${displayStart} ~${displayEnd})`;
     }
 
-    if (!confirm(`[${student["이름"]}] 학생의 근태를 '${detailMsg}'(으)로 기록하시겠습니까?`)) return;
+    // [수정] 기본 confirm 대신 커스텀 모달 사용
+    showAttendanceConfirmModal(student, detailMsg, async () => {
+        const teacherPrefix = getStoredEmailPrefix();
 
-    const teacherPrefix = getStoredEmailPrefix();
+        const formData = new FormData();
+        formData.append("num", student["학번"]);
+        formData.append("bad", "근태");
+        formData.append("detail", detailMsg);
+        formData.append("teacher", teacherPrefix);
+        formData.append("time", new Date().toISOString());
 
-    const formData = new FormData();
-    formData.append("num", student["학번"]);
-    formData.append("bad", "근태");
-    formData.append("detail", detailMsg);
-    formData.append("teacher", teacherPrefix);
-    formData.append("time", new Date().toISOString());
-
-    try {
-        await saveRecord(formData);
-        alert("기록되었습니다.");
-        const modal = document.getElementById("action-modal");
-        if (modal) modal.remove();
-        // UI 리프레시 (건수 올리기 등) 필요 시 loadStudents 재호출
-        loadStudents();
-    } catch (e) {
-        alert("기록 저장에 실패했습니다.");
-        console.error(e);
-    }
+        try {
+            await saveRecord(formData);
+            window.showToast("정상적으로 기록되었습니다.", "success");
+            const modal = document.getElementById("action-modal");
+            if (modal) modal.remove();
+            loadStudents();
+        } catch (e) {
+            window.showToast("기록 저장에 실패했습니다.", "error");
+            console.error(e);
+        }
+    });
 };
+
+// [신규] 근태 기록 전용 세련된 커스텀 확인 모달
+function showAttendanceConfirmModal(student, detailMsg, onConfirm) {
+    const overlay = document.createElement("div");
+    overlay.className = "attendance-confirm-overlay";
+
+    const isEarly = detailMsg.includes("조퇴");
+    const typeLabel = isEarly ? "조퇴" : "외출";
+    const icon = isEarly ? "🏠" : "🏃";
+
+    // 사진 처리 (utils.js의 함수가 전역에 있다고 가정하거나 직접 구현)
+    const extractDriveId = (url) => {
+        if (!url) return null;
+        const match = url.match(/(?:\/d\/|id=)([\w-]{25,})/);
+        return match ? match[1] : null;
+    };
+    const getThumbnailUrl = (fileId) => {
+        return fileId ? `https://lh3.googleusercontent.com/d/${fileId}=s220` : "https://via.placeholder.com/120x150?text=No+Photo";
+    };
+
+    const photoUrl = student["사진저장링크"] || "";
+    let bgUrl;
+    if (photoUrl.startsWith('http') && !photoUrl.includes('drive.google.com')) {
+        bgUrl = photoUrl;
+    } else {
+        bgUrl = getThumbnailUrl(extractDriveId(photoUrl));
+    }
+
+    overlay.innerHTML = `
+        <div class="attendance-confirm-card" style="padding: 24px; text-align: center;">
+            <div class="attendance-confirm-icon" style="font-size: 2.5rem; margin-bottom: 12px;">${icon}</div>
+            <div class="attendance-confirm-title" style="font-weight: 800; font-size: 1.2rem; color: #1e293b; margin-bottom: 18px;">${typeLabel} 기록 확인</div>
+            
+            <div class="attendance-confirm-student-container" style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 20px;">
+                <img src="${bgUrl}" style="width: 100px; height: 130px; border-radius: 12px; object-fit: cover; border: 2px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <span style="color: #2563eb; font-weight: 900; font-size: 1.1rem;">${student["학번"]}</span>
+                    <span style="font-weight: 700; font-size: 1.2rem; color: #1e293b;">${student["이름"]}</span>
+                </div>
+            </div>
+
+            <div class="attendance-confirm-msg" style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-bottom: 24px; color: #475569; font-size: 0.95rem; line-height: 1.5; border: 1px dashed #cbd5e1;">
+                해당 학생의 <strong>'${detailMsg}'</strong> 기록을<br>데이터베이스에 저장할까요?
+            </div>
+            
+            <div class="attendance-btn-group" style="display: flex; gap: 10px;">
+                <button class="attendance-btn cancel" style="flex:1; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; background: white; font-weight: 600; color: #64748b; cursor: pointer;">취소</button>
+                <button class="attendance-btn confirm" style="flex:2; padding: 14px; border-radius: 12px; border: none; background: #3b82f6; color: white; font-weight: 800; cursor: pointer;">기록하기</button>
+            </div>
+        </div>
+    `;
+
+    overlay.querySelector(".cancel").onclick = () => overlay.remove();
+    overlay.querySelector(".confirm").onclick = () => {
+        overlay.remove();
+        onConfirm();
+    };
+
+    document.body.appendChild(overlay);
+
+    // 배경 클릭 시 닫기
+    overlay.onclick = (e) => {
+        if (e.target === overlay) overlay.remove();
+    };
+}
 
 window.openStatusModal = function (student) {
     const grid = document.getElementById("action-grid-main");
     if (!grid) return;
 
+    // 타이틀 변경
+    const titleEl = document.getElementById("action-modal-title");
+    if (titleEl) {
+        const displayNum = student["번호"] || (student["학번"] ? String(student["학번"]).slice(-2) : "??");
+        titleEl.textContent = `[${displayNum}번] ${student["이름"]} 학적 상태 변경`;
+    }
+
+    // 현재 학적 상태 파싱 (숙려제 여부 확인)
+    const currentStatus = student["학적"] || "재학";
+    const isCoolingOff = currentStatus.startsWith("숙려제");
+
+    let defaultStart = "";
+    let defaultEnd = "";
+    if (isCoolingOff) {
+        const parts = currentStatus.split('|');
+        defaultStart = parts[1] || "";
+        defaultEnd = parts[2] || "";
+    } else {
+        const now = new Date();
+        defaultStart = now.toISOString().split('T')[0];
+        const end = new Date();
+        end.setDate(now.getDate() + 13); // 기본 2주
+        defaultEnd = end.toISOString().split('T')[0];
+    }
+
     grid.innerHTML = `
-        <div class="action-input-group">
-            <label>변경할 학적/상태 선택</label>
-            <select id="status-select">
-                <option value="재학">재학 (기본)</option>
-                <option value="전출">전출</option>
-                <option value="전입">전입</option>
-                <option value="자퇴">자퇴</option>
-                <option value="위탁">위탁</option>
-                <option value="숙려제">숙려제</option>
-            </select>
-            <button class="action-submit-btn" onclick="saveStatus(${JSON.stringify(student).replace(/"/g, '&quot;')})">학적상태 변경 저장</button>
+        <div class="attendance-input-card" style="background: #f8fafc; padding: 25px 15px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; width: 100%;">
+            <div class="attendance-input-group" style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 0.9rem; font-weight: 700; color: #64748b; margin-bottom: 15px; text-align: center;">변경할 학적/상태 선택</label>
+                
+                <div id="status-button-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    ${['재학', '전출', '전입', '자퇴', '위탁', '숙려제'].map(status => {
+        const isActive = (status === '숙려제' && isCoolingOff) || (status === currentStatus);
+        return `
+                            <button class="status-opt-btn ${isActive ? 'active' : ''}" 
+                                    onclick="selectStatusOption(this, '${status}')"
+                                    style="padding: 12px; border-radius: 12px; border: 1.5px solid ${isActive ? '#6366f1' : '#e2e8f0'}; 
+                                           background: ${isActive ? '#f5f3ff' : 'white'}; 
+                                           color: ${isActive ? '#6366f1' : '#475569'}; 
+                                           font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s;">
+                                ${status}
+                            </button>
+                        `;
+    }).join('')}
+                </div>
+                <input type="hidden" id="status-select-value" value="${isCoolingOff ? '숙려제' : currentStatus}">
+            </div>
+
+            <!-- 숙려제 전용 날짜 설정 섹션 -->
+            <div id="cooling-off-section" style="display: ${isCoolingOff ? 'block' : 'none'}; border-top: 1px dashed #e2e8f0; pt: 20px; margin-top: 15px;">
+                <div style="display: flex; gap: 15px; margin-top: 15px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 8px;">숙려제 시작일</label>
+                        <div style="display: flex; gap: 4px; margin-bottom: 6px;">
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-start', 1)" style="flex:1; height: 36px; font-size: 0.8rem; border-radius: 8px;">+1일</button>
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-start', -1)" style="flex:1; height: 36px; font-size: 0.8rem; border-radius: 8px;">-1일</button>
+                        </div>
+                        <input type="date" id="cooling-start" value="${defaultStart}" style="width: 100%; padding: 10px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-family: inherit; font-weight: 700; text-align: center;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 700; color: #64748b; margin-bottom: 8px;">숙려제 종료일</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px;">
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-end', 1)" style="height: 36px; font-size: 0.8rem; border-radius: 8px;">+1일</button>
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-end', -1)" style="height: 36px; font-size: 0.8rem; border-radius: 8px;">-1일</button>
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-end', 7)" style="height: 36px; font-size: 0.8rem; border-radius: 8px;">+1주</button>
+                            <button class="time-quick-btn" onclick="adjustDate('cooling-end', -7)" style="height: 36px; font-size: 0.8rem; border-radius: 8px;">-1주</button>
+                        </div>
+                        <input type="date" id="cooling-end" value="${defaultEnd}" style="width: 100%; padding: 10px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-family: inherit; font-weight: 700; text-align: center;">
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <button id="status-submit-btn" class="action-submit-btn" onclick="saveStatus(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background: #6366f1; margin-top: 10px; font-weight: 800; font-size: 1.4rem; border: none; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);">
+            💾 학적상태 변경 저장
+        </button>
     `;
+
+    // 상태 선택 버튼 이벤트 헬퍼
+    window.selectStatusOption = (btn, value) => {
+        // 모든 버튼 비활성화
+        document.querySelectorAll('.status-opt-btn').forEach(b => {
+            b.classList.remove('active');
+            b.style.borderColor = '#e2e8f0';
+            b.style.background = 'white';
+            b.style.color = '#475569';
+        });
+        // 선택한 버튼 활성화
+        btn.classList.add('active');
+        btn.style.borderColor = '#6366f1';
+        btn.style.background = '#f5f3ff';
+        btn.style.color = '#6366f1';
+
+        // 숨겨진 input에 값 저장
+        document.getElementById('status-select-value').value = value;
+
+        // 숙려제 섹션 토글
+        const section = document.getElementById('cooling-off-section');
+        section.style.display = value === '숙려제' ? 'block' : 'none';
+
+        if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(8);
+        }
+    };
+};
+
+// [신규] 날짜 가산 함수
+window.adjustDate = function (inputId, daysToAdd) {
+    const input = document.getElementById(inputId);
+    if (!input.value) return;
+
+    const date = new Date(input.value);
+    date.setDate(date.getDate() + daysToAdd);
+
+    // YYYY-MM-DD 형식으로 변환
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    input.value = `${yyyy}-${mm}-${dd}`;
 };
 
 window.saveStatus = async function (student) {
-    const newStatus = document.getElementById('status-select').value;
-    if (!confirm(`[${student["이름"]}] 학생의 상태를 '${newStatus}'(으)로 변경하시겠습니까?`)) return;
+    const statusType = document.getElementById('status-select-value').value;
 
-    try {
-        const { error } = await supabase
-            .from('students')
-            .update({ status: newStatus })
-            .eq('student_id', student["학번"]);
-
-        if (error) throw error;
-
-        alert("상태가 변경되었습니다.");
-        const modal = document.getElementById("action-modal");
-        if (modal) modal.remove();
-        // 목록 다시 불러와서 UI(비활성화 딤처리, 배지 등) 갱신
-        loadStudents();
-    } catch (e) {
-        alert("상태 변경에 실패했습니다.");
-        console.error(e);
+    let finalStatus = statusType;
+    if (statusType === '숙려제') {
+        const start = document.getElementById('cooling-start').value;
+        const end = document.getElementById('cooling-end').value;
+        if (!start || !end) {
+            window.showToast("숙려제 시작일과 종료일을 입력해주세요.", "error");
+            return;
+        }
+        finalStatus = `숙려제|${start}|${end}`;
     }
+
+    // [수정] 기본 confirm 대신 세련된 커스텀 모달 사용
+    showStatusConfirmModal(student, statusType, async () => {
+        try {
+            const { error } = await supabase
+                .from('students')
+                .update({ status: finalStatus })
+                .eq('student_id', student["학번"]);
+
+            if (error) throw error;
+
+            window.showToast("상태가 정상적으로 변경되었습니다.", "success");
+            const modal = document.getElementById("action-modal");
+            if (modal) modal.remove();
+            loadStudents();
+        } catch (e) {
+            window.showToast("상태 변경에 실패했습니다.", "error");
+            console.error(e);
+        }
+    });
 };
+
+// [신규] 학적 상태 변경 전용 세련된 커스텀 확인 모달
+function showStatusConfirmModal(student, newStatus, onConfirm) {
+    const overlay = document.createElement("div");
+    overlay.className = "attendance-confirm-overlay";
+
+    // 사진 처리
+    const extractDriveId = (url) => {
+        if (!url) return null;
+        const match = url.match(/(?:\/d\/|id=)([\w-]{25,})/);
+        return match ? match[1] : null;
+    };
+    const getThumbnailUrl = (fileId) => {
+        return fileId ? `https://lh3.googleusercontent.com/d/${fileId}=s220` : "https://via.placeholder.com/120x150?text=No+Photo";
+    };
+
+    const photoUrl = student["사진저장링크"] || student.photo_url || "";
+    let bgUrl;
+    if (photoUrl.startsWith('http') && !photoUrl.includes('drive.google.com')) {
+        bgUrl = photoUrl;
+    } else {
+        bgUrl = getThumbnailUrl(extractDriveId(photoUrl));
+    }
+
+    overlay.innerHTML = `
+        <div class="attendance-confirm-card" style="padding: 24px; text-align: center; background: white; border-radius: 28px; width: 90%; max-width: 340px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div class="attendance-confirm-icon" style="font-size: 2.5rem; margin-bottom: 12px; filter: drop-shadow(0 4px 10px rgba(99, 102, 241, 0.3));">🪪</div>
+            <div class="attendance-confirm-title" style="font-weight: 800; font-size: 1.2rem; color: #1e293b; margin-bottom: 20px;">학적 상태 변경 확인</div>
+            
+            <div class="attendance-confirm-student-container" style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <img src="${bgUrl}" style="width: 110px; height: 145px; border-radius: 16px; object-fit: cover; border: 2.5px solid #f1f5f9; box-shadow: 0 8px 20px rgba(0,0,0,0.12); transition: transform 0.3s;">
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                    <span style="color: #6366f1; font-weight: 900; font-size: 1.15rem; letter-spacing: 1px;">${student["학번"]}</span>
+                    <span style="font-weight: 800; font-size: 1.3rem; color: #1e293b;">${student["이름"]}</span>
+                </div>
+            </div>
+
+            <div class="attendance-confirm-msg" style="background: #f5f3ff; padding: 18px; border-radius: 16px; margin-bottom: 28px; color: #4338ca; font-size: 0.98rem; line-height: 1.6; border: 1px solid #ddd6fe; font-weight: 500;">
+                현재 상태를 <strong>'${newStatus}'</strong>(으)로<br>변경하시겠습니까?
+            </div>
+            
+            <div class="attendance-btn-group" style="display: flex; gap: 12px;">
+                <button class="attendance-btn cancel" style="flex:1; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: white; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s;">취소</button>
+                <button class="attendance-btn confirm" style="flex:2; padding: 16px; border-radius: 14px; border: none; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 16px rgba(99, 102, 241, 0.25);">변경하기</button>
+            </div>
+        </div>
+    `;
+
+    overlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.2s ease;";
+
+    const cancelBtn = overlay.querySelector(".cancel");
+    const confirmBtn = overlay.querySelector(".confirm");
+
+    cancelBtn.onclick = () => {
+        overlay.classList.add("fade-out");
+        overlay.addEventListener("animationend", () => overlay.remove());
+    };
+
+    confirmBtn.onclick = () => {
+        overlay.remove();
+        onConfirm();
+    };
+
+    document.body.appendChild(overlay);
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) cancelBtn.click();
+    };
+}
 
 function goToRelativeClass(direction) {
     let g = grade || 1;
@@ -954,3 +1418,36 @@ function registerServiceWorker() {
             .catch(err => console.error("[SW] Registration failed:", err));
     }
 }
+// [신규] 세련된 디자인의 토스트 알림 함수
+window.showToast = function (message, type = 'error') {
+    // 컨테이너 없으면 생성
+    let container = document.querySelector('.toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+
+    const toast = document.createElement('div');
+    toast.className = `toast-item ${type}`;
+
+    // 타입별 아이콘 설정
+    let icon = '🔔';
+    if (type === 'error') icon = '⚠️';
+    if (type === 'success') icon = '✅';
+    if (type === 'info') icon = 'ℹ️';
+
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    // 3초 후 제거 애니메이션 및 삭제
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+            if (container.childNodes.length === 0) {
+                container.remove();
+            }
+        });
+    }, 3000);
+};
