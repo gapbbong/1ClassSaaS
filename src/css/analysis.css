@@ -415,3 +415,127 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* owner-batch-panel Styles */
+.owner-batch-panel {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 2px dashed var(--ai-border);
+}
+
+.owner-batch-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.owner-batch-panel h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--ai-text);
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.status-badge.running {
+    background: #ecfdf5;
+    color: #10b981;
+    animation: batchPulse 2s infinite;
+}
+
+@keyframes batchPulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.batch-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.batch-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.batch-btn.start {
+    background: #10b981;
+    color: white;
+}
+
+.batch-btn.start:hover {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.batch-btn.stop {
+    background: #ef4444;
+    color: white;
+}
+
+.batch-btn.stop:disabled {
+    background: #f1f5f9;
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.batch-progress-container {
+    background: #f8fafc;
+    padding: 16px;
+    border-radius: 16px;
+    border: 1px solid var(--ai-border);
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ai-text);
+}
+
+.progress-bar-bg {
+    height: 10px;
+    background: #e2e8f0;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    width: 0%;
+    transition: width 0.4s ease;
+}
+
+.current-target {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0;
+    text-align: center;
+}

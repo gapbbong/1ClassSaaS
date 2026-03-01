@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js';
+import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
 
 let currentStudent = null;
@@ -12,6 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initSearch();
     initClassSelect();
     initTeacherAuth(); // 교사 권한 초기화 추가
+    initOwnerBatch(); // 소유자 전용 배치 분석 초기화
 
     // Check URL parameters for direct student search
     const urlParams = new URLSearchParams(window.location.search);
@@ -34,15 +36,18 @@ async function initTeacherAuth() {
         const teacherEmail = bytes.toString(CryptoJS.enc.Utf8);
 
         if (teacherEmail) {
+            console.log("Teacher email found in token:", teacherEmail);
             const { data, error } = await supabase
                 .from('teachers')
                 .select('name, email, role, assigned_class')
-                .eq('email', teacherEmail)
+                .eq('email', teacherEmail.trim().toLowerCase())
                 .maybeSingle();
 
             if (!error && data) {
                 currentTeacher = data;
                 console.log("Teacher Auth Initialized:", currentTeacher.name, currentTeacher.role);
+            } else {
+                console.warn("Teacher record not found for email:", teacherEmail);
             }
         }
     } catch (e) {
@@ -54,8 +59,8 @@ async function initTeacherAuth() {
 function hasFullAnalysisAccess(student) {
     if (!currentTeacher) return false;
 
-    // 1. 관리자 또는 소유자 (admin, keeper)
-    if (currentTeacher.role === 'admin' || currentTeacher.email === 'keeper@kse.hs.kr') return true;
+    // 1. 관리자 또는 소유자 (admin, gapbbong@naver.com)
+    if (currentTeacher.role === 'admin' || currentTeacher.email === 'gapbbong@naver.com') return true;
 
     // 2. 상담 교사 (counselor)
     if (currentTeacher.role === 'counselor') return true;
@@ -102,6 +107,7 @@ async function initClassSelect() {
         const { data, error } = await supabase
             .from('students')
             .select('class_info')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .neq('class_info', null);
 
         if (!error && data) {
@@ -144,6 +150,7 @@ function initSearch() {
         const { data } = await supabase
             .from('students')
             .select('pid, student_id, name, class_info, gender, photo_url')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .ilike('name', `%${searchQuery}%`)
             .limit(10);
 
@@ -158,7 +165,9 @@ function initSearch() {
 
         if (!sid && !sname) return alert("학번 또는 이름을 입력해주세요.");
 
-        let query = supabase.from('students').select('pid, student_id, name, class_info, gender, photo_url');
+        let query = supabase.from('students')
+            .select('pid, student_id, name, class_info, gender, photo_url')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (sid) {
             query = query.eq('student_id', sid);
@@ -904,4 +913,271 @@ function renderHolisticProfile(analysis, role) {
     }
 
     el.innerHTML = html;
+}
+
+/**
+ * 소유자 전용 배치 분석 시스템 (Batch Engine)
+ */
+let isBatchRunning = false;
+let batchQueue = [];
+let batchCurrentIndex = 0;
+let stopRequested = false;
+
+function initOwnerBatch() {
+    const startBtn = document.getElementById("batch-start-btn");
+    const stopBtn = document.getElementById("batch-stop-btn");
+
+    if (!startBtn || !stopBtn) return;
+
+    // 권한 체크 후 UI 표시 여부 결정 (소유자 이메일 검증)
+    const checkOwnerInternal = setInterval(() => {
+        // 1. currentTeacher 객체가 있는 경우 (Supabase 연동 성공)
+        if (currentTeacher) {
+            clearInterval(checkOwnerInternal);
+            if (currentTeacher.email.toLowerCase() === 'gapbbong@naver.com') {
+                document.getElementById("owner-batch-panel").style.display = "block";
+                console.log("👑 Owner Batch Engine Initialized (via DB)");
+            }
+        }
+        // 2. 만약 DB 연동이 늦어지더라도 토큰에서 이메일을 직접 추출해 선제 노출 시도
+        else {
+            try {
+                const encryptedToken = localStorage.getItem('teacher_auth_token');
+                if (encryptedToken) {
+                    const bytes = CryptoJS.AES.decrypt(encryptedToken, API_CONFIG.SECRET_KEY);
+                    const email = bytes.toString(CryptoJS.enc.Utf8).toLowerCase();
+                    if (email === 'gapbbong@naver.com') {
+                        document.getElementById("owner-batch-panel").style.display = "block";
+                        console.log("👑 Owner Batch Panel Shown (via Token)");
+                        // DB 데이터가 올 때까지 인터벌은 유지 (다른 롤 정보가 필요할 수 있으므로)
+                    }
+                }
+            } catch (e) { }
+        }
+    }, 1000);
+
+    startBtn.addEventListener("click", startBatchAnalysis);
+    stopBtn.addEventListener("click", () => {
+        stopRequested = true;
+        updateBatchUI("중단 요청 중...", "stop");
+    });
+
+    // 실시간 모니터링 구독 시작
+    subscribeToNewSurveys();
+}
+
+/**
+ * 실시간 설문 제출 모니터링 (소유자 전용)
+ */
+function subscribeToNewSurveys() {
+    supabase
+        .channel('public:surveys-realtime-batch')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'surveys' }, async (payload) => {
+            // 엔진이 실행 중이 아니면 무시
+            if (!isBatchRunning || stopRequested) return;
+
+            const newSurvey = payload.new;
+            const pid = newSurvey.student_pid;
+
+            // 이미 큐에 있거나 현재 분석 중인지 확인
+            if (batchQueue.some(s => s.pid === pid)) return;
+
+            try {
+                // 학생 정보 가져오기 (현재 학년도 확인)
+                const { data: student } = await supabase
+                    .from('students')
+                    .select('pid, student_id, name, academic_year')
+                    .eq('pid', pid)
+                    .single();
+
+                if (student && student.academic_year === API_CONFIG.CURRENT_ACADEMIC_YEAR) {
+                    console.log(`[Realtime] 새 제출 감지: ${student.name}. 대기열 추가.`);
+
+                    const wasIdle = batchCurrentIndex >= batchQueue.length;
+                    batchQueue.push(student);
+
+                    // 만약 작업이 대기 상태였다면 즉시 다음 학생 처리 시작
+                    if (wasIdle) {
+                        console.log("[Realtime] 배치 프로세스 재개...");
+                        processNextInBatch();
+                    }
+                }
+            } catch (e) {
+                console.error("Realtime submission fetch failed:", e);
+            }
+        })
+        .subscribe();
+}
+
+function updateBatchUI(statusText, state) {
+    const badge = document.getElementById("batch-status-badge");
+    const progressText = document.getElementById("batch-progress-text");
+    const startBtn = document.getElementById("batch-start-btn");
+    const stopBtn = document.getElementById("batch-stop-btn");
+
+    if (statusText) progressText.innerText = statusText;
+
+    if (state === "running") {
+        badge.innerText = "분석 중";
+        badge.className = "status-badge running";
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+    } else if (state === "stop") {
+        badge.innerText = "대기 중";
+        badge.className = "status-badge";
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        isBatchRunning = false;
+    }
+}
+
+async function startBatchAnalysis() {
+    if (isBatchRunning) return;
+
+    isBatchRunning = true;
+    stopRequested = false;
+    updateBatchUI("미분석 학생 조회 중...", "running");
+    document.getElementById("batch-progress-container").style.display = "block";
+
+    try {
+        // 1. 현재 학년도의 모든 학생 가져오기
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid, student_id, name')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
+
+        if (sError) throw sError;
+
+        // 2. 이미 분석된 PID 목록 가져오기
+        const { data: insights } = await supabase
+            .from('student_insights')
+            .select('student_pid');
+
+        const analyzedSet = new Set(insights.map(i => i.student_pid));
+
+        // 3. 설문 제출 완료 학생 중 미분석자 필터링
+        const { data: surveys } = await supabase
+            .from('surveys')
+            .select('student_pid')
+            .order('submitted_at', { ascending: true });
+
+        const submissionSet = new Set(surveys.map(s => s.student_pid));
+
+        batchQueue = students.filter(s => submissionSet.has(s.pid) && !analyzedSet.has(s.pid));
+
+        if (batchQueue.length === 0) {
+            alert("분석할 새로운 대상이 없습니다.");
+            updateBatchUI("모든 학생 분석 완료", "stop");
+            return;
+        }
+
+        batchCurrentIndex = 0;
+        await processNextInBatch();
+
+    } catch (e) {
+        console.error("Batch Analysis Start Failed:", e);
+        alert("배치 분석 준비 중 오류가 발생했습니다.");
+        updateBatchUI("오류 발생", "stop");
+    }
+}
+
+async function processNextInBatch() {
+    if (stopRequested) {
+        updateBatchUI("분석 중단됨", "stop");
+        return;
+    }
+
+    if (batchCurrentIndex >= batchQueue.length) {
+        // 모든 현재 대기열 처리 완료. 실시간 대기 모드로 전환.
+        document.getElementById("batch-status-badge").innerText = "제출 대기 중";
+        document.getElementById("batch-status-badge").className = "status-badge running"; // 계속 애니메이션 유지
+        document.getElementById("batch-progress-text").innerText = "새로운 설문 제출을 실시간으로 기다리고 있습니다...";
+        document.getElementById("batch-current-target").innerText = "모든 현재 제출자 분석 완료. 대기 중...";
+        return;
+    }
+
+    const student = batchQueue[batchCurrentIndex];
+    const total = batchQueue.length;
+    const currentNum = batchCurrentIndex + 1;
+    const progressPerc = Math.round((currentNum / total) * 100);
+
+    // UI 업데이트
+    document.getElementById("batch-progress-bar").style.width = `${progressPerc}%`;
+    document.getElementById("batch-progress-percent").innerText = `${currentNum}/${total}`;
+    document.getElementById("batch-current-target").innerText = `현재: ${student.student_id} ${student.name} 분석 중...`;
+    document.getElementById("batch-status-badge").innerText = `진행 중 (${progressPerc}%)`;
+
+    try {
+        await runSilentAIAnalysis(student.pid, student.name);
+
+        batchCurrentIndex++;
+
+        // 5.5초 대기 (API 한도 준수)
+        let secondsLeft = 5;
+        const countdownTimer = setInterval(() => {
+            if (secondsLeft > 0 && !stopRequested) {
+                document.getElementById("batch-progress-text").innerText = `다음 학생 대기 중... (${secondsLeft}초)`;
+                secondsLeft--;
+            } else {
+                clearInterval(countdownTimer);
+            }
+        }, 1000);
+
+        setTimeout(processNextInBatch, 5500);
+
+    } catch (e) {
+        console.error(`Batch Error (${student.name}):`, e);
+        document.getElementById("batch-progress-text").innerText = "에러 발생! 10초 후 재시도...";
+        setTimeout(processNextInBatch, 10000);
+    }
+}
+
+async function runSilentAIAnalysis(pid, name) {
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    if (!apiKey) throw new Error("API Key Missing");
+
+    // 데이터 수집
+    const [sData, rData, sInfo] = await Promise.all([
+        supabase.from('surveys').select('data').eq('student_pid', pid).maybeSingle(),
+        supabase.from('life_records').select('category, content, is_positive').eq('student_pid', pid).limit(15),
+        supabase.from('students').select('*').eq('pid', pid).single()
+    ]);
+
+    const survey = sData.data?.data || {};
+    const records = (rData.data || []).filter(r => r.content && r.content.trim().length > 5);
+
+    const promptText = `
+    다음 학생 데이터를 분석하여 JSON으로만 답변해줘.
+    이름: ${name}, 성별: ${sInfo.data.gender}, 학급: ${sInfo.data.class_info}
+    생활기록: ${JSON.stringify(records)}
+    기초조사: ${JSON.stringify(survey)}
+
+    형식:
+    {
+      "summary": "3줄 요약",
+      "student_type": "핵심 성향",
+      "tags": ["키워드1", "키워드2", "키워드3"],
+      "counseling_priority": {"level": "시급/주의/관심/안정 중 택1", "reason": "이유"},
+      "holistic_analysis": {
+        "career": "목표지향형/탐색형/방황형",
+        "disposition": "내향 집중형/외향 활동형/균형형",
+        "family": "보호 안정형/정서 의존형/책임 조기성숙형",
+        "hobby_life": "경쟁 몰입형/창작 몰입형/소비형",
+        "rhythm": "건강 안정형/수면 부족형",
+        "emotion": "자기 인식형/고민 내재형/도움 요청형"
+      },
+      "group_role": "역할명",
+      "stats": {"study": 0~100, "routine": 0~100, "emotion": 0~100, "social": 0~100, "self": 0~100, "resilience": 0~100},
+      "detective": {"clues": ["단서1"], "deduction": "추론"},
+      "action": "교사 조언"
+    }`;
+
+    const result = await callGeminiAPI(apiKey, promptText, "");
+
+    // DB 저장
+    await supabase.from('student_insights').insert([
+        { student_pid: pid, insight_type: 'omni', content: result }
+    ]);
+
+    console.log(`[Batch Success] ${name} 분석 완료`);
 }

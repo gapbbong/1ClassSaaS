@@ -401,6 +401,56 @@ export async function fetchClassSurveys(classInfo) {
 }
 
 /**
+ * 특정 학급 학생들의 상세 기록 건수(잘한일, 일반, 지도)를 가져옵니다.
+ * @param {string} classInfo - '1-1' 형식
+ */
+export async function fetchDetailedRecordCounts(classInfo) {
+    try {
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid')
+            .eq('class_info', classInfo)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated');
+
+        if (sError || !students) throw sError;
+        const studentPids = students.map(s => s.pid);
+
+        const { data, error } = await supabase
+            .from('life_records')
+            .select('student_pid, is_positive, category')
+            .in('student_pid', studentPids)
+            .neq('category', '상담');
+
+        if (error) throw error;
+
+        // studentPids를 키로 하는 초기 맵 생성
+        const countMap = {};
+        studentPids.forEach(pid => {
+            countMap[pid] = { good: 0, normal: 0, bad: 0 };
+        });
+
+        data.forEach(r => {
+            if (countMap[r.student_pid]) {
+                if (r.is_positive) {
+                    countMap[r.student_pid].good++;
+                } else if (r.category === '일반') {
+                    countMap[r.student_pid].normal++;
+                } else {
+                    countMap[r.student_pid].bad++;
+                }
+            }
+        });
+
+        return countMap;
+    } catch (error) {
+        console.error("Fetch Detailed Record Counts Error:", error);
+        return {};
+    }
+}
+
+
+/**
  * 특정 학급의 모든 생활기록을 가져옵니다.
  * @param {string} classInfo - '1-1' 형식
  */

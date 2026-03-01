@@ -1,6 +1,6 @@
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
-import { fetchStudentsByClass, fetchClassInfo, saveRecord } from './api.js';
+import { fetchStudentsByClass, fetchClassInfo, saveRecord, fetchDetailedRecordCounts } from './api.js';
 import { supabase } from './supabase.js';
 import CryptoJS from 'crypto-js';
 
@@ -243,8 +243,13 @@ function loadStudents() {
     const list = document.getElementById("student-list");
     list.classList.add("loading");
 
-    fetchStudentsByClass(grade, classNum)
-        .then(data => {
+    const classKey = `${grade}-${classNum}`;
+
+    Promise.all([
+        fetchStudentsByClass(grade, classNum),
+        fetchDetailedRecordCounts(classKey)
+    ])
+        .then(([data, detailedCounts]) => {
             list.classList.remove("loading");
             list.innerHTML = "";
 
@@ -253,7 +258,7 @@ function loadStudents() {
                 return;
             }
 
-            // 해당 반 학생 필터링 (서버에서 이미 필터링되어 오지만 안전을 위해 유지)
+            // 해당 반 학생 필터링
             const filtered = data;
 
             // 학급 전체 기록 건수 합산
@@ -295,8 +300,6 @@ function loadStudents() {
                 } else if (driveFileId) {
                     img.src = getThumbnailUrl(driveFileId);
                 } else if (supabasePhotoUrl) {
-                    // 파일명만 있는 경우 Supabase Public URL 구성 시도 (만약 경로가 정해져 있다면)
-                    // 일단 구글 썸네일로 폴백 시도
                     img.src = `https://drive.google.com/thumbnail?id=${supabasePhotoUrl.split('.')[0]}&sz=w500`;
                 } else {
                     img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -304,7 +307,6 @@ function loadStudents() {
 
                 img.loading = "lazy";
 
-                // 이미지 로드 실패 시 대체 경로 시도 (Fallback)
                 img.onerror = function () {
                     if (this.getAttribute("data-retry")) {
                         this.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -332,11 +334,19 @@ function loadStudents() {
                     imgContainer.appendChild(statusBadge);
                 }
 
-                // [수정] 기록 건수 배지 (사진 위 우측 하단 배치)
-                if (student.recordCount > 0) {
+                // [수정] 상세 기록 건수 배지 (3색: 파랑-일반/잘함-검정-못함)
+                // 3색 배지 구현: 파랑(잘한일), 검정(일반), 빨강(지도)
+                const counts = detailedCounts[student.pid] || { good: 0, normal: 0, bad: 0 };
+                if (counts.good > 0 || counts.normal > 0 || counts.bad > 0) {
                     const recordBadge = document.createElement("div");
-                    recordBadge.className = "record-badge";
-                    recordBadge.textContent = student.recordCount;
+                    recordBadge.className = "record-badge-multi";
+
+                    let badgeHtml = "";
+                    if (counts.good > 0) badgeHtml += `<span class="badge-good">${counts.good}</span>`;
+                    if (counts.normal > 0) badgeHtml += `<span class="badge-normal">${counts.normal}</span>`;
+                    if (counts.bad > 0) badgeHtml += `<span class="badge-bad">${counts.bad}</span>`;
+
+                    recordBadge.innerHTML = badgeHtml;
                     imgContainer.appendChild(recordBadge);
                 }
 

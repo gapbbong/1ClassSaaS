@@ -16,31 +16,30 @@
 
 <body>
     <!-- 상단 버전 정보 -->
-    <div class="version-tag">v1.49</div>
+    <div class="version-tag">v1.52</div>
 
     <!-- 제목 및 검색 버튼 영역 -->
     <div class="title-bar">
         <div class="title-left"></div>
         <h1 class="school-name">경성전자고</h1>
         <div class="nav-actions">
-            <!-- 1. 기록 통계 -->
-            <button class="nav-action-btn" onclick="location.href='total-records.html'">
-                <span class="nav-text">기록 <strong id="record-count-val" class="loading-dots"
-                        style="color:#007aff;">...</strong>건</span>
-            </button>
-
-            <!-- 2. 일괄 기록 -->
-            <button class="nav-action-btn" onclick="location.href='bulk-record.html'">
-                <span class="nav-text">일괄기록</span>
-            </button>
-
             <!-- 햄버거 메뉴 -->
             <div class="hamburger-menu">
                 <button id="hamburger-btn" class="hamburger-btn" aria-label="메뉴 열기">☰</button>
                 <div id="hamburger-dropdown" class="hamburger-dropdown">
+                    <!-- 기초조사 제출 현황을 최상단으로 -->
                     <button onclick="location.href='check-survey.html'">기초조사 제출 현황</button>
+
+                    <!-- 기록 건수를 햄버거 메뉴 안으로 이동 -->
+                    <button onclick="location.href='total-records.html'">
+                        기록 <strong id="record-count-val" class="loading-dots" style="color:#007aff;">...</strong>건
+                    </button>
+
+                    <div class="menu-divider"></div>
+
                     <button id="menu-class-analysis" style="display: none;"
                         onclick="location.href='class-analysis.html'">우리반 분석</button>
+                    <button onclick="location.href='bulk-record.html'">일괄기록</button>
                     <button onclick="location.href='analysis.html'">학생 분석</button>
                     <button onclick="location.href='search.html'">학생 검색</button>
                     <button id="logout-btn" style="color: #FF3B30;">로그아웃</button>

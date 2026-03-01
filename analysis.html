@@ -7,6 +7,7 @@
     <title>Omni-Perspective | AI 학생 분석</title>
     <link rel="stylesheet" href="src/css/analysis.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 
 <body>
@@ -55,6 +56,27 @@
                 </div>
             </div>
 
+            <!-- 3. 소유자 전용 배치 분석 (기본 숨김) -->
+            <div id="owner-batch-panel" class="owner-batch-panel" style="display: none;">
+                <div class="panel-header">
+                    <h3>👑 전체 학생 자동 분석</h3>
+                    <span class="status-badge" id="batch-status-badge">대기 중</span>
+                </div>
+                <div class="batch-controls">
+                    <button id="batch-start-btn" class="batch-btn start">자동 분석 시작</button>
+                    <button id="batch-stop-btn" class="batch-btn stop" disabled>중단</button>
+                </div>
+                <div id="batch-progress-container" class="batch-progress-container" style="display: none;">
+                    <div class="progress-info">
+                        <span id="batch-progress-text">미분석 학생 조회 중...</span>
+                        <span id="batch-progress-percent">0/0</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="batch-progress-bar" class="progress-bar-fill"></div>
+                    </div>
+                    <p id="batch-current-target" class="current-target">대상 확인 중...</p>
+                </div>
+            </div>
         </section>
 
         <main id="analysis-content" class="analysis-main">

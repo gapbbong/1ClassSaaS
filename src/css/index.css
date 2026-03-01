@@ -116,7 +116,13 @@
 }
 
 .hamburger-dropdown button:hover {
-    background: #f8f9fa;
+    background-color: #f1f5f9;
+}
+
+.menu-divider {
+    height: 1px;
+    background-color: #e2e8f0;
+    margin: 4px 0;
 }
 
 .hamburger-dropdown button:last-child {
