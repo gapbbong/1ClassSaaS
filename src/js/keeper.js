@@ -131,16 +131,20 @@ function renderRecords(records) {
 
 // 실시간 자동 갱신 (담임이 작성하면 화면에 즉각 표시)
 function subscribeToChanges() {
+    console.log("📡 실시간 데이터 연동을 시작합니다...");
     supabase
         .channel('public:life_records')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'life_records' }, payload => {
+            console.log("🔔 새로운 기록 감지:", payload.new);
             const newRecord = payload.new;
             if (newRecord.category === '근태' && (newRecord.content.includes('외출') || newRecord.content.includes('조퇴'))) {
-                // 변화가 생기면 전체 재로드 (복잡도 감소)
+                console.log("✨ 외출/조퇴 데이터이므로 화면을 갱신합니다.");
                 loadTodayRecords();
             }
         })
-        .subscribe();
+        .subscribe((status) => {
+            console.log("🌐 실시간 채널 연결 상태:", status);
+        });
 }
 
 function initLogout() {
