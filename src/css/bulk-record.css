@@ -92,7 +92,10 @@
 }
 
 #student-input {
-    flex: 1;
+    flex: 7;
+    /* 7 비율 */
+    min-width: 0;
+    /* 넘침 방지 */
     padding: 12px 18px;
     border: 2px solid #eee;
     border-radius: 12px;
@@ -106,18 +109,32 @@
 }
 
 .search-btn {
-    padding: 12px 25px;
-    background: #fff;
-    border: 2px solid #ddd;
+    flex: 3;
+    /* 3 비율 */
+    padding: 12px 0;
+    /* 내부 정렬을 위해 padding 단순화 */
+    background: #4A90E2;
+    /* 저장하기 버튼과 동일한 배경 */
+    color: #fff;
+    border: none;
     border-radius: 12px;
-    font-weight: 700;
+    font-weight: 800;
+    /* 잘한 일 라벨과 동일한 두께 */
+    font-size: 0.95em;
+    /* 잘한 일 라벨(0.95em)과 동일한 크기 */
     cursor: pointer;
     transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+    /* 저장 버튼 형태의 그림자 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .search-btn:hover {
-    background: #f8f9fa;
-    border-color: #bbb;
+    background: #357ABD;
+    transform: translateY(-2px);
+    /* 호버 시 약간 띄움 효과 */
 }
 
 .help-text {
