@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js';
+import { fetchAllStudents, bulkSaveRecords } from './api.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
     initClock();
@@ -60,7 +61,7 @@ async function loadTodayRecords() {
     const { data: records, error } = await supabase
         .from('life_records')
         .select(`
-            id, created_at, category, content, teacher_name,
+            id, created_at, category, content, teacher_email_prefix,
             students!inner ( student_id, name, photo_url, class_info )
         `)
         .eq('category', '근태')
@@ -71,7 +72,7 @@ async function loadTodayRecords() {
 
     if (error) {
         console.error("외출 기록 로드 실패:", error);
-        document.getElementById("loading-view").innerText = "데이터를 불러오는 데 실패했습니다.";
+        document.getElementById("loading-view").innerText = "데이터를 불러오는 데 실패했습니다. (권한 또는 필드 오류)";
         return;
     }
 
@@ -119,7 +120,7 @@ function renderRecords(records) {
                 <div class="card-class">${studentInfo.class_info || '학급 미상'}</div>
                 <div class="card-student">${studentInfo.name || '알 수 없음'} <span style="font-size: 1.8rem; color:#64748b;">(${studentInfo.student_id || ''})</span></div>
                 <div class="card-detail">${r.content}</div>
-                <div style="text-align:right; font-size:1.1rem; color:#94a3b8; margin-top:10px;">결재 교사: ${r.teacher_name}</div>
+                <div style="text-align:right; font-size:1.1rem; color:#94a3b8; margin-top:10px;">확인 교사: ${r.teacher_email_prefix || '시스템'}</div>
             </div>
         `;
     });
@@ -150,3 +151,160 @@ function initLogout() {
         }
     });
 }
+
+// [신규] 지킴이 전용 일괄 기록 모달 오픈
+window.openBulkRecordModal = async function () {
+    // 1. 모달 오버레이 생성
+    const overlay = document.createElement("div");
+    overlay.className = "bulk-record-overlay";
+    overlay.style.cssText = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); display:flex; justify-content:center; align-items:center; z-index:9999; animation:fadeIn 0.2s ease;";
+
+    overlay.innerHTML = `
+        <div class="bulk-record-card" style="background:white; width:90%; max-width:600px; padding:30px; border-radius:32px; box-shadow:0 30px 60px rgba(0,0,0,0.4); animation:modalIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px;">
+                <h2 style="font-size:1.8rem; font-weight:800; color:#1e293b; margin:0;">📋 지킴이 일괄 기록</h2>
+                <button onclick="this.closest('.bulk-record-overlay').remove()" style="background:#f1f5f9; border:none; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.2rem; color:#64748b;">✕</button>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:1rem; font-weight:700; color:#64748b; margin-bottom:10px;">대상 학생 검색 및 선택</label>
+                <div style="position:relative; margin-bottom:15px;">
+                    <input type="text" id="student-search-input" placeholder="학생 이름 또는 학번 입력..." style="width:100%; padding:15px 20px; border-radius:15px; border:2px solid #e2e8f0; font-size:1.2rem; outline:none; transition:border-color 0.2s;">
+                    <div id="search-result-dropdown" style="display:none; position:absolute; top:100%; left:0; width:100%; background:white; border:1px solid #e2e8f0; border-radius:15px; box-shadow:0 10px 20px rgba(0,0,0,0.1); max-height:200px; overflow-y:auto; z-index:100; margin-top:5px;"></div>
+                </div>
+                <div id="selected-students-tags" style="display:flex; flex-wrap:wrap; gap:8px; min-height:45px; padding:10px; background:#f8fafc; border-radius:15px; border:1px dashed #cbd5e1;">
+                    <span style="color:#94a3b8; font-size:0.9rem;">학생을 검색하여 선택해주세요.</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:1rem; font-weight:700; color:#64748b; margin-bottom:10px;">지도 카테고리</label>
+                <div id="bulk-category-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                    ${['생활지도', '태도', '복장', '기타'].map(cat => `
+                        <button class="bulk-cat-btn" onclick="selectBulkCategory(this, '${cat}')" style="padding:12px; border-radius:12px; border:1.5px solid #e2e8f0; background:white; font-weight:700; cursor:pointer; transition:all 0.2s;">${cat}</button>
+                    `).join('')}
+                </div>
+                <input type="hidden" id="selected-bulk-category" value="생활지도">
+            </div>
+
+            <div style="margin-bottom:25px;">
+                <label style="display:block; font-size:1rem; font-weight:700; color:#64748b; margin-bottom:10px;">상세 내용</label>
+                <textarea id="bulk-record-content" placeholder="지도 내용을 입력하세요..." style="width:100%; height:100px; padding:15px; border-radius:15px; border:2px solid #e2e8f0; font-size:1.1rem; resize:none; outline:none; transition:border-color 0.2s;"></textarea>
+            </div>
+
+            <button id="save-bulk-btn" onclick="saveBulkRecordData()" style="width:100%; padding:18px; border-radius:18px; border:none; background:linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color:white; font-size:1.3rem; font-weight:800; cursor:pointer; box-shadow:0 10px 20px rgba(99,102,241,0.3); transition:all 0.2s;">💾 기록 저장하기</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // 데이터 로드 및 초기화
+    const allStudents = await fetchAllStudents();
+    const selectedStudents = [];
+    const searchInput = document.getElementById("student-search-input");
+    const dropdown = document.getElementById("search-result-dropdown");
+    const tagsContainer = document.getElementById("selected-students-tags");
+
+    // 카테고리 초기값 선택 처리
+    const firstCat = overlay.querySelector('.bulk-cat-btn');
+    if (firstCat) selectBulkCategory(firstCat, '생활지도');
+
+    searchInput.addEventListener("input", (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        if (!query) {
+            dropdown.style.display = "none";
+            return;
+        }
+
+        const filtered = allStudents.filter(s =>
+            (s["이름"].toLowerCase().includes(query) || String(s["학번"]).includes(query)) &&
+            !selectedStudents.some(sel => sel.num === s["학번"])
+        ).slice(0, 10);
+
+        if (filtered.length > 0) {
+            dropdown.innerHTML = filtered.map(s => `
+                <div style="padding:12px 15px; cursor:pointer; border-bottom:1px solid #f1f5f9; hover:background:#f8fafc;" onclick="addStudentToBulk('${s["학번"]}', '${s["이름"]}')">
+                    <span style="font-weight:700;">${s["이름"]}</span> 
+                    <span style="color:#64748b; font-size:0.9rem;">(${s["학번"]})</span>
+                </div>
+            `).join('');
+            dropdown.style.display = "block";
+        } else {
+            dropdown.style.display = "none";
+        }
+    });
+
+    // 전역 함수 등록 (모달 내 버튼에서 호출용)
+    window.selectBulkCategory = (btn, value) => {
+        document.querySelectorAll('.bulk-cat-btn').forEach(b => {
+            b.style.background = 'white';
+            b.style.borderColor = '#e2e8f0';
+            b.style.color = '#475569';
+        });
+        btn.style.background = '#f5f3ff';
+        btn.style.borderColor = '#6366f1';
+        btn.style.color = '#6366f1';
+        document.getElementById('selected-bulk-category').value = value;
+    };
+
+    window.addStudentToBulk = (num, name) => {
+        selectedStudents.push({ num, name });
+        searchInput.value = "";
+        dropdown.style.display = "none";
+        updateBulkTags();
+    };
+
+    window.removeStudentFromBulk = (num) => {
+        const idx = selectedStudents.findIndex(s => s.num === num);
+        if (idx > -1) selectedStudents.splice(idx, 1);
+        updateBulkTags();
+    };
+
+    function updateBulkTags() {
+        if (selectedStudents.length === 0) {
+            tagsContainer.innerHTML = `<span style="color:#94a3b8; font-size:0.9rem;">학생을 검색하여 선택해주세요.</span>`;
+            return;
+        }
+        tagsContainer.innerHTML = selectedStudents.map(s => `
+            <div style="background:#6366f1; color:white; padding:6px 12px; border-radius:10px; display:flex; align-items:center; gap:8px; font-weight:700; font-size:0.95rem;">
+                ${s.name} (${s.num})
+                <span onclick="removeStudentFromBulk('${s.num}')" style="cursor:pointer; font-size:1.1rem;">×</span>
+            </div>
+        `).join('');
+    }
+
+    window.saveBulkRecordData = async () => {
+        if (selectedStudents.length === 0) {
+            alert("기록할 대상을 선택해주세요.");
+            return;
+        }
+        const content = document.getElementById("bulk-record-content").value.trim();
+        if (!content) {
+            alert("지도 내용을 입력해주세요.");
+            return;
+        }
+
+        const category = document.getElementById('selected-bulk-category').value;
+        const submitBtn = document.getElementById('save-bulk-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `⏳ 저장 중...`;
+
+        try {
+            const authEmail = 'keeper@kse.hs.kr'; // 지킴이 고정 이메일
+            const { count } = await bulkSaveRecords(selectedStudents, {
+                category: category,
+                detail: content,
+                teacher: authEmail,
+                is_positive: false
+            });
+
+            alert(`${count}명의 학생에게 기록이 정상적으로 저장되었습니다.`);
+            overlay.remove();
+        } catch (e) {
+            alert("일괄 저장 중 오류가 발생했습니다.");
+            console.error(e);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `💾 기록 저장하기`;
+        }
+    };
+};
