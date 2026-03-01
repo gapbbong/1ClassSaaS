@@ -374,7 +374,15 @@ async function handleSaveAll() {
 
         if (result.result === "success") {
             alert(`✅ ${result.count}명의 기록이 저장되었습니다.`);
-            location.href = "index.html"; // 메인으로 이동
+
+            // [수정] 어디서 왔는지에 따라 돌아가는 페이지 결정
+            const urlParams = new URLSearchParams(window.location.search);
+            const from = urlParams.get('from');
+            if (from === 'keeper') {
+                location.href = "keeper.html";
+            } else {
+                location.href = "index.html";
+            }
         } else {
             alert("저장 실패");
         }

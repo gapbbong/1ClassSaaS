@@ -11,7 +11,8 @@
 
 <body>
     <div class="header-row">
-        <button type="button" class="btn-back" aria-label="뒤로가기" onclick="location.href='index.html'"></button>
+        <button type="button" class="btn-back" aria-label="뒤로가기"
+            onclick="const from = new URLSearchParams(window.location.search).get('from'); location.href = (from === 'keeper' ? 'keeper.html' : 'index.html')"></button>
         <h2 id="pageTitle">일괄 생활기록</h2>
     </div>
 
