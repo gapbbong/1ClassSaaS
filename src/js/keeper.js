@@ -2,7 +2,6 @@ import { supabase } from './supabase.js';
 import { fetchAllStudents, bulkSaveRecords } from './api.js';
 
 document.addEventListener("DOMContentLoaded", async () => {
-    initClock();
     await checkAuth();
     loadTodayRecords();
     subscribeToChanges();
@@ -15,30 +14,7 @@ async function checkAuth() {
     // 현재는 바로 진행
 }
 
-// 상단 타이머 및 날짜 표시
-function initClock() {
-    const timeEl = document.getElementById("current-time");
-    const dateEl = document.getElementById("current-date");
-
-    function updateClock() {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        const days = ['일', '월', '화', '수', '목', '금', '토'];
-        const day = days[now.getDay()];
-
-        dateEl.innerText = `${yyyy}년 ${mm}월 ${dd}일 (${day})`;
-
-        const hh = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
-        const sec = String(now.getSeconds()).padStart(2, '0');
-        timeEl.innerText = `${hh}:${min}:${sec}`;
-    }
-
-    updateClock();
-    setInterval(updateClock, 1000);
-}
+// 상단 타이머 부분 제거 (사용자 요청에 따라 HTML에서 요소가 삭제됨)
 
 // 오늘 날짜의 조퇴/외출 데이터 로드 (KST 기준)
 async function loadTodayRecords() {
