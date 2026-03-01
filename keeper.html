@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>오늘의 조퇴/외출 현황판</title>
+    <title>경성전자고 지킴이</title>
     <link rel="stylesheet" href="src/css/main.css">
     <link rel="stylesheet" href="src/css/keeper.css">
     <link rel="manifest" href="manifest.json" />
@@ -13,18 +13,13 @@
 
 <body>
     <header class="keeper-header">
-        <div class="header-left">
-            <h1>🧑‍🏫 오늘의 조퇴/외출 현황</h1>
-            <div id="current-date" class="date-text">로딩 중...</div>
-        </div>
-        <div class="header-right">
-            <div id="current-time" class="time-text">00:00:00</div>
-            <div style="display: flex; gap: 10px;">
-                <button id="bulk-record-btn" class="bulk-btn" onclick="location.href='bulk-record.html?from=keeper'"
-                    style="background: #6366f1; color: white; border: none; padding: 12px 24px; font-size: 1.3rem; font-weight: bold; border-radius: 10px; cursor: pointer; transition: 0.2s;">📋
-                    일괄 기록</button>
-                <button id="logout-btn" class="logout-btn">로그아웃</button>
-            </div>
+        <h1>🧑‍🏫 경성전자고 지킴이</h1>
+
+        <div class="header-buttons">
+            <button id="bulk-record-btn" class="bulk-btn" onclick="location.href='bulk-record.html?from=keeper'">
+                📋 일괄 기록
+            </button>
+            <button id="logout-btn" class="logout-btn">로그아웃</button>
         </div>
     </header>
 

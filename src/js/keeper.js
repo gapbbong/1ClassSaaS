@@ -108,14 +108,22 @@ function renderRecords(records) {
 
         const studentInfo = r.students || {};
 
+        const defaultPhoto = `https://ui-avatars.com/api/?name=${encodeURIComponent(studentInfo.name || '학생')}&background=e2e8f0&color=475569`;
+        const photoUrl = studentInfo.photo_url || defaultPhoto;
+
         grid.innerHTML += `
             <div class="record-card ${typeClass}">
                 <div class="card-header">
                     <span class="card-type">${typeLabel}</span>
                     <span class="card-time">${timeStr}</span>
                 </div>
-                <div class="card-class">${studentInfo.class_info || '학급 미상'}</div>
-                <div class="card-student">${studentInfo.name || '알 수 없음'} <span style="font-size: 1.8rem; color:#64748b;">(${studentInfo.student_id || ''})</span></div>
+                <div class="card-profile">
+                    <img class="student-photo" src="${photoUrl}" alt="${studentInfo.name} 사진" onerror="this.src='${defaultPhoto}'">
+                    <div class="student-info">
+                        <div class="card-class">${studentInfo.class_info || '학급 미상'}</div>
+                        <div class="card-student">${studentInfo.name || '알 수 없음'} <span style="font-size: 1.8rem; color:#64748b;">(${studentInfo.student_id || ''})</span></div>
+                    </div>
+                </div>
                 <div class="card-detail">${r.content}</div>
                 <div style="text-align:right; font-size:1.1rem; color:#94a3b8; margin-top:10px;">확인 교사: ${r.teacher_email_prefix || '시스템'}</div>
             </div>
