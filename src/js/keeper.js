@@ -47,16 +47,13 @@ async function loadTodayRecords() {
     document.getElementById("record-grid").innerHTML = "";
 
     const today = new Date();
-    // 한국 시간 기준으로 오늘 00:00:00 ~ 23:59:59 범위 설정
-    const kstOffset = 9 * 60 * 60 * 1000;
+    // 자바스크립트 Date 객체는 내부적으로 로컬 타임존(KST)을 인식하여 UTC로 변환해주므로, 
+    // 수동으로 9시간을 뺄 필요가 없습니다. (수동으로 빼면 오히려 시간이 과거로 틀어집니다.)
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfToday = new Date(startOfToday.getTime() + 24 * 60 * 60 * 1000 - 1);
 
-    // ISO 문자열 반환 시 UTC 기준이므로, KST에 맞춘 쿼리를 위해서는 변환 필요 
-    // Supabase created_at은 UTC로 저장되기에, 정확한 오늘 날짜 필터링 적용
-    // 간단히 KST 시작/끝 시간을 UTC로 변환해서 조회
-    const startUtc = new Date(startOfToday.getTime() - kstOffset).toISOString();
-    const endUtc = new Date(endOfToday.getTime() - kstOffset).toISOString();
+    const startUtc = startOfToday.toISOString();
+    const endUtc = endOfToday.toISOString();
 
     const { data: records, error } = await supabase
         .from('life_records')
