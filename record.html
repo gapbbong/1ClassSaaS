@@ -43,17 +43,20 @@
 
     <!-- 자세히 -->
     <div class="label-row-with-btn"
-      style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
-      <label for="detail" style="margin-right: auto;">자세히</label>
-      <button type="button" class="btn-survey-view"
-        style="color: #03c75a; border-color: #03c75a; background-color: #f0fdf4;"
-        onclick="window.open('https://clovanote.naver.com', '_blank')">
-        🟢 클로바노트
-      </button>
-      <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display: none;"
-        onclick="openSurveyPopup(null, num)">
-        📖 위 학생 기초조사
-      </button>
+      style="display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; margin-bottom: 6px;">
+      <label for="detail" style="margin: 0;">자세히</label>
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button type="button" class="btn-survey-view"
+          style="color: #03c75a; border-color: #03c75a; background-color: #f0fdf4;"
+          onclick="window.open('https://clovanote.naver.com', '_blank')">
+          🟢 클로바노트
+        </button>
+        <button type="button" id="viewSurveyBtn" class="btn-survey-view" style="display: none;"
+          onclick="openSurveyPopup(null, num)">
+          📖 위 학생 기초조사
+        </button>
+      </div>
+      <div></div>
     </div>
     <textarea id="detail" placeholder="상세 내용 입력"></textarea>
 
