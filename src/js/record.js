@@ -317,7 +317,7 @@ async function loadRecords() {
                     viewBtn.style.alignItems = "center";
                     viewBtn.style.gap = "4px";
                     viewBtn.innerHTML = `📷 사진 보기 ${r.photos.length > 1 ? index + 1 : ""}`;
-                    viewBtn.onclick = () => window.open(photoUrl);
+                    viewBtn.onclick = () => window.openPhotoViewer(photoUrl);
                     photoDiv.appendChild(viewBtn);
                 });
                 headerDiv.appendChild(photoDiv);
@@ -637,6 +637,29 @@ function closePopup() {
     if (overlay) overlay.style.display = "none";
     document.body.style.overflow = "auto";
 }
+
+/**
+ * 사진 뷰어 팝업 열기/닫기 (전역 노출)
+ */
+window.openPhotoViewer = function (url) {
+    const overlay = document.getElementById("photoViewerOverlay");
+    const img = document.getElementById("photoViewerImg");
+    if (overlay && img) {
+        img.src = url;
+        overlay.style.display = "flex";
+        document.body.style.overflow = "hidden"; // 배경 스크롤 방지
+    }
+};
+
+window.closePhotoViewer = function () {
+    const overlay = document.getElementById("photoViewerOverlay");
+    const img = document.getElementById("photoViewerImg");
+    if (overlay && img) {
+        overlay.style.display = "none";
+        img.src = "";
+        document.body.style.overflow = ""; // 스크롤 원복
+    }
+};
 
 /**
  * vFlat 앱 스토어 페이지로 이동
