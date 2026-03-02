@@ -286,8 +286,42 @@ async function loadRecords() {
                 }
             }
 
-            let photoIcon = (r.photos && r.photos.length > 0) ? " 📷" : "";
-            headerDiv.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님${photoIcon}`;
+            // 헤더 내부를 flexbox로 구성하여 사진 보기 버튼을 나란히 배치
+            headerDiv.style.display = "flex";
+            headerDiv.style.alignItems = "center";
+            headerDiv.style.flexWrap = "wrap";
+            headerDiv.style.gap = "8px";
+
+            const infoSpan = document.createElement("span");
+            infoSpan.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
+            headerDiv.appendChild(infoSpan);
+
+            // [수정] 사진 보기 버튼을 헤더 영역으로 이동
+            if (r.photos && r.photos.length > 0) {
+                const photoDiv = document.createElement("div");
+                photoDiv.style.display = "flex";
+                photoDiv.style.alignItems = "center";
+                photoDiv.style.gap = "4px";
+
+                r.photos.forEach((photoUrl, index) => {
+                    const viewBtn = document.createElement("button");
+                    viewBtn.type = "button";
+                    viewBtn.className = "btn-view-photo"; // CSS 추가 필요
+                    viewBtn.style.background = "#f0f2f5";
+                    viewBtn.style.border = "1px solid #d9d9d9";
+                    viewBtn.style.borderRadius = "6px";
+                    viewBtn.style.padding = "2px 8px"; // 높이를 조금 줄임
+                    viewBtn.style.fontSize = "0.85em";
+                    viewBtn.style.cursor = "pointer";
+                    viewBtn.style.display = "inline-flex";
+                    viewBtn.style.alignItems = "center";
+                    viewBtn.style.gap = "4px";
+                    viewBtn.innerHTML = `📷 사진 보기 ${r.photos.length > 1 ? index + 1 : ""}`;
+                    viewBtn.onclick = () => window.open(photoUrl);
+                    photoDiv.appendChild(viewBtn);
+                });
+                headerDiv.appendChild(photoDiv);
+            }
 
             itemDiv.appendChild(headerDiv);
 
@@ -313,34 +347,6 @@ async function loadRecords() {
                 detailDiv.style.color = "#333";
                 detailDiv.textContent = `📝 ${r.detail}`;
                 itemDiv.appendChild(detailDiv);
-            }
-
-            // [추가] 사진/반성문 표시 개선 (버튼 타입)
-            if (r.photos && r.photos.length > 0) {
-                const photoDiv = document.createElement("div");
-                photoDiv.style.marginTop = "12px";
-                photoDiv.style.display = "flex";
-                photoDiv.style.alignItems = "center";
-                photoDiv.style.gap = "8px";
-
-                r.photos.forEach((photoUrl, index) => {
-                    const viewBtn = document.createElement("button");
-                    viewBtn.type = "button";
-                    viewBtn.className = "btn-view-photo"; // CSS 추가 필요
-                    viewBtn.style.background = "#f0f2f5";
-                    viewBtn.style.border = "1px solid #d9d9d9";
-                    viewBtn.style.borderRadius = "6px";
-                    viewBtn.style.padding = "4px 10px";
-                    viewBtn.style.fontSize = "0.85em";
-                    viewBtn.style.cursor = "pointer";
-                    viewBtn.style.display = "inline-flex";
-                    viewBtn.style.alignItems = "center";
-                    viewBtn.style.gap = "4px";
-                    viewBtn.innerHTML = `📷 사진 보기 ${r.photos.length > 1 ? index + 1 : ""}`;
-                    viewBtn.onclick = () => window.open(photoUrl);
-                    photoDiv.appendChild(viewBtn);
-                });
-                itemDiv.appendChild(photoDiv);
             }
 
             // [추가] 삭제 버튼 노출 권한 체크 (기록한 선생님만)
