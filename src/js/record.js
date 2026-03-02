@@ -173,18 +173,18 @@ function setupForm() {
                     recordTimeInput.value = localISO2;
 
                     btn.disabled = false;
-                    btn.textContent = "기록 저장";
+                    btn.textContent = "저장";
                     loadRecords();
                 } else {
                     alert("저장 실패: " + data.message);
                     btn.disabled = false;
-                    btn.textContent = "기록 저장";
+                    btn.textContent = "저장";
                 }
             } catch (error) {
                 console.error("Save Error:", error);
                 alert("처리 중 오류가 발생했습니다: " + error.message);
                 btn.disabled = false;
-                btn.textContent = "기록 저장";
+                btn.textContent = "저장";
             }
         });
     }
