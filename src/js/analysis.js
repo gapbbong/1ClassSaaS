@@ -525,21 +525,24 @@ async function runBatchAIAnalysis(pid) {
         setTimeout(() => {
             document.getElementById("loading-view").style.display = "none";
             renderResultView();
+        }, 100);
+
+        setTimeout(() => {
             updateSectionUI('summary', currentInsight, currentInsight.tags, fullAccess);
-        }, 800);
+        }, 400);
 
         setTimeout(() => {
             updateSectionUI('stats', currentInsight.stats, null, true);
             renderChart();
-        }, 300);
+        }, 700);
 
         setTimeout(() => {
             updateSectionUI('detective', currentInsight.detective, null, fullAccess);
-        }, 600);
+        }, 1000);
 
         setTimeout(() => {
             updateSectionUI('action', currentInsight.action, null, fullAccess);
-        }, 900);
+        }, 1300);
 
         // DB 저장
         await supabase.from('student_insights').insert([{ student_pid: pid, insight_type: 'omni', content: currentInsight }]);
