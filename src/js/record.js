@@ -293,7 +293,7 @@ async function loadRecords() {
             headerDiv.style.gap = "8px";
 
             const infoSpan = document.createElement("span");
-            infoSpan.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
+            infoSpan.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑 ${teacherDisplay}`;
             headerDiv.appendChild(infoSpan);
 
             // [수정] 사진 보기 버튼을 헤더 영역으로 이동
