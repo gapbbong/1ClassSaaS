@@ -311,7 +311,9 @@ function updateClassBadges(classStats) {
     const count = classStats[key];
     if (badgeEl && count > 0) {
       const [grade, classNum] = key.split("-");
-      badgeEl.innerHTML = `<a href="total-records.html?grade=${grade}&class=${classNum}" class="count-badge-link"><span class="count-badge">(${count}건)</span></a>`;
+      // TODO: 설정 기능 추가 시 토글 가능하도록 복구할 예정
+      // badgeEl.innerHTML = `<a href="total-records.html?grade=${grade}&class=${classNum}" class="count-badge-link"><span class="count-badge">(${count}건)</span></a>`;
+      badgeEl.innerHTML = ``; // 현재는 무조건 숨김
     }
   });
 }
