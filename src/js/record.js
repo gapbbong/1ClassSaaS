@@ -278,6 +278,13 @@ async function loadRecords() {
             if (teacherDisplay.includes('@')) {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
+            if (teacherDisplay !== "미입력") {
+                if (teacherDisplay.length >= 2) {
+                    teacherDisplay = '**' + teacherDisplay.substring(2);
+                } else {
+                    teacherDisplay = '*' + teacherDisplay.substring(1);
+                }
+            }
 
             headerDiv.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
 

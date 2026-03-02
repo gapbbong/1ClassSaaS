@@ -594,7 +594,7 @@ export async function uploadEvidencePhoto(file, studentId) {
         return publicUrl;
     } catch (error) {
         console.error("Upload Error:", error);
-        throw new Error("사진 업로드에 실패했습니다.");
+        throw new Error(`사진 업로드에 실패했습니다. (${error.message || '오류 상세 정보 없음'})`);
     }
 }
 

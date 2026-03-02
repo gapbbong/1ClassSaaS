@@ -142,7 +142,7 @@ USING ( bucket_id IN ('student-photos', 'evidence-photos') );
 CREATE POLICY "Teachers can upload student photos"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK ( bucket_id = 'student-photos' );
+WITH CHECK ( bucket_id IN ('student-photos', 'evidence-photos') );
 
 -- 10. AI 학생 통합 인사이트 테이블
 CREATE TABLE public.student_insights (
