@@ -240,7 +240,8 @@ export async function fetchClassStats() {
         // 1. 전체 생활기록 건수 조회
         const { count: grandTotal, error: gError } = await supabase
             .from('life_records')
-            .select('*', { count: 'exact', head: true })
+            .select('students!inner(academic_year)', { count: 'exact', head: true })
+            .eq('students.academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .neq('category', '상담');
 
         if (gError) throw gError;

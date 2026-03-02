@@ -73,6 +73,8 @@
     /* 요소 간격 */
     margin-bottom: 15px;
     padding: 0 5px;
+    flex-wrap: wrap;
+    /* 버튼이 많아질 경우 줄바꿈 허용 */
 }
 
 .sort-controls {
@@ -140,19 +142,7 @@
     position: relative;
 }
 
-.photo-badge {
-    position: absolute;
-    top: 5px;
-    left: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 800;
-    z-index: 10;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    white-space: nowrap;
-}
+/* .photo-badge 스타일 제거 */
 
 .type-good {
     background-color: #007aff;
@@ -165,50 +155,59 @@
 }
 
 .type-neutral {
-    background-color: #000;
-    /* 검정색 */
+    background-color: #8e8e93;
+    /* 회색으로 변경 */
 }
 
 .student-photo {
-    width: 100px;
-    height: 133px;
-    /* 3:4 비율 유지 (100 * 1.33) */
-    border-radius: 8px;
+    width: 80px;
+    height: 106px;
+    /* 크기 약간 축소 */
+    border-radius: 12px;
     object-fit: cover;
-    border: 1px solid #ddd;
+    border: 1px solid #f0f0f0;
     background: #f9f9f9;
 }
 
 .record-info-area {
     flex: 1;
     min-width: 0;
-    /* 강제 줄바꿈 방지 */
 }
 
 .log-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 5px;
-    font-size: 0.9em;
+    align-items: center;
+    margin-bottom: 8px;
 }
 
 .student-info {
     font-weight: 800;
-    color: #333;
-    font-size: 1.05em;
+    color: #1d1d1f;
+    font-size: 1.1em;
 }
 
-.log-time {
-    font-size: 0.8em;
-    color: #999;
+.teacher-tag {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 700;
 }
 
 .log-content {
-    font-size: 0.95em;
-    line-height: 1.4;
-    color: #444;
+    font-size: 1em;
+    line-height: 1.5;
+    color: #333;
     word-break: break-all;
+    margin-bottom: 8px;
+}
+
+.log-footer-time {
+    font-size: 0.8em;
+    color: #8e8e93;
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 
 .deed-tags {
