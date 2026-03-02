@@ -795,10 +795,26 @@ async function renderCommentsSection(container, recordId, originalTeacherId) {
                 try {
                     btn.disabled = true;
                     btn.style.opacity = '0.5';
-                    if (group && group.me) { // 토글 취소 (삭제)
-                        const myId = group.ids[group.ids.length - 1];
-                        await deleteRecordComment(myId);
-                    } else { // 새로 등록
+
+                    // 현재 사용자가 이미 남긴 리액션 조회
+                    const existingMyReaction = reactions.find(r => r.teacher_email_prefix === currentUser);
+
+                    if (existingMyReaction) {
+                        if (existingMyReaction.content === emj) {
+                            // 기존과 같은 이모티콘 클릭 -> 반응 취소(삭제)
+                            await deleteRecordComment(existingMyReaction.id);
+                        } else {
+                            // 다른 이모티콘 클릭 -> 기존 삭제 후 새 등록(변경)
+                            await deleteRecordComment(existingMyReaction.id);
+                            await addRecordComment({
+                                record_id: recordId,
+                                teacher_email_prefix: currentUser,
+                                type: 'reaction',
+                                content: emj
+                            });
+                        }
+                    } else {
+                        // 기존 반응이 없을 경우 새 등록
                         await addRecordComment({
                             record_id: recordId,
                             teacher_email_prefix: currentUser,
