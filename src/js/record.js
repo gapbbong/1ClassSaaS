@@ -1,4 +1,4 @@
-import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData } from './api.js';
+import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData, fetchRecordComments, addRecordComment, deleteRecordComment } from './api.js';
 import { formatRelativeWithPeriod } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
@@ -316,7 +316,7 @@ async function loadRecords() {
                     viewBtn.style.display = "inline-flex";
                     viewBtn.style.alignItems = "center";
                     viewBtn.style.gap = "4px";
-                    viewBtn.innerHTML = `📷 사진 보기 ${r.photos.length > 1 ? index + 1 : ""}`;
+                    viewBtn.innerHTML = `📷 사진 ${r.photos.length > 1 ? index + 1 : ""}`;
                     viewBtn.onclick = () => window.openPhotoViewer(photoUrl);
                     photoDiv.appendChild(viewBtn);
                 });
@@ -348,6 +348,18 @@ async function loadRecords() {
                 detailDiv.textContent = `📝 ${r.detail}`;
                 itemDiv.appendChild(detailDiv);
             }
+
+            // [추가] 리액션 및 댓글 영역 구성
+            const commentsContainer = document.createElement("div");
+            commentsContainer.style.marginTop = "12px";
+            commentsContainer.style.borderTop = "1px dashed #eee";
+            commentsContainer.style.paddingTop = "10px";
+            commentsContainer.className = "record-comments-container";
+
+            // 리액션/댓글 불러오기 및 렌더링 (비동기)
+            renderCommentsSection(commentsContainer, r.id, r.teacher);
+
+            itemDiv.appendChild(commentsContainer);
 
             // [추가] 삭제 버튼 노출 권한 체크 (기록한 선생님만)
             let currentUser = "";
@@ -657,9 +669,188 @@ window.closePhotoViewer = function () {
     if (overlay && img) {
         overlay.style.display = "none";
         img.src = "";
+        img.src = "";
         document.body.style.overflow = ""; // 스크롤 원복
     }
 };
+
+/**
+ * 리액션 및 댓글 렌더링 함수
+ */
+async function renderCommentsSection(container, recordId, originalTeacherId) {
+    container.innerHTML = `<div style="color:#999; font-size:0.85em; margin-bottom:5px;">💬 리액션 및 댓글 불러오는 중...</div>`;
+
+    // 현재 접속한 선생님 정보 추출 (삭제 권한 등 확인용)
+    let currentUser = "";
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (encrypted) {
+        try {
+            const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+            currentUser = bytes.toString(CryptoJS.enc.Utf8);
+            if (currentUser && currentUser.includes('@')) {
+                currentUser = currentUser.split('@')[0];
+            }
+        } catch (e) {
+            console.error("Token Decryption Error in comments:", e);
+        }
+    }
+
+    try {
+        const comments = await fetchRecordComments(recordId);
+        const reactions = comments.filter(c => c.type === 'reaction');
+        const textComments = comments.filter(c => c.type === 'comment');
+
+        // 이모지별 카운트 Grouping
+        const reactionCounts = {};
+        reactions.forEach(r => {
+            if (!reactionCounts[r.content]) reactionCounts[r.content] = { count: 0, me: false, ids: [] };
+            reactionCounts[r.content].count++;
+            reactionCounts[r.content].ids.push(r.id);
+            if (r.teacher_email_prefix === currentUser) {
+                reactionCounts[r.content].me = true; // 내가 남긴 리액션
+            }
+        });
+
+        // 사용 가능 이모지 지정
+        const availableEmojis = ['👏', '👍', '💖', '🫂', '😅', '😢', '🙏'];
+
+        // 전체 UI 조립
+        let html = `<div class="reactions-bar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">`;
+
+        availableEmojis.forEach(emj => {
+            const group = reactionCounts[emj];
+            const count = group ? group.count : 0;
+            const highlighted = group && group.me ? 'background:#e0f2fe; border-color:#38bdf8;' : 'background:#fff; border-color:#e2e8f0;';
+            const displayCount = count > 0 ? `<span style="margin-left:4px; font-weight:bold; font-size:1.05em; color:#333;">${count}</span>` : '';
+
+            html += `
+                <button type="button" class="btn-reaction" data-emoji="${emj}" 
+                    style="border:1px solid #ccc; border-radius:14px; padding:4px 10px; font-size:0.9em; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; box-shadow:0 1px 2px rgba(0,0,0,0.05); ${highlighted}">
+                    ${emj}${displayCount}
+                </button>
+            `;
+        });
+        html += `</div>`;
+
+        // 텍스트 댓글 내역 렌더링
+        if (textComments.length > 0) {
+            html += `<div class="text-comments-list" style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">`;
+            textComments.forEach(tc => {
+                const isMyComment = (currentUser === tc.teacher_email_prefix);
+                const isRecordOwner = (currentUser === originalTeacherId);
+                const canDelete = isMyComment || isRecordOwner;
+                const deleteBtnHtml = canDelete ? `<button type="button" class="delete-comment-btn" data-id="${tc.id}" style="background:transparent; border:none; color:#ccc; cursor:pointer; margin-left:auto; padding:0 4px; font-size:0.8em;" title="삭제">✕</button>` : '';
+
+                let maskedName = tc.teacher_email_prefix;
+                if (maskedName.length >= 2) {
+                    maskedName = '**' + maskedName.substring(2);
+                } else {
+                    maskedName = '*' + maskedName.substring(1);
+                }
+
+                html += `
+                    <div style="background:#f8fafc; padding:8px 12px; border-radius:8px; display:flex; align-items:flex-start; font-size:0.9em; border:1px solid #e2e8f0;">
+                        <span style="font-weight:bold; color:#64748b; margin-right:8px; min-width:40px; white-space:nowrap;">${maskedName}</span>
+                        <span style="flex:1; color:#334155; word-break:break-all; line-height:1.4;">${tc.content}</span>
+                        ${deleteBtnHtml}
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        // 새 텍스트 댓글 작성 폼
+        html += `
+            <div style="margin-top:10px; display:flex; gap:6px;">
+                <input type="text" class="new-comment-input" placeholder="동료 선생님에게 따뜻한 한마디를 남겨보세요." style="flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9em; outline:none; background:#fff;">
+                <button type="button" class="btn-submit-comment" style="background:#4f46e5; color:white; border:none; border-radius:8px; padding:0 16px; cursor:pointer; font-size:0.95em; font-weight:bold; transition:background 0.2s;">등록</button>
+            </div>
+        `;
+
+        container.innerHTML = html;
+
+        // 리액션 버튼 동작 이벤트 바인딩
+        const reactionBtns = container.querySelectorAll('.btn-reaction');
+        reactionBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!currentUser) return alert("로그인(선생님 인증) 정보가 없습니다.");
+                const emj = btn.getAttribute('data-emoji');
+                const group = reactionCounts[emj];
+
+                try {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                    if (group && group.me) { // 토글 취소 (삭제)
+                        const myId = group.ids[group.ids.length - 1];
+                        await deleteRecordComment(myId);
+                    } else { // 새로 등록
+                        await addRecordComment({
+                            record_id: recordId,
+                            teacher_email_prefix: currentUser,
+                            type: 'reaction',
+                            content: emj
+                        });
+                    }
+                    renderCommentsSection(container, recordId, originalTeacherId);
+                } catch (e) {
+                    alert(e.message);
+                    renderCommentsSection(container, recordId, originalTeacherId);
+                }
+            });
+        });
+
+        // 텍스트 댓글 삭제 이벤트 바인딩
+        const deleteBtns = container.querySelectorAll('.delete-comment-btn');
+        deleteBtns.forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                if (confirm("이 댓글을 삭제하시겠습니까? (삭제 후 복구할 수 없습니다)")) {
+                    const cId = e.currentTarget.getAttribute('data-id');
+                    try {
+                        await deleteRecordComment(cId);
+                        renderCommentsSection(container, recordId, originalTeacherId);
+                    } catch (err) {
+                        alert(err.message);
+                    }
+                }
+            });
+        });
+
+        // 텍스트 댓글 등록 이벤트 바인딩
+        const submitBtn = container.querySelector('.btn-submit-comment');
+        const commentInput = container.querySelector('.new-comment-input');
+
+        const submitComment = async () => {
+            const val = commentInput.value.trim();
+            if (!val) return;
+            if (!currentUser) return alert("로그인(선생님 인증) 정보가 없습니다.");
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '저장중';
+            try {
+                await addRecordComment({
+                    record_id: recordId,
+                    teacher_email_prefix: currentUser,
+                    type: 'comment',
+                    content: val
+                });
+                renderCommentsSection(container, recordId, originalTeacherId);
+            } catch (e) {
+                alert(e.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '등록';
+            }
+        };
+
+        submitBtn.addEventListener('click', submitComment);
+        commentInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') submitComment();
+        });
+
+    } catch (e) {
+        container.innerHTML = `<div style="color:#ef4444; font-size:0.85em;">코멘트를 불러오지 못했습니다.</div>`;
+        console.error("Comments Render Error:", e);
+    }
+}
 
 /**
  * vFlat 앱 스토어 페이지로 이동

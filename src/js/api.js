@@ -637,3 +637,61 @@ export async function fetchSurveyData(num) {
         return null;
     }
 }
+
+/**
+ * 특정 기록에 달린 코멘트(리액션/댓글)를 가져옵니다.
+ * @param {number} recordId - 생활기록 ID
+ */
+export async function fetchRecordComments(recordId) {
+    try {
+        const { data, error } = await supabase
+            .from('record_comments')
+            .select('*')
+            .eq('record_id', recordId)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error("Fetch Comments Error:", error);
+        return [];
+    }
+}
+
+/**
+ * 기록에 리액션이나 댓글을 추가합니다.
+ * @param {Object} payload { record_id, teacher_email_prefix, type('reaction'|'comment'), content } 
+ */
+export async function addRecordComment(payload) {
+    try {
+        const { data, error } = await supabase
+            .from('record_comments')
+            .insert(payload)
+            .select('*');
+
+        if (error) throw error;
+        return data[0];
+    } catch (error) {
+        console.error("Add Comment Error:", error);
+        throw new Error("코멘트 등록 실패");
+    }
+}
+
+/**
+ * 기록 코멘트를 삭제합니다. 
+ * @param {number} commentId 
+ */
+export async function deleteRecordComment(commentId) {
+    try {
+        const { error } = await supabase
+            .from('record_comments')
+            .delete()
+            .eq('id', commentId);
+
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error("Delete Comment Error:", error);
+        throw new Error("삭제 권한이 없거나 실패했습니다.");
+    }
+}
