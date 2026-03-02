@@ -1,6 +1,7 @@
+```json
 {
   "name": "oneclass25",
-  "version": "1.56",
+  "version": "1.58",
   "type": "module",
   "main": "service-worker.js",
   "scripts": {

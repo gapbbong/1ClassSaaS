@@ -112,7 +112,7 @@ async function loadRecords(grade, classNum) {
         // 로딩 종료
         container.classList.remove('loading-records');
 
-        countEl.textContent = `총 ${allRecords.length}건`;
+        countEl.textContent = allRecords.length;
 
         if (allRecords.length === 0) {
             container.innerHTML = '<div class="loading-msg">표시할 기록이 없습니다.</div>';
@@ -158,7 +158,7 @@ function renderRecords() {
 
     // 건수 업데이트 (필터링된 결과 기준)
     const countEl = document.getElementById('total-count');
-    countEl.textContent = `총 ${sorted.length}건`;
+    countEl.textContent = sorted.length;
 }
 
 // 레코드 카드 생성
@@ -169,7 +169,9 @@ function createRecordCard(record) {
     // 시간 포맷
     const relativeTime = formatRelativeWithPeriod(record.time);
     const d = new Date(record.time);
-    const absoluteTime = `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const dayName = days[d.getDay()];
+    const absoluteTime = `${d.getMonth() + 1}/${d.getDate()}(${dayName}) ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     const fullTimeStr = `${relativeTime} (${absoluteTime})`;
 
     // 기록 유형에 따른 배경색 클래스 결정
@@ -183,12 +185,14 @@ function createRecordCard(record) {
     div.innerHTML = `
         <div class="card-inner">
             <div class="student-photo-area">
-                <img src="${record.photo || ''}" alt="${record.name}" class="student-photo" 
+                <img src="${record.photo || ''}" alt="${record.name}" class="total-rec-photo" 
                      onerror="if(!this.dataset.retry){this.dataset.retry=true; const fid='${extractDriveId(record.photo)}'; if(fid) this.src='https://drive.google.com/thumbnail?id='+fid+'&sz=w500';} else {this.src='https://ssl.gstatic.com/ui/v1/solid-track/common/identity/static/avatar/ad_default_user.png'}">
             </div>
             <div class="record-info-area">
                 <div class="log-header">
-                    <span class="student-info">${record.num} ${record.name}</span>
+                    <a href="record.html?num=${record.num}&name=${encodeURIComponent(record.name)}" class="student-info-link">
+                        <span class="student-info">${record.num} ${record.name}</span>
+                    </a>
                 </div>
                 <div class="log-content">${record.detail || '상세 내용 없음'}</div>
                 <div class="log-footer-time">${fullTimeStr}</div>
