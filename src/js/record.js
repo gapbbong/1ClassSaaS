@@ -286,7 +286,8 @@ async function loadRecords() {
                 }
             }
 
-            headerDiv.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님`;
+            let photoIcon = (r.photos && r.photos.length > 0) ? " 📷" : "";
+            headerDiv.textContent = `📅 ${formatRelativeWithPeriod(r.time)} | 🧑‍🏫 ${teacherDisplay} 선생님${photoIcon}`;
 
             itemDiv.appendChild(headerDiv);
 

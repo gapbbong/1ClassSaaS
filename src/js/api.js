@@ -38,6 +38,7 @@ export async function fetchStudentRecords(num) {
                 num: num,
                 name: r.students.name,
                 photo: r.students.photo_url,
+                photos: r.photos,
                 time: r.created_at,
                 good: r.is_positive ? r.category : null,
                 bad: !r.is_positive ? r.category : null,
@@ -221,6 +222,7 @@ export async function fetchGroupRecords(grade, classNum) {
                 bad: !r.is_positive ? r.category : null,
                 detail: r.content,
                 photo: r.students.photo_url,
+                photos: r.photos,
                 teacher: teacher
             };
         });

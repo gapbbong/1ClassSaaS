@@ -133,6 +133,7 @@ function createRecordCard(record) {
                 </div>
                 <div class="log-content">${record.detail || '상세 내용 없음'}</div>
                 <div class="deed-tags">
+                    ${record.photos && record.photos.length > 0 ? `<span class="tag" style="background: #f0f0f0; color: #555; border: 1px solid #ccc;">📷 사진</span>` : ''}
                     ${record.good && !['기록', '생활기록', '일반'].includes(record.good) ? `<span class="tag tag-good">${record.good}</span>` : ''}
                     ${record.bad && !['기록', '생활기록', '일반'].includes(record.bad) ? `<span class="tag tag-bad">${record.bad}</span>` : ''}
                 </div>
