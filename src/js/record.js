@@ -730,7 +730,13 @@ async function renderCommentsSection(container, recordId, originalTeacherId) {
                 </button>
             `;
         });
-        html += `</div>`;
+
+        // [추가] 댓글달기 토글 버튼
+        html += `
+            <button type="button" class="btn-toggle-comment" style="border:1px dashed #ccc; background:transparent; border-radius:14px; padding:4px 10px; font-size:0.9em; cursor:pointer; display:inline-flex; align-items:center; color:#666; transition:background 0.2s;">
+                💬 댓글달기
+            </button>
+        </div>`;
 
         // 텍스트 댓글 내역 렌더링
         if (textComments.length > 0) {
@@ -741,16 +747,10 @@ async function renderCommentsSection(container, recordId, originalTeacherId) {
                 const canDelete = isMyComment || isRecordOwner;
                 const deleteBtnHtml = canDelete ? `<button type="button" class="delete-comment-btn" data-id="${tc.id}" style="background:transparent; border:none; color:#ccc; cursor:pointer; margin-left:auto; padding:0 4px; font-size:0.8em;" title="삭제">✕</button>` : '';
 
-                let maskedName = tc.teacher_email_prefix;
-                if (maskedName.length >= 2) {
-                    maskedName = '**' + maskedName.substring(2);
-                } else {
-                    maskedName = '*' + maskedName.substring(1);
-                }
-
+                // 작성자 아이디 제거 (익명화) - 내용과 이모티콘 같은 장식만 표시
                 html += `
                     <div style="background:#f8fafc; padding:8px 12px; border-radius:8px; display:flex; align-items:flex-start; font-size:0.9em; border:1px solid #e2e8f0;">
-                        <span style="font-weight:bold; color:#64748b; margin-right:8px; min-width:40px; white-space:nowrap;">${maskedName}</span>
+                        <span style="font-weight:bold; color:#a1a1aa; margin-right:6px;">💬</span>
                         <span style="flex:1; color:#334155; word-break:break-all; line-height:1.4;">${tc.content}</span>
                         ${deleteBtnHtml}
                     </div>
@@ -759,15 +759,30 @@ async function renderCommentsSection(container, recordId, originalTeacherId) {
             html += `</div>`;
         }
 
-        // 새 텍스트 댓글 작성 폼
+        // 새 텍스트 댓글 작성 폼 (초기 숨김)
         html += `
-            <div style="margin-top:10px; display:flex; gap:6px;">
-                <input type="text" class="new-comment-input" placeholder="동료 선생님에게 따뜻한 한마디를 남겨보세요." style="flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9em; outline:none; background:#fff;">
+            <div class="comment-input-area" style="margin-top:10px; display:none; gap:6px;">
+                <input type="text" class="new-comment-input" placeholder="동료 선생님에게 따뜻한 한마디를 남겨보세요..." style="flex:1; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:0.9em; outline:none; background:#fff;">
                 <button type="button" class="btn-submit-comment" style="background:#4f46e5; color:white; border:none; border-radius:8px; padding:0 16px; cursor:pointer; font-size:0.95em; font-weight:bold; transition:background 0.2s;">등록</button>
             </div>
         `;
 
         container.innerHTML = html;
+
+        // 댓글달기 폼 토글 이벤트
+        const toggleBtn = container.querySelector('.btn-toggle-comment');
+        const inputArea = container.querySelector('.comment-input-area');
+        const commentInputObj = container.querySelector('.new-comment-input');
+        if (toggleBtn && inputArea) {
+            toggleBtn.addEventListener('click', () => {
+                if (inputArea.style.display === 'none') {
+                    inputArea.style.display = 'flex';
+                    if (commentInputObj) commentInputObj.focus();
+                } else {
+                    inputArea.style.display = 'none';
+                }
+            });
+        }
 
         // 리액션 버튼 동작 이벤트 바인딩
         const reactionBtns = container.querySelectorAll('.btn-reaction');
