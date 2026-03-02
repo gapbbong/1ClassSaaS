@@ -711,8 +711,8 @@ async function renderCommentsSection(container, recordId, originalTeacherId) {
             }
         });
 
-        // 사용 가능 이모지 지정 (윈도우 렌더링 최적화 1, 4, 5번 변경)
-        const availableEmojis = ['🙌', '👍', '💖', '💪', '🥲', '😢', '🙏'];
+        // 사용 가능 이모지 지정 (윈도우 렌더링 최적화 1, 5번 2차 변경)
+        const availableEmojis = ['💯', '👍', '💖', '💪', '🥹', '😢', '🙏'];
 
         // 전체 UI 조립
         let html = `<div class="reactions-bar" style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">`;
