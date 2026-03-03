@@ -68,7 +68,6 @@ function mapStudentData(s) {
         "사진저장링크": s.photo_url,
         "연락처": s.contact || "",
         "인스타": s.instagram || s.insta || "",
-        "이메일": s.email || "",
         "생년월일": s.birth_date || "",
         "주소": s.address || "",
         "보호자연락처": s.parent_contact || "",

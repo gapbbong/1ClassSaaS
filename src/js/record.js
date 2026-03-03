@@ -3,6 +3,43 @@ import { formatRelativeWithPeriod } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
 
+function getFullStoredEmail() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+        return "";
+    }
+}
+
+function getCurrentUserPrefix() {
+    const email = getFullStoredEmail();
+    return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
+}
+
+/**
+ * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
+ */
+function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [prefix, domain] = email.split('@');
+    if (prefix.length <= 3) return prefix + '@' + domain;
+    return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
+}
+
+/**
+ * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
+ */
+function maskEmailPrefix(prefix) {
+    if (!prefix) return "";
+    if (prefix.length >= 2) {
+        return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
+    }
+    return prefix.substring(0, 1) + '*';
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 const studentName = urlParams.get("name") || "";
 const num = urlParams.get("num") || "";
@@ -279,11 +316,7 @@ async function loadRecords() {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
             if (teacherDisplay !== "미입력") {
-                if (teacherDisplay.length >= 2) {
-                    teacherDisplay = '**' + teacherDisplay.substring(2);
-                } else {
-                    teacherDisplay = '*' + teacherDisplay.substring(1);
-                }
+                teacherDisplay = maskEmailPrefix(teacherDisplay);
             }
 
             // 헤더 내부를 flexbox로 구성하여 사진 보기 버튼을 나란히 배치
@@ -525,8 +558,11 @@ async function openSurveyPopup(e, targetId = null) {
     const intimacyMap = { "1": "거의 모름", "2": "조금 암", "3": "보통", "4": "친함", "5": "매우 친함" };
     const getValue = (primary, secondary, ...keys) => {
         for (const key of keys) {
-            if (primary && primary[key] && primary[key] !== "null" && primary[key] !== "undefined") return primary[key];
-            if (secondary && secondary[key] && secondary[key] !== "null" && secondary[key] !== "undefined") return secondary[key];
+            let pVal = primary ? String(primary[key] || "").trim() : "";
+            if (pVal && pVal !== "null" && pVal !== "undefined" && pVal !== ".") return pVal;
+
+            let sVal = secondary ? String(secondary[key] || "").trim() : "";
+            if (sVal && sVal !== "null" && sVal !== "undefined" && sVal !== ".") return sVal;
         }
         return ".";
     };
@@ -546,7 +582,7 @@ async function openSurveyPopup(e, targetId = null) {
     // 2사분면: 기본 정보
     let infoHtml2 = "";
     infoHtml2 += createInfoRow("연락처", getValue(student, surveyData, "연락처", "contact", "학생폰"));
-    infoHtml2 += createInfoRow("인스타", getValue(student, surveyData, "인스타", "instagram", "insta"));
+    infoHtml2 += createInfoRow("인스타id", getValue(student, surveyData, "인스타id", "인스타 id", "인스타", "instagram", "insta"));
     infoHtml2 += createInfoRow("집주소", getValue(student, surveyData, "주소", "집주소", "address"));
     infoHtml2 += createInfoRow("학적", getValue(student, surveyData, "학적", "status"));
     infoHtml2 += createInfoRow("성별", getValue(student, surveyData, "성별", "gender"));
@@ -559,11 +595,41 @@ async function openSurveyPopup(e, targetId = null) {
 
     // 4사분면: 상세 기초조사
     let infoHtml4 = "";
-    const excludeKeys = ["번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "이름", "student_id", "photo_url", "data", "student_pid", "id", "submitted_at", "PID", "CREATED_AT", "UPDATED_AT"];
+    const excludeKeys = [
+        "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "이름",
+        "student_id", "photo_url", "data", "student_pid", "id", "submitted_at",
+        "PID", "CREATED_AT", "UPDATED_AT", "instagram", "insta", "contact",
+        "address", "status", "gender", "주보호자 관계", "보호자관계",
+        "주보호자 연락처", "보호자연락처", "거주가족", "가족구성", "인스타id", "인스타 id", "인스타 아이디"
+    ];
     for (let key in surveyData) {
         if (!excludeKeys.includes(key) && key === key.toLowerCase() && surveyData[key] && surveyData[key] !== ".") {
             infoHtml4 += createInfoRow(key, surveyData[key]);
         }
+    }
+
+    // 권한 확인
+    const { fetchClassInfo } = await import('./api.js');
+    const classInfoArr = await fetchClassInfo();
+    const myEmail = getFullStoredEmail();
+    const studentIdStr = String(student["학번"] || activeId);
+    const sGrade = parseInt(studentIdStr.substring(0, 1));
+    const sClass = parseInt(studentIdStr.substring(1, 2));
+
+    const currentClassInfo = classInfoArr ? classInfoArr.find(c => c.grade === sGrade && c.class === sClass) : null;
+    const isAuthorized = currentClassInfo && (
+        currentClassInfo.homeroomEmail === myEmail ||
+        currentClassInfo.subEmail === myEmail ||
+        myEmail === 'assari@kse.hs.kr'
+    );
+
+    if (!isAuthorized) {
+        infoHtml3 = `<div class="no-access-msg" style="padding:24px; text-align:center; color:#999; font-size:0.9em;">
+            🔒 가족 정보와 연락처는<br>담임/부담임 선생님만 조회가 가능합니다.
+        </div>`;
+        infoHtml4 = `<div class="no-access-msg" style="padding:24px; text-align:center; color:#999; font-size:0.9em;">
+            🔒 상세 기초조사 내용은<br>담임/부담임 선생님 전용 정보입니다.
+        </div>`;
     }
 
     const imgSrc = student["사진저장링크"] || "";
@@ -596,9 +662,11 @@ async function openSurveyPopup(e, targetId = null) {
                 <div class="quad-scroll">${infoHtml4 || ". (상세 정보 없음)"}</div>
             </div>
         </div>
-        <!-- 학생 이동 플로팅 버튼 추가 -->
+        <!-- 학생 이동 플로팅 버튼 (권한 있을 때만) -->
+        ${isAuthorized ? `
         <div class="nav-floating-btn nav-prev-btn" onclick="navigateStudent(-1, '${activeId}')">〈</div>
         <div class="nav-floating-btn nav-next-btn" onclick="navigateStudent(1, '${activeId}')">〉</div>
+        ` : ''}
     `;
 }
 

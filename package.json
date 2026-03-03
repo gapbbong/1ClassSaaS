@@ -1,6 +1,6 @@
 {
   "name": "oneclass25",
-  "version": "1.59",
+  "version": "1.65",
   "type": "module",
   "main": "service-worker.js",
   "scripts": {
@@ -14,7 +14,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
@@ -28,5 +27,6 @@
     "googleapis": "^171.4.0",
     "iconv-lite": "^0.7.2",
     "sharp": "^0.34.5"
-  }
+  },
+  "description": "OneClass 2025 - v1.64 Stable"
 }

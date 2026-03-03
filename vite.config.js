@@ -14,7 +14,8 @@ export default defineConfig({
         survey: resolve(__dirname, 'class-survey.html'),
         check_survey: resolve(__dirname, 'check-survey.html'),
         analysis: resolve(__dirname, 'analysis.html'),
-        class_analysis: resolve(__dirname, 'class-analysis.html')
+        class_analysis: resolve(__dirname, 'class-analysis.html'),
+        keeper: resolve(__dirname, 'keeper.html')
       }
     }
   },

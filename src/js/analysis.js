@@ -713,7 +713,6 @@ async function callGeminiAPI(apiKey, prompt, context, targetModel = 'gemini-1.5-
             }
             throw new Error(res.error.message);
         }
-
         if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
 
         if (res.usageMetadata) {
@@ -1197,6 +1196,22 @@ function initOwnerBatch() {
         updateBatchUI("중단 요청 중...", "stop");
     });
 
+    const resetKeyBtn = document.getElementById("batch-reset-key-btn");
+    if (resetKeyBtn) {
+        resetKeyBtn.onclick = () => {
+            const newKey = prompt("새로운 제미나이 API 키를 입력해주세요.\n(현재 저장된 키를 대체합니다.)", localStorage.getItem('gemini_api_key') || "");
+            if (newKey) {
+                localStorage.setItem('gemini_api_key', newKey);
+                alert("새 API 키가 브라우저에 저장되었습니다.");
+                location.reload();
+            } else if (newKey === "") {
+                localStorage.removeItem('gemini_api_key');
+                alert("저장된 키가 삭제되었습니다. 이제 환경 변수(Vite)의 키를 사용합니다.");
+                location.reload();
+            }
+        };
+    }
+
     // 실시간 모니터링 구독 시작
     subscribeToNewSurveys();
 }
@@ -1271,6 +1286,18 @@ async function startBatchAnalysis() {
 
     isBatchRunning = true;
     stopRequested = false;
+
+    // API 키 체크 (배치 시작 시 한 번만 확인)
+    let apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+        apiKey = prompt("제미나이(Gemini) API 키를 입력해주세요.\n(입력하신 키는 브라우저에 저장되어 배치 분석에 사용됩니다.)");
+        if (!apiKey) {
+            isBatchRunning = false;
+            return;
+        }
+        localStorage.setItem('gemini_api_key', apiKey);
+    }
+
     updateBatchUI("미분석 학생 조회 중...", "running");
     document.getElementById("batch-progress-container").style.display = "block";
     document.getElementById("overall-status-board").style.display = "block";
@@ -1320,6 +1347,9 @@ async function startBatchAnalysis() {
     }
 }
 
+// 배치 엔진 상태 관리
+let batchFailureCount = 0; // 특정 학생 실패 횟수 카운트
+
 async function processNextInBatch() {
     if (stopRequested) {
         updateBatchUI("분석 중단됨", "stop");
@@ -1327,14 +1357,17 @@ async function processNextInBatch() {
         return;
     }
 
-    // [추가] 중복 실행 방지
-    if (isProcessingNext) return;
+    // 이미 실행 중인 경우 중복 실행 방지 (핵심!: 429 원인 해결)
+    if (isProcessingNext) {
+        console.log("[Batch] 이미 다른 프로세스가 진행 중입니다. 대기합니다.");
+        return;
+    }
     isProcessingNext = true;
 
     if (batchCurrentIndex >= batchQueue.length) {
         // 모든 현재 대기열 처리 완료. 실시간 대기 모드로 전환.
         document.getElementById("batch-status-badge").innerText = "제출 대기 중";
-        document.getElementById("batch-status-badge").className = "status-badge running"; // 계속 애니메이션 유지
+        document.getElementById("batch-status-badge").className = "status-badge running";
         document.getElementById("batch-progress-text").innerText = "새로운 설문 제출을 실시간으로 기다리고 있습니다...";
         document.getElementById("batch-current-target").innerText = "모든 현재 제출자 분석 완료. 대기 중...";
         isProcessingNext = false; // 대기 모드로 전환 시 플래그 해제
@@ -1368,12 +1401,13 @@ async function processNextInBatch() {
         await runSilentAIAnalysis(student.pid, student.name);
 
         batchCurrentIndex++;
+        batchFailureCount = 0; // 성공 시 실패 카운트 초기화
 
-        // 10초 대기 (안정성 강화)
-        let secondsLeft = 10;
+        // 12초 대기 (쿼터 준수를 위해 대폭 증가)
+        let secondsLeft = 12;
         const countdownTimer = setInterval(() => {
             if (secondsLeft > 0 && !stopRequested) {
-                document.getElementById("batch-progress-text").innerText = `분석 성공! 다음 학생 대기 중... (${secondsLeft}초)`;
+                document.getElementById("batch-progress-text").innerText = `안전 대기 중... (${secondsLeft}초)`;
                 secondsLeft--;
             } else {
                 clearInterval(countdownTimer);
@@ -1383,10 +1417,11 @@ async function processNextInBatch() {
         setTimeout(() => {
             isProcessingNext = false; // 대기 종료 후 플래그 해제
             processNextInBatch();
-        }, 10500);
+        }, 12500);
 
     } catch (err) {
         console.error(`Batch Error (${student.name}):`, err);
+        batchFailureCount++;
 
         if (err.status === 429) {
             // 429 에러(한도 초과) 시 자동 재시도 로직
@@ -1406,21 +1441,26 @@ async function processNextInBatch() {
                 isProcessingNext = false; // 재시도 대기 후 플래그 해제
                 processNextInBatch();
             }, waitSec * 1000);
+        } else if (batchFailureCount >= 3) {
+            console.warn(`[Batch] ${student.name} 학생 분석 3회 실패. 다음 학생으로 넘어갑니다.`);
+            batchCurrentIndex++;
+            batchFailureCount = 0;
+            isProcessingNext = false;
+            processNextInBatch();
         } else {
-            // 일반 에러 시 10초 후 다음 학생 시도 (혹은 현재 학생 다시 시도?)
-            // 여기선 현재 학생 다시 시도하도록 유지
-            document.getElementById("batch-progress-text").innerText = "에러 발생! 10초 후 재시도...";
+            // 일반 에러 시 15초 후 재시도
+            document.getElementById("batch-progress-text").innerText = `에러 발생! 15초 후 재시도... (${batchFailureCount}/3)`;
             setTimeout(() => {
                 isProcessingNext = false;
                 processNextInBatch();
-            }, 10000);
+            }, 15000);
         }
     }
 }
 
 
 async function runSilentAIAnalysis(pid, name) {
-    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    let apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) throw new Error("API Key Missing");
 
     // 데이터 수집

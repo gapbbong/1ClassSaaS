@@ -12,10 +12,31 @@ function getStoredEmailPrefix() {
     try {
         const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
         const email = bytes.toString(CryptoJS.enc.Utf8);
-        return email ? email.split('@')[0] : "교사";
+        return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
     } catch (e) {
         return "교사";
     }
+}
+
+/**
+ * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
+ */
+function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [prefix, domain] = email.split('@');
+    if (prefix.length <= 3) return prefix + '@' + domain;
+    return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
+}
+
+/**
+ * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
+ */
+function maskEmailPrefix(prefix) {
+    if (!prefix) return "";
+    if (prefix.length >= 2) {
+        return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
+    }
+    return prefix.substring(0, 1) + '*';
 }
 
 // URL 파라미터 파싱
@@ -26,6 +47,7 @@ const classNum = parseInt(urlParams.get("class"));
 document.addEventListener("DOMContentLoaded", async () => {
     // DB에서 교사 정보 호출
     const classInfo = await fetchClassInfo();
+    window.classInfoData = classInfo; // 전역 저장
 
     // 1. 타이틀 및 교사 정보 설정
     setupHeader(classInfo);
@@ -506,18 +528,21 @@ function loadStudents() {
 function getValue(obj1, obj2, ...keys) {
     const combined = { ...obj1, ...obj2 };
     for (let key of keys) {
-        if (combined[key] !== undefined && combined[key] !== null && String(combined[key]).trim() !== "") {
-            return String(combined[key]).trim();
+        let val = combined[key];
+        if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).trim() !== ".") {
+            return String(val).trim();
         }
         // 대문자 체크
         const upper = key.toUpperCase();
-        if (combined[upper] !== undefined && combined[upper] !== null && String(combined[upper]).trim() !== "") {
-            return String(combined[upper]).trim();
+        let valU = combined[upper];
+        if (valU !== undefined && valU !== null && String(valU).trim() !== "" && String(valU).trim() !== ".") {
+            return String(valU).trim();
         }
         // 공백 제거 버전 체크
         const noSpace = key.replace(/\s/g, "");
-        if (combined[noSpace] !== undefined && combined[noSpace] !== null && String(combined[noSpace]).trim() !== "") {
-            return String(combined[noSpace]).trim();
+        let valNS = combined[noSpace];
+        if (valNS !== undefined && valNS !== null && String(valNS).trim() !== "" && String(valNS).trim() !== ".") {
+            return String(valNS).trim();
         }
     }
     return "";
@@ -596,7 +621,7 @@ async function showPopup(student) {
             displayVal = intimacyMap[valStr];
         }
 
-        const isPhone = (label.includes("전화") || label.includes("연락처") || (label.includes("번호") && label !== "번호" && label !== "학번") || label.includes("폰"));
+        const isPhone = (label.includes("전화") || label.includes("연락처") || (label.includes("번호") && label !== "번호" && label !== "학번" && !label.includes("우편")) || label.includes("폰"));
         const isInsta = lowLabel.includes("인스타") || lowLabel.includes("insta");
 
         if (isInsta && valStr !== ".") {
@@ -616,7 +641,7 @@ async function showPopup(student) {
     // 2사분면: 기본 정보 (순서: 연락처, 인스타, 집주소, 학적, 성별)
     let infoHtml2 = "";
     infoHtml2 += createInfoRow("연락처", getValue(student, surveyData, "연락처", "contact", "학생폰", "학생 연락처"));
-    infoHtml2 += createInfoRow("인스타", getValue(student, surveyData, "인스타", "instagram", "insta", "인스타 아이디", "SNS"));
+    infoHtml2 += createInfoRow("인스타id", getValue(student, surveyData, "인스타id", "인스타 id", "인스타 아이디", "인스타", "instagram", "insta", "SNS"));
     infoHtml2 += createInfoRow("집주소", getValue(student, surveyData, "주소", "집주소", "address"));
     infoHtml2 += createInfoRow("학적", getValue(student, surveyData, "학적", "status"));
     infoHtml2 += createInfoRow("성별", getValue(student, surveyData, "성별", "gender"));
@@ -634,7 +659,7 @@ async function showPopup(student) {
     // 4사분면: 상세 기초조사 (나머지 설문 데이터)
     let infoHtml4 = "";
     const usedKeys = [
-        "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "student_id", "contact", "instagram", "insta", "인스타 아이디", "주소", "집주소", "address", "status", "gender",
+        "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "student_id", "contact", "instagram", "insta", "인스타 아이디", "인스타id", "인스타 id", "주소", "집주소", "address", "status", "gender",
         "주보호자 관계", "주보호자 연락처", "주보호자 친밀도", "보조보호자 관계", "보조보호자 연락처", "보조보호자 친밀도", "거주가족", "SNS", "학생폰", "학생 연락처",
         "보호자연락처", "보호자관계", "PARENT_RELATION", "PARENT_CONTACT", "가족구성", "친밀도", "보호자 연락처",
         "주보호자연락처", "보조보호자연락처", "주보호자친밀도", "보조보호자친밀도"
@@ -656,17 +681,26 @@ async function showPopup(student) {
         }
     });
 
+    // 권한 확인 (본인 학급 담임/부담임 여부)
+    const myEmail = getFullStoredEmail();
+    const currentClassInfo = window.classInfoData ? window.classInfoData.find(c => c.grade === grade && c.class === classNum) : null;
+    const isAuthorized = currentClassInfo && (
+        currentClassInfo.homeroomEmail === myEmail ||
+        currentClassInfo.subEmail === myEmail ||
+        myEmail === 'assari@kse.hs.kr'
+    );
+
+    if (!isAuthorized) {
+        infoHtml3 = `<div class="no-access-msg" style="padding:20px; text-align:center; color:#999; font-size:0.9em;">
+            🔒 가족 정보와 연락처는<br>담임/부담임 선생님만 조회가 가능합니다.
+        </div>`;
+        infoHtml4 = `<div class="no-access-msg" style="padding:20px; text-align:center; color:#999; font-size:0.9em;">
+            🔒 상세 기초조사 내용은<br>담임/부담임 선생님 전용 정보입니다.
+        </div>`;
+    }
+
     const escapedStudent = JSON.stringify(student).replace(/"/g, '&quot;');
     const photoImg = imgSrc ? `<img src="${imgSrc}" onerror="this.src='${fallbackImgSrc}'" alt="${student["이름"]} 사진">` : `<div class="no-photo-placeholder">📷<br>사진 없음</div>`;
-
-    // 현재 반 학생들 목록 가져오기 (이동 버튼용)
-    const studentsInClass = Array.from(document.querySelectorAll('.student')).map(el => {
-        // 이 부분은 loadStudents에서 데이터를 전역 변수에 담아두는 것이 좋지만, 
-        // 현재 구조를 유지하며 DOM에서 데이터를 유추하거나 다시 fetch하는 대신 
-        // 간단한 인덱스 기반 이동을 위해 popup 호출 시 index를 넘겨받는 식으로 개선할 수 있습니다.
-        // 여기서는 student 객체 자체를 사용하여 이전/다음 번호를 찾습니다.
-        return null; // 나중에 보완
-    });
 
     popup.innerHTML = `
         <div class="popup-header">
@@ -679,8 +713,8 @@ async function showPopup(student) {
         </div>
         
         <div class="popup-content-layout">
-            <!-- 왼쪽 이동 버튼 -->
-            <button class="nav-arrow-btn left" id="popup-prev-btn">
+            <!-- 이동 버튼은 본인 학급일 때만 표시하거나, 이동 시에도 권한 체크가 유지되므로 일단 유지 또는 비활성화 -->
+            <button class="nav-arrow-btn left" id="popup-prev-btn" ${!isAuthorized ? 'style="display:none;"' : ''}>
                 <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
             </button>
 
@@ -703,7 +737,7 @@ async function showPopup(student) {
                     <div class="quad-inner">
                         <div class="quad-label">연락처 및 가족</div>
                         <div class="quad-scroll">
-                            ${infoHtml3 || '<div class="no-data-msg">-</div>'}
+                            ${infoHtml3}
                         </div>
                     </div>
                 </div>
@@ -711,14 +745,13 @@ async function showPopup(student) {
                     <div class="quad-inner">
                         <div class="quad-label">상세 기초조사</div>
                         <div class="quad-scroll">
-                            ${infoHtml4 || '<div class="no-data-msg">정보 없음</div>'}
+                            ${infoHtml4}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 오른쪽 이동 버튼 -->
-            <button class="nav-arrow-btn right" id="popup-next-btn">
+            <button class="nav-arrow-btn right" id="popup-next-btn" ${!isAuthorized ? 'style="display:none;"' : ''}>
                 <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
             </button>
         </div>
