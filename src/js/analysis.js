@@ -681,7 +681,7 @@ async function runBatchClassAnalysis(classInfo) {
 async function callGeminiAPI(apiKey, prompt, context) {
     // 사용자의 최신 환경에 맞춰 Gemini 2.5 Flash 모델로 업데이트
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1147,6 +1147,18 @@ async function startBatchAnalysis() {
 
     isBatchRunning = true;
     stopRequested = false;
+
+    // API 키 체크 (배치 시작 시 한 번만 확인)
+    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    if (!apiKey) {
+        apiKey = prompt("제미나이(Gemini) API 키를 입력해주세요.\n(입력하신 키는 브라우저에 저장되어 배치 분석에 사용됩니다.)");
+        if (!apiKey) {
+            isBatchRunning = false;
+            return;
+        }
+        localStorage.setItem('gemini_api_key', apiKey);
+    }
+
     updateBatchUI("미분석 학생 조회 중...", "running");
     document.getElementById("batch-progress-container").style.display = "block";
     document.getElementById("overall-status-board").style.display = "block";

@@ -10,7 +10,7 @@ const teacherUpdates = {
     "eunioioi@naver.com": ["김정은", "010-5880-4184"],
     "bbo-yaa@naver.com": ["김보윤", "010-9703-3313"],
     "assaree0306@naver.com": ["최지은", "010-2769-0306"],
-    "qkektls96@naver.com": ["성지민", "010-5348-9397"],
+    "slalee@kse.hs.kr": ["이슬아", "010-5516-9138"],
     "jh850324@naver.com": ["전지훈", "010-4515-1898"],
     "kkoma0911@kse.hs.kr": ["최현정", "010-2435-9360"],
     "unknown1@daum.net": ["김덕원", "010-4874-8654"],
