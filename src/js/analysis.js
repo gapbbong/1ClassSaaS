@@ -699,11 +699,13 @@ async function getAvailableModel(apiKey) {
         const candidates = [
             'models/gemini-1.5-flash-latest',
             'models/gemini-1.5-flash',
+            'models/gemini-flash-latest',
             'models/gemini-2.5-flash',
             'models/gemini-1.5-flash-001',
             'models/gemini-1.5-flash-002',
             'models/gemini-pro',
             'models/gemini-1.0-pro',
+            'models/gemini-pro-latest',
             'models/gemini-2.5-pro',
             'models/gemini-2.0-flash'
         ];
@@ -739,7 +741,7 @@ async function getAvailableModel(apiKey) {
     }
 }
 
-async function callGeminiAPI(apiKey, prompt, context) {
+async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
     try {
         const model = await getAvailableModel(apiKey);
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
@@ -749,8 +751,31 @@ async function callGeminiAPI(apiKey, prompt, context) {
                 contents: [{ parts: [{ text: (context ? context + "\n" : "") + prompt }] }]
             })
         });
+
+        // 429 (Too Many Requests) 핸들링: 60초 대기 후 재시도
+        if (response.status === 429) {
+            if (retryCount < 2) {
+                console.warn(`[Gemini API] Quota Exceeded (429). Waiting 60s for retry... (${retryCount + 1}/2)`);
+                if (document.getElementById("batch-progress-text")) {
+                    document.getElementById("batch-progress-text").innerText = "⚠️ API 할도 초과. 60초 후 자동 재시도합니다...";
+                }
+                await new Promise(resolve => setTimeout(resolve, 60000));
+                return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
+            } else {
+                throw new Error("API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.");
+            }
+        }
+
         const res = await response.json();
         if (res.error) {
+            // 응답 내부에 에러가 있는 경우 (쿼터 초과 등)
+            if (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED') {
+                if (retryCount < 2) {
+                    console.warn(`[Gemini API] Resource Exhausted. Waiting 60s for retry... (${retryCount + 1}/2)`);
+                    await new Promise(resolve => setTimeout(resolve, 60000));
+                    return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
+                }
+            }
             console.error('Gemini Raw Error:', res.error);
             throw new Error(res.error.message || 'API 오류 발생');
         }
@@ -1311,8 +1336,8 @@ async function processNextInBatch() {
 
         batchCurrentIndex++;
 
-        // 5.5초 대기 (API 한도 준수)
-        let secondsLeft = 5;
+        // 6.5초 대기 (API 한도 준수 - 429 방어 위해 약간 증량)
+        let secondsLeft = 6;
         const countdownTimer = setInterval(() => {
             if (secondsLeft > 0 && !stopRequested) {
                 document.getElementById("batch-progress-text").innerText = `다음 학생 대기 중... (${secondsLeft}초)`;
@@ -1322,7 +1347,7 @@ async function processNextInBatch() {
             }
         }, 1000);
 
-        setTimeout(processNextInBatch, 5500);
+        setTimeout(processNextInBatch, 6500);
 
     } catch (e) {
         console.error(`Batch Error (${student.name}):`, e);
