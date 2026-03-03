@@ -8,9 +8,8 @@ dotenv.config();
 // ==== 1. API 키 설정 ("돌려막기"용) ====
 // 발급받으신 여러 개의 키를 따옴표('') 안에 쉼표로 구분해서 자유롭게 추가하세요.
 const GEMINI_KEYS = [
-    process.env.VITE_GEMINI_API_KEY, // 첫 번째는 .env 기본 키를 사용합니다.
-    'AIzaSyDusECCC5xy6DVcGToRCFKcLZSZ-SjKiJ8',
-].filter(Boolean); // 빈 값은 자동으로 무시합니다.
+    process.env.VITE_GEMINI_API_KEY,
+].filter(Boolean);
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
