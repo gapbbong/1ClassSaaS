@@ -1,5 +1,6 @@
 {
   "name": "oneclass25",
+  "description": "OneClass 2025 - Teacher & Student Management System v1.59",
   "version": "1.59",
   "type": "module",
   "main": "service-worker.js",
@@ -14,7 +15,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "eslint": "^9.39.2",
