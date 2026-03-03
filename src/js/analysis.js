@@ -695,19 +695,18 @@ async function getAvailableModel(apiKey) {
         const availableModels = data.models.map(m => m.name);
         console.log("All Available Models:", availableModels);
 
-        // 검색 우선순위 설정 (안정적인 1.5 및 최신 2.5 우선, 2.0은 쿼터 문제로 뒤로 미룸)
+        // 검색 우선순위 설정
+        // Gemini 2.0 Flash Lite는 Free 티어 기준 30 RPM으로 가장 넉넉함
         const candidates = [
+            'models/gemini-2.0-flash-lite',
+            'models/gemini-2.0-flash-lite-preview-09-2025',
+            'models/gemini-2.0-flash',
             'models/gemini-1.5-flash-latest',
             'models/gemini-1.5-flash',
             'models/gemini-flash-latest',
             'models/gemini-2.5-flash',
-            'models/gemini-1.5-flash-001',
-            'models/gemini-1.5-flash-002',
-            'models/gemini-pro',
-            'models/gemini-1.0-pro',
             'models/gemini-pro-latest',
-            'models/gemini-2.5-pro',
-            'models/gemini-2.0-flash'
+            'models/gemini-2.5-pro'
         ];
 
         // 존재하는 모델 중 가장 우선순위가 높은 것 선택
@@ -1298,20 +1297,34 @@ async function startBatchAnalysis() {
     }
 }
 
+// 배치 엔진 상태 관리
+let isProcessingSingleBatchItem = false;
+let batchFailureCount = 0; // 특정 학생 실패 횟수 카운트
+
 async function processNextInBatch() {
     if (stopRequested) {
         updateBatchUI("분석 중단됨", "stop");
+        isProcessingSingleBatchItem = false;
+        return;
+    }
+
+    // 이미 실행 중인 경우 중복 실행 방지 (핵심!: 429 원인 해결)
+    if (isProcessingSingleBatchItem) {
+        console.log("[Batch] 이미 다른 프로세스가 진행 중입니다. 대기합니다.");
         return;
     }
 
     if (batchCurrentIndex >= batchQueue.length) {
         // 모든 현재 대기열 처리 완료. 실시간 대기 모드로 전환.
         document.getElementById("batch-status-badge").innerText = "제출 대기 중";
-        document.getElementById("batch-status-badge").className = "status-badge running"; // 계속 애니메이션 유지
+        document.getElementById("batch-status-badge").className = "status-badge running";
         document.getElementById("batch-progress-text").innerText = "새로운 설문 제출을 실시간으로 기다리고 있습니다...";
         document.getElementById("batch-current-target").innerText = "모든 현재 제출자 분석 완료. 대기 중...";
+        isProcessingSingleBatchItem = false;
         return;
     }
+
+    isProcessingSingleBatchItem = true; // 잠금 설정
 
     const student = batchQueue[batchCurrentIndex];
     const total = batchQueue.length;
@@ -1340,9 +1353,10 @@ async function processNextInBatch() {
         await runSilentAIAnalysis(student.pid, student.name);
 
         batchCurrentIndex++;
+        batchFailureCount = 0; // 성공 시 실패 카운트 초기화
 
-        // 6.5초 대기 (API 한도 준수 - 429 방어 위해 약간 증량)
-        let secondsLeft = 6;
+        // 8초 대기 (중복 호출 방지 및 쿼터 준수를 위해 약간 더 증가)
+        let secondsLeft = 8;
         const countdownTimer = setInterval(() => {
             if (secondsLeft > 0 && !stopRequested) {
                 document.getElementById("batch-progress-text").innerText = `다음 학생 대기 중... (${secondsLeft}초)`;
@@ -1352,12 +1366,28 @@ async function processNextInBatch() {
             }
         }, 1000);
 
-        setTimeout(processNextInBatch, 6500);
+        setTimeout(() => {
+            isProcessingSingleBatchItem = false; // 잠금 해제
+            processNextInBatch();
+        }, 8500);
 
     } catch (e) {
         console.error(`Batch Error (${student.name}):`, e);
-        document.getElementById("batch-progress-text").innerText = "에러 발생! 10초 후 재시도...";
-        setTimeout(processNextInBatch, 10000);
+        batchFailureCount++;
+
+        if (batchFailureCount >= 3) {
+            console.warn(`[Batch] ${student.name} 학생 분석 3회 실패. 다음 학생으로 넘어갑니다.`);
+            batchCurrentIndex++;
+            batchFailureCount = 0;
+            isProcessingSingleBatchItem = false;
+            processNextInBatch();
+        } else {
+            document.getElementById("batch-progress-text").innerText = `에러 발생! 15초 후 재시도... (${batchFailureCount}/3)`;
+            setTimeout(() => {
+                isProcessingSingleBatchItem = false; // 잠금 해제 후 재시도
+                processNextInBatch();
+            }, 15000);
+        }
     }
 }
 
