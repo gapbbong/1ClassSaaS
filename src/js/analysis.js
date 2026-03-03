@@ -752,26 +752,31 @@ async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
             })
         });
 
-        // 429 (Too Many Requests) 핸들링: 60초 대기 후 재시도
-        if (response.status === 429) {
+        // 429 (Too Many Requests) 또는 503 (Service Unavailable) 핸들링
+        if (response.status === 429 || response.status === 503) {
             if (retryCount < 2) {
-                console.warn(`[Gemini API] Quota Exceeded (429). Waiting 60s for retry... (${retryCount + 1}/2)`);
+                const errorType = response.status === 429 ? "할당량 초과(429)" : "서버 과부하(503)";
+                console.warn(`[Gemini API] ${errorType}. Waiting 60s for retry... (${retryCount + 1}/2)`);
                 if (document.getElementById("batch-progress-text")) {
-                    document.getElementById("batch-progress-text").innerText = "⚠️ API 할도 초과. 60초 후 자동 재시도합니다...";
+                    document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 60초 후 자동 재시도합니다...`;
                 }
                 await new Promise(resolve => setTimeout(resolve, 60000));
                 return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
             } else {
-                throw new Error("API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.");
+                throw new Error(response.status === 429 ? "API 요청 한도를 초과했습니다." : "현재 AI 서버가 혼잡합니다. 잠시 후 다시 시도해주세요.");
             }
         }
 
         const res = await response.json();
         if (res.error) {
-            // 응답 내부에 에러가 있는 경우 (쿼터 초과 등)
-            if (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED') {
+            // 응답 내부에 에러가 있는 경우 (쿼터 초과 또는 서비스 불가 등)
+            if (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED' || res.error.code === 503 || res.error.status === 'UNAVAILABLE') {
                 if (retryCount < 2) {
-                    console.warn(`[Gemini API] Resource Exhausted. Waiting 60s for retry... (${retryCount + 1}/2)`);
+                    const errorType = (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED') ? "리소스 부족" : "서버 일시 불가";
+                    console.warn(`[Gemini API] ${errorType}. Waiting 60s for retry... (${retryCount + 1}/2)`);
+                    if (document.getElementById("batch-progress-text")) {
+                        document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 60초 후 자동 재시도합니다...`;
+                    }
                     await new Promise(resolve => setTimeout(resolve, 60000));
                     return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
                 }
