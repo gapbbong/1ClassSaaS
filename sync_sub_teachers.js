@@ -8,7 +8,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const teacherUpdates = {
     "daegal96@kakao.com": ["신승현", "010-9094-6599"],
     "eunioioi@naver.com": ["김정은", "010-5880-4184"],
-    "bbo-yaa@naver.com": ["김보윤", "010-9703-3313"],
+    "bbo_yaa_@naver.com": ["김보윤", "010-9703-3313"],
     "assaree0306@naver.com": ["최지은", "010-2769-0306"],
     "slalee@kse.hs.kr": ["이슬아", "010-5516-9138"],
     "jh850324@naver.com": ["전지훈", "010-4515-1898"],
