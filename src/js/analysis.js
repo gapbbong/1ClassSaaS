@@ -695,14 +695,16 @@ async function getAvailableModel(apiKey) {
         const availableModels = data.models.map(m => m.name);
         console.log("All Available Models:", availableModels);
 
-        // 검색 우선순위 설정 (2.0은 쿼터 문제로 뒤로 미룸)
+        // 검색 우선순위 설정 (안정적인 1.5 및 최신 2.5 우선, 2.0은 쿼터 문제로 뒤로 미룸)
         const candidates = [
             'models/gemini-1.5-flash-latest',
             'models/gemini-1.5-flash',
+            'models/gemini-2.5-flash',
             'models/gemini-1.5-flash-001',
             'models/gemini-1.5-flash-002',
             'models/gemini-pro',
             'models/gemini-1.0-pro',
+            'models/gemini-2.5-pro',
             'models/gemini-2.0-flash'
         ];
 
