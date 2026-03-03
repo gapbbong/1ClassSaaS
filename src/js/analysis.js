@@ -679,8 +679,8 @@ async function runBatchClassAnalysis(classInfo) {
 
 // 전역 변수로 선택된 모델 저장 (성능 최적화: 최초 1회만 조회)
 // [수정] 모델 탐색 로직(getAvailableModel) 완전 제거 -> 429 에러(할당량) 방지
-// 가장 안정적이고 쿼터가 많은 gemini-1.5-flash-latest (RPM 15) 고정 사용
-let selectedGeminiModel = 'models/gemini-1.5-flash-latest';
+// [수정] 1.5-flash가 목록에 없어(Not Found) 2.5-flash 최신 모델로 고정
+let selectedGeminiModel = 'models/gemini-2.5-flash';
 
 async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
     try {
