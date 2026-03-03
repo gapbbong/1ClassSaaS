@@ -677,11 +677,53 @@ async function runBatchClassAnalysis(classInfo) {
     }
 }
 
-// Helper: Call Gemini
-async function callGeminiAPI(apiKey, prompt, context) {
-    // 사용자의 최신 환경에 맞춰 Gemini 2.5 Flash 모델로 업데이트
+// 전역 변수로 선택된 모델 저장 (성능 최적화: 최초 1회만 조회)
+let selectedGeminiModel = null;
+
+async function getAvailableModel(apiKey) {
+    if (selectedGeminiModel) return selectedGeminiModel;
+
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const data = await res.json();
+
+        if (!data.models) throw new Error("모델 목록을 불러올 수 없습니다.");
+
+        // 검색 우선순위 설정
+        const candidates = [
+            'models/gemini-1.5-flash-latest',
+            'models/gemini-1.5-flash',
+            'models/gemini-2.0-flash',
+            'models/gemini-pro'
+        ];
+
+        // 존재하는 모델 중 가장 우선순위가 높은 것 선택
+        const availableModels = data.models.map(m => m.name);
+        for (const cand of candidates) {
+            if (availableModels.includes(cand)) {
+                selectedGeminiModel = cand;
+                break;
+            }
+        }
+
+        // 목록에 없으면 가장 성능이 좋을 것으로 예상되는 것을 임의 선택
+        if (!selectedGeminiModel) {
+            const flashModel = data.models.find(m => m.name.includes('flash') && m.supportedGenerationMethods.includes('generateContent'));
+            selectedGeminiModel = flashModel ? flashModel.name : data.models[0].name;
+        }
+
+        console.log("Selected Model:", selectedGeminiModel);
+        return selectedGeminiModel;
+    } catch (err) {
+        console.error("Model Search Error:", err);
+        return 'models/gemini-1.5-flash'; // 폴백
+    }
+}
+
+async function callGeminiAPI(apiKey, prompt, context) {
+    try {
+        const model = await getAvailableModel(apiKey);
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -696,10 +738,7 @@ async function callGeminiAPI(apiKey, prompt, context) {
         if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
 
         let text = res.candidates[0].content.parts[0].text;
-
-        // 마크다운 백틱 제거 및 순수 JSON 추출
         text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
         return JSON.parse(text);
     } catch (err) {
         console.error("Gemini API Call Error:", err);
