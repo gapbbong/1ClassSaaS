@@ -678,70 +678,13 @@ async function runBatchClassAnalysis(classInfo) {
 }
 
 // 전역 변수로 선택된 모델 저장 (성능 최적화: 최초 1회만 조회)
-let selectedGeminiModel = null;
-
-async function getAvailableModel(apiKey) {
-    if (selectedGeminiModel) return selectedGeminiModel;
-
-    try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        const data = await res.json();
-
-        if (!data.models) {
-            console.error("Model List Fetch Failed:", data);
-            throw new Error("모델 목록을 불러올 수 없습니다.");
-        }
-
-        const availableModels = data.models.map(m => m.name);
-        console.log("All Available Models:", availableModels);
-
-        // 검색 우선순위 설정
-        // Gemini 2.0 Flash Lite는 Free 티어 기준 30 RPM으로 가장 넉넉함
-        const candidates = [
-            'models/gemini-1.5-flash-latest',
-            'models/gemini-1.5-flash',
-            'models/gemini-1.5-flash-002',
-            'models/gemini-1.5-flash-001',
-            'models/gemini-2.0-flash-lite',
-            'models/gemini-flash-latest',
-            'models/gemini-2.0-flash',
-            'models/gemini-pro-latest'
-        ];
-
-        // 존재하는 모델 중 가장 우선순위가 높은 것 선택
-        for (const cand of candidates) {
-            if (availableModels.includes(cand)) {
-                selectedGeminiModel = cand;
-                break;
-            }
-        }
-
-        // 목록에 없으면 'flash'가 포함된 1.5 계열 우선 검색
-        if (!selectedGeminiModel) {
-            const flashModel = data.models.find(m =>
-                m.name.includes('flash') &&
-                !m.name.includes('2.0') &&
-                m.supportedGenerationMethods.includes('generateContent')
-            );
-            selectedGeminiModel = flashModel ? flashModel.name : null;
-        }
-
-        // 최후의 수단: 아무 모델이나 선택
-        if (!selectedGeminiModel) {
-            selectedGeminiModel = availableModels.find(name => !name.includes('2.0')) || availableModels[0];
-        }
-
-        console.log("Final Selected Model:", selectedGeminiModel);
-        return selectedGeminiModel;
-    } catch (err) {
-        console.error("Model Search Error:", err);
-        return 'models/gemini-1.5-flash'; // 폴백
-    }
-}
+// [수정] 모델 탐색 로직(getAvailableModel) 완전 제거 -> 429 에러(할당량) 방지
+// 가장 안정적이고 쿼터가 많은 gemini-1.5-flash (RPM 15) 고정 사용
+let selectedGeminiModel = 'models/gemini-1.5-flash';
 
 async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
     try {
-        const model = await getAvailableModel(apiKey);
+        const model = selectedGeminiModel;
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
