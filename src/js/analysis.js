@@ -698,15 +698,14 @@ async function getAvailableModel(apiKey) {
         // 검색 우선순위 설정
         // Gemini 2.0 Flash Lite는 Free 티어 기준 30 RPM으로 가장 넉넉함
         const candidates = [
-            'models/gemini-2.0-flash-lite',
-            'models/gemini-2.0-flash-lite-preview-09-2025',
-            'models/gemini-2.0-flash',
             'models/gemini-1.5-flash-latest',
             'models/gemini-1.5-flash',
+            'models/gemini-1.5-flash-002',
+            'models/gemini-1.5-flash-001',
+            'models/gemini-2.0-flash-lite',
             'models/gemini-flash-latest',
-            'models/gemini-2.5-flash',
-            'models/gemini-pro-latest',
-            'models/gemini-2.5-pro'
+            'models/gemini-2.0-flash',
+            'models/gemini-pro-latest'
         ];
 
         // 존재하는 모델 중 가장 우선순위가 높은 것 선택
@@ -755,11 +754,11 @@ async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
         if (response.status === 429 || response.status === 503) {
             if (retryCount < 2) {
                 const errorType = response.status === 429 ? "할당량 초과(429)" : "서버 과부하(503)";
-                console.warn(`[Gemini API] ${errorType}. Waiting 60s for retry... (${retryCount + 1}/2)`);
+                console.warn(`[Gemini API] ${errorType}. Waiting 90s for retry... (${retryCount + 1}/2)`);
                 if (document.getElementById("batch-progress-text")) {
-                    document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 60초 후 자동 재시도합니다...`;
+                    document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 90초 후 자동 재시도합니다...`;
                 }
-                await new Promise(resolve => setTimeout(resolve, 60000));
+                await new Promise(resolve => setTimeout(resolve, 90000));
                 return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
             } else {
                 throw new Error(response.status === 429 ? "API 요청 한도를 초과했습니다." : "현재 AI 서버가 혼잡합니다. 잠시 후 다시 시도해주세요.");
@@ -772,11 +771,11 @@ async function callGeminiAPI(apiKey, prompt, context, retryCount = 0) {
             if (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED' || res.error.code === 503 || res.error.status === 'UNAVAILABLE') {
                 if (retryCount < 2) {
                     const errorType = (res.error.code === 429 || res.error.status === 'RESOURCE_EXHAUSTED') ? "리소스 부족" : "서버 일시 불가";
-                    console.warn(`[Gemini API] ${errorType}. Waiting 60s for retry... (${retryCount + 1}/2)`);
+                    console.warn(`[Gemini API] ${errorType}. Waiting 90s for retry... (${retryCount + 1}/2)`);
                     if (document.getElementById("batch-progress-text")) {
-                        document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 60초 후 자동 재시도합니다...`;
+                        document.getElementById("batch-progress-text").innerText = `⚠️ ${errorType}. 90초 후 자동 재시도합니다...`;
                     }
-                    await new Promise(resolve => setTimeout(resolve, 60000));
+                    await new Promise(resolve => setTimeout(resolve, 90000));
                     return callGeminiAPI(apiKey, prompt, context, retryCount + 1);
                 }
             }
@@ -1371,11 +1370,11 @@ async function processNextInBatch() {
         batchCurrentIndex++;
         batchFailureCount = 0; // 성공 시 실패 카운트 초기화
 
-        // 8초 대기 (중복 호출 방지 및 쿼터 준수를 위해 약간 더 증가)
-        let secondsLeft = 8;
+        // 12초 대기 (쿼터 준수를 위해 대폭 증가)
+        let secondsLeft = 12;
         const countdownTimer = setInterval(() => {
             if (secondsLeft > 0 && !stopRequested) {
-                document.getElementById("batch-progress-text").innerText = `다음 학생 대기 중... (${secondsLeft}초)`;
+                document.getElementById("batch-progress-text").innerText = `안전 대기 중... (${secondsLeft}초)`;
                 secondsLeft--;
             } else {
                 clearInterval(countdownTimer);
@@ -1385,7 +1384,7 @@ async function processNextInBatch() {
         setTimeout(() => {
             isProcessingSingleBatchItem = false; // 잠금 해제
             processNextInBatch();
-        }, 8500);
+        }, 12500);
 
     } catch (e) {
         console.error(`Batch Error (${student.name}):`, e);
