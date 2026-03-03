@@ -138,10 +138,46 @@ async function initAuth() {
     if (!encrypted) return null;
     try {
       const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+      const email = bytes.toString(CryptoJS.enc.Utf8);
+      return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
+    } catch (e) {
+      return "교사";
+    }
+  }
+
+  /**
+   * 암호화된 전체 이메일 불러오기
+   */
+  function getFullStoredEmail() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "";
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
       return bytes.toString(CryptoJS.enc.Utf8);
     } catch (e) {
-      return null; // 복호화 에러 시 null 반환
+      return "";
     }
+  }
+
+  /**
+   * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
+   */
+  function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [prefix, domain] = email.split('@');
+    if (prefix.length <= 3) return prefix + '@' + domain;
+    return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
+  }
+
+  /**
+   * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
+   */
+  function maskEmailPrefix(prefix) {
+    if (!prefix) return "";
+    if (prefix.length >= 2) {
+      return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
+    }
+    return prefix.substring(0, 1) + '*';
   }
 
   // 암호화하여 저장

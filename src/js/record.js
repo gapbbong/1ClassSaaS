@@ -3,6 +3,39 @@ import { formatRelativeWithPeriod } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
 
+function getCurrentUserPrefix() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "교사";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+        const email = bytes.toString(CryptoJS.enc.Utf8);
+        return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
+    } catch (e) {
+        return "교사";
+    }
+}
+
+/**
+ * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
+ */
+function maskEmail(email) {
+    if (!email || !email.includes('@')) return email;
+    const [prefix, domain] = email.split('@');
+    if (prefix.length <= 3) return prefix + '@' + domain;
+    return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
+}
+
+/**
+ * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
+ */
+function maskEmailPrefix(prefix) {
+    if (!prefix) return "";
+    if (prefix.length >= 2) {
+        return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
+    }
+    return prefix.substring(0, 1) + '*';
+}
+
 const urlParams = new URLSearchParams(window.location.search);
 const studentName = urlParams.get("name") || "";
 const num = urlParams.get("num") || "";
@@ -279,11 +312,7 @@ async function loadRecords() {
                 teacherDisplay = teacherDisplay.split('@')[0];
             }
             if (teacherDisplay !== "미입력") {
-                if (teacherDisplay.length >= 2) {
-                    teacherDisplay = '**' + teacherDisplay.substring(2);
-                } else {
-                    teacherDisplay = '*' + teacherDisplay.substring(1);
-                }
+                teacherDisplay = maskEmailPrefix(teacherDisplay);
             }
 
             // 헤더 내부를 flexbox로 구성하여 사진 보기 버튼을 나란히 배치
