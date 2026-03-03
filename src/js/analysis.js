@@ -1165,9 +1165,14 @@ function initOwnerBatch() {
     const resetKeyBtn = document.getElementById("batch-reset-key-btn");
     if (resetKeyBtn) {
         resetKeyBtn.onclick = () => {
-            if (confirm("저장된 제미나이 API 키를 삭제하고 다시 입력하시겠습니까?")) {
+            const newKey = prompt("새로운 제미나이 API 키를 입력해주세요.\n(현재 저장된 키를 대체합니다.)", localStorage.getItem('gemini_api_key') || "");
+            if (newKey) {
+                localStorage.setItem('gemini_api_key', newKey);
+                alert("새 API 키가 브라우저에 저장되었습니다.");
+                location.reload();
+            } else if (newKey === "") {
                 localStorage.removeItem('gemini_api_key');
-                alert("키가 삭제되었습니다. 다시 [자동 분석 시작]을 누르면 새 키를 물어봅니다.");
+                alert("저장된 키가 삭제되었습니다. 이제 환경 변수(Vite)의 키를 사용합니다.");
                 location.reload();
             }
         };
