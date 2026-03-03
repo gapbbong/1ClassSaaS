@@ -620,8 +620,7 @@ async function openSurveyPopup(e, targetId = null) {
     const isAuthorized = currentClassInfo && (
         currentClassInfo.homeroomEmail === myEmail ||
         currentClassInfo.subEmail === myEmail ||
-        myEmail === 'assari@kse.hs.kr' ||
-        myEmail === 'godls2156@naver.com'
+        myEmail === 'assari@kse.hs.kr'
     );
 
     if (!isAuthorized) {
