@@ -314,7 +314,45 @@ body {
 
 /* 빨강: 지도 */
 
+/* [추가] 근태 뱃지 (사진 왼쪽 상단) */
+.student .conduct-badge-container {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.conduct-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.badge-early {
+    background: #ff9500 !important;
+    /* 주황색: 조퇴 */
+}
+
+.badge-out {
+    background: #af52de !important;
+    /* 보라색: 외출 */
+}
+
 /* 오버레이 */
+
 #overlay {
     position: fixed;
     top: 0;

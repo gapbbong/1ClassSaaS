@@ -355,7 +355,7 @@ function loadStudents() {
                 }
 
                 // [수정] 상세 기록 건수 배지 (3색 분리 표시: 파랑(잘한일)-검정(일반)-빨강(지도))
-                const counts = detailedCounts[student.pid] || { good: 0, normal: 0, bad: 0 };
+                const counts = detailedCounts[student.pid] || { good: 0, normal: 0, bad: 0, early: 0, out: 0 };
                 if (counts.good > 0 || counts.normal > 0 || counts.bad > 0) {
                     const recordBadge = document.createElement("div");
                     recordBadge.className = "record-badge-multi";
@@ -368,6 +368,19 @@ function loadStudents() {
 
                     recordBadge.innerHTML = badgeHtml;
                     imgContainer.appendChild(recordBadge);
+                }
+
+                // [추가] 근태 뱃지 (조퇴, 외출 / 사진 왼쪽 상단)
+                if (counts.early > 0 || counts.out > 0) {
+                    const conductBadgeContainer = document.createElement("div");
+                    conductBadgeContainer.className = "conduct-badge-container";
+
+                    let conductHtml = "";
+                    if (counts.early > 0) conductHtml += `<span class="conduct-badge badge-early">조퇴</span>`;
+                    if (counts.out > 0) conductHtml += `<span class="conduct-badge badge-out">외출</span>`;
+
+                    conductBadgeContainer.innerHTML = conductHtml;
+                    imgContainer.appendChild(conductBadgeContainer);
                 }
 
                 // 이름 및 학번 표시

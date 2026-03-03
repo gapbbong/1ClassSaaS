@@ -421,7 +421,7 @@ export async function fetchDetailedRecordCounts(classInfo) {
 
         const { data, error } = await supabase
             .from('life_records')
-            .select('student_pid, is_positive, category')
+            .select('student_pid, is_positive, category, content, created_at')
             .in('student_pid', studentPids)
             .neq('category', '상담');
 
@@ -430,13 +430,19 @@ export async function fetchDetailedRecordCounts(classInfo) {
         // studentPids를 키로 하는 초기 맵 생성
         const countMap = {};
         studentPids.forEach(pid => {
-            countMap[pid] = { good: 0, normal: 0, bad: 0 };
+            countMap[pid] = { good: 0, normal: 0, bad: 0, early: 0, out: 0 };
         });
 
         const neutralCategories = ['기록', '생활기록', '일반'];
 
+        // 오늘 날짜 기준 (KST)
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const endOfToday = startOfToday + 24 * 60 * 60 * 1000 - 1;
+
         data.forEach(r => {
             if (countMap[r.student_pid]) {
+                // 1. 일반 생활기록 집계 (누적)
                 if (neutralCategories.includes(r.category)) {
                     countMap[r.student_pid].normal++;
                 } else if (r.is_positive) {
@@ -444,8 +450,50 @@ export async function fetchDetailedRecordCounts(classInfo) {
                 } else {
                     countMap[r.student_pid].bad++;
                 }
+
+                // 2. [수정] 근태 뱃지 (당일 기록 + '근태' 카테고리 + 내용 기반)
+                if (r.category === '근태') {
+                    const recordTime = new Date(r.created_at).getTime();
+                    if (recordTime >= startOfToday && recordTime <= endOfToday) {
+                        const content = r.content || "";
+                        if (content.includes("조퇴")) {
+                            countMap[r.student_pid].early++;
+                        }
+                        if (content.includes("외출")) {
+                            // [추가] 외출 시간에만 표시 (시작 ~ 종료 사이)
+                            const timeMatch = content.match(/(오전|오후)\s*외출\((\d{2}:\d{2})\s*~\s*(\d{2}:\d{2})\)/);
+                            if (timeMatch) {
+                                const [_, ampm, startStr, endStr] = timeMatch;
+                                const isPm = ampm === '오후';
+
+                                const convertTo24h = (rawTime, isPmFlag) => {
+                                    let [h, m] = rawTime.split(':').map(Number);
+                                    if (isPmFlag && h < 12) h += 12;
+                                    if (!isPmFlag && h === 12) h = 0;
+                                    return h * 100 + m;
+                                };
+
+                                const start24 = convertTo24h(startStr, isPm);
+                                const end24 = convertTo24h(endStr, isPm);
+
+                                const nowObj = new Date();
+                                const nowTime = nowObj.getHours() * 100 + nowObj.getMinutes();
+
+                                if (nowTime >= start24 && nowTime <= end24) {
+                                    countMap[r.student_pid].out++;
+                                }
+                            } else {
+                                // 파싱 실패 시 기본적으로 표시 (예외 케이스)
+                                countMap[r.student_pid].out++;
+                            }
+                        }
+                    }
+                }
             }
         });
+
+
+
 
         return countMap;
     } catch (error) {

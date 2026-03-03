@@ -469,6 +469,8 @@ async function runBatchAIAnalysis(pid) {
                 if (progress > 20 && progress <= 40) {
                     pText.innerText = "제미나이 2.5 Flash 모델 응답 대기 중...";
                 } else if (progress > 40 && progress <= 70) {
+
+
                     pText.innerText = "다면 평가 지표 추출 및 분석 중...";
                 } else if (progress > 70) {
                     pText.innerText = "거의 완료되었습니다. 결과 요약 중...";
@@ -509,7 +511,7 @@ async function runBatchAIAnalysis(pid) {
         ${commonContext}`;
 
         // 단 한 번의 호출로 통합 데이터 수신
-        const fullData = await callGeminiAPI(apiKey, promptText, "");
+        const fullData = await callGeminiAPI(apiKey, promptText, "", 'gemini-2.5-flash');
 
         // 인터벌 정리 및 완료 상태(100%) 표시
         clearInterval(progressInterval);
@@ -559,7 +561,12 @@ async function runBatchAIAnalysis(pid) {
         }
         if (pText) {
             pText.style.color = "#d63031";
-            pText.innerText = "분석 실패 (API 한도/키 오류)";
+            // [업데이트] 429 에러 메시지 상세화
+            if (err.status === 429) {
+                pText.innerText = `한도 초과 (API Quota Exceeded). ${err.retryAfter || 20}초 후 다시 시도해주세요.`;
+            } else {
+                pText.innerText = "분석 실패 (API 한도/키 오류)";
+            }
         }
 
         const sections = ['summary', 'stats', 'detective', 'garden', 'action'];
@@ -567,7 +574,7 @@ async function runBatchAIAnalysis(pid) {
             const el = document.getElementById(`sec-${sec}`);
             if (el && el.classList.contains('loading-section')) {
                 el.classList.remove('loading-section');
-                el.innerHTML = `<h3 style="color:#d63031;">⚠️ 분석 오류</h3><p style="color:#636e72; font-size:0.9rem;">AI 연동 중 문제가 발생했습니다. (API 키 확인 필요)</p>`;
+                el.innerHTML = `<h3 style="color:#d63031;">⚠️ 분석 오류</h3><p style="color:#636e72; font-size:0.9rem;">${err.status === 429 ? 'API 한도가 초과되었습니다.' : 'AI 연동 중 문제가 발생했습니다.'}</p>`;
             }
         });
     }
@@ -648,7 +655,8 @@ async function runBatchClassAnalysis(classInfo) {
         [데이터]
         ${commonContext}`;
 
-        const fullData = await callGeminiAPI(apiKey, promptText, "");
+        const fullData = await callGeminiAPI(apiKey, promptText, "", 'gemini-2.5-flash');
+
 
         clearInterval(progressInterval);
         if (pBar) pBar.style.width = "100%";
@@ -678,10 +686,10 @@ async function runBatchClassAnalysis(classInfo) {
 }
 
 // Helper: Call Gemini
-async function callGeminiAPI(apiKey, prompt, context) {
-    // 사용자의 최신 환경에 맞춰 Gemini 2.5 Flash 모델로 업데이트
+async function callGeminiAPI(apiKey, prompt, context, targetModel = 'gemini-1.5-flash') {
+    // 1.5 Flash가 안정성이 가장 높으므로 기본값으로 설정
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -689,21 +697,136 @@ async function callGeminiAPI(apiKey, prompt, context) {
                 generationConfig: { responseMimeType: "application/json" }
             })
         });
+
         const res = await response.json();
-        if (res.error) throw new Error(res.error.message);
+
+        if (res.error) {
+            if (response.status === 429) {
+                const errorDetail = {
+                    status: 429,
+                    message: res.error.message,
+                    retryAfter: 0
+                };
+                const match = res.error.message.match(/retry in ([\d.]+)s/);
+                if (match) errorDetail.retryAfter = parseFloat(match[1]);
+                throw errorDetail;
+            }
+            throw new Error(res.error.message);
+        }
+
         if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
 
+        if (res.usageMetadata) {
+            const { promptTokenCount, candidatesTokenCount, totalTokenCount, cachedContentTokenCount } = res.usageMetadata;
+            const actualCandidates = candidatesTokenCount || (totalTokenCount - (promptTokenCount + (cachedContentTokenCount || 0)));
+
+            console.log("-----------------------------------------");
+            console.log(`🤖 [Gemini API Usage Detail - ${targetModel}]`);
+            console.log(`- Prompt (New Content): ${promptTokenCount}`);
+            if (cachedContentTokenCount) {
+                console.log(`- Cached (Reused Content): ${cachedContentTokenCount}`);
+            }
+            console.log(`- Candidates (Response): ${actualCandidates}`);
+            console.log(`- TOTAL Tokens: ${totalTokenCount}`);
+            console.log("-----------------------------------------");
+        }
+
         let text = res.candidates[0].content.parts[0].text;
-
-        // 마크다운 백틱 제거 및 순수 JSON 추출
         text = text.replace(/```json/g, "").replace(/```/g, "").trim();
-
         return JSON.parse(text);
     } catch (err) {
         console.error("Gemini API Call Error:", err);
         throw err;
     }
 }
+
+/**
+ * 전교생 대상 정기 배치 분석 실행 (단일 학생)
+ */
+async function runSilentAIAnalysis(studentPid, studentName) {
+    if (!studentPid) return;
+
+    try {
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const studentInfo = await getStudentContext(studentPid);
+
+        if (!studentInfo) {
+            console.warn(`[Batch Skip] ${studentName}: No survey found.`);
+            return;
+        }
+
+        const prompt = `학생명: ${studentName}. 설문 답변 내용을 바탕으로 학생 분석을 수행하세요...`;
+
+        // [수정] 배치 분석은 한도가 넉넉한 1.5-flash 사용
+        const insights = await callGeminiAPI(apiKey, prompt, studentInfo.context, 'gemini-1.5-flash');
+
+        const { error } = await supabase
+            .from('student_insights')
+            .upsert({
+                student_pid: studentPid,
+                analysis_data: insights,
+                analyzed_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+        console.log(`[Batch Success] ${studentName} 분석 완료`);
+        return true;
+
+    } catch (err) {
+        console.error(`[Batch Final Error] ${studentName}:`, err);
+        throw err;
+    }
+}
+
+/**
+ * 개별 학생 분석 실행 (UI와 직접 연결)
+ */
+async function runAIAnalysis() {
+    if (!currentStudent) return;
+
+    const applyBtn = document.getElementById("search-apply-btn");
+    const container = document.getElementById("analysis-result-container");
+
+    try {
+        applyBtn.disabled = true;
+        applyBtn.innerText = "분석 중...";
+        container.innerHTML = `<div class="loading-section"><div class="loading-spinner"></div><p>AI가 학생 정보를 분석하고 있습니다...</p></div>`;
+
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        const studentContext = await getStudentContext(currentStudent.pid);
+
+        if (!studentContext) {
+            alert("해당 학생의 설문 데이터가 없습니다.");
+            return;
+        }
+
+        const prompt = "위 설문 내용을 바탕으로 학생의 성향을 분석해주세요...";
+
+        // 개별 분석은 즉각적인 반응을 위해 2.0 Flash 사용 (혹은 동일하게 1.5-flash)
+        const insights = await callGeminiAPI(apiKey, prompt, studentContext.context, 'gemini-1.5-flash');
+
+        const { error } = await supabase
+            .from('student_insights')
+            .upsert({
+                student_pid: currentStudent.pid,
+                analysis_data: insights,
+                analyzed_at: new Date().toISOString()
+            });
+
+        if (error) throw error;
+
+        currentInsight = insights;
+        renderAnalysisResult(currentInsight);
+
+    } catch (err) {
+        console.error("Single Analysis Error:", err);
+        container.innerHTML = `<div class="error-section">⚠️ 분석 중 오류가 발생했습니다: ${err.message}</div>`;
+    } finally {
+        applyBtn.disabled = false;
+        applyBtn.innerText = "AI 분석";
+    }
+}
+
 
 // UI: Initial Result View (Skeleton)
 function renderResultView() {
@@ -1030,6 +1153,7 @@ function renderHolisticProfile(analysis, role) {
  * 소유자 전용 배치 분석 시스템 (Batch Engine)
  */
 let isBatchRunning = false;
+let isProcessingNext = false; // [추가] 중복 실행 방지 플래그
 let batchQueue = [];
 let batchCurrentIndex = 0;
 let stopRequested = false;
@@ -1107,14 +1231,14 @@ function subscribeToNewSurveys() {
                     const wasIdle = batchCurrentIndex >= batchQueue.length;
                     batchQueue.push(student);
 
-                    // 만약 작업이 대기 상태였다면 즉시 다음 학생 처리 시작
-                    if (wasIdle) {
+                    // [수정] 작업이 대기 상태였고, 현재 프로세스가 돌고 있지 않을 때만 깨움
+                    if (wasIdle && !isProcessingNext) {
                         console.log("[Realtime] 배치 프로세스 재개...");
                         processNextInBatch();
                     }
                 }
-            } catch (e) {
-                console.error("Realtime submission fetch failed:", e);
+            } catch (err) {
+                console.error("[Realtime Subscription Error]", err);
             }
         })
         .subscribe();
@@ -1199,8 +1323,13 @@ async function startBatchAnalysis() {
 async function processNextInBatch() {
     if (stopRequested) {
         updateBatchUI("분석 중단됨", "stop");
+        isProcessingNext = false; // 플래그 해제
         return;
     }
+
+    // [추가] 중복 실행 방지
+    if (isProcessingNext) return;
+    isProcessingNext = true;
 
     if (batchCurrentIndex >= batchQueue.length) {
         // 모든 현재 대기열 처리 완료. 실시간 대기 모드로 전환.
@@ -1208,6 +1337,7 @@ async function processNextInBatch() {
         document.getElementById("batch-status-badge").className = "status-badge running"; // 계속 애니메이션 유지
         document.getElementById("batch-progress-text").innerText = "새로운 설문 제출을 실시간으로 기다리고 있습니다...";
         document.getElementById("batch-current-target").innerText = "모든 현재 제출자 분석 완료. 대기 중...";
+        isProcessingNext = false; // 대기 모드로 전환 시 플래그 해제
         return;
     }
 
@@ -1239,25 +1369,55 @@ async function processNextInBatch() {
 
         batchCurrentIndex++;
 
-        // 5.5초 대기 (API 한도 준수)
-        let secondsLeft = 5;
+        // 10초 대기 (안정성 강화)
+        let secondsLeft = 10;
         const countdownTimer = setInterval(() => {
             if (secondsLeft > 0 && !stopRequested) {
-                document.getElementById("batch-progress-text").innerText = `다음 학생 대기 중... (${secondsLeft}초)`;
+                document.getElementById("batch-progress-text").innerText = `분석 성공! 다음 학생 대기 중... (${secondsLeft}초)`;
                 secondsLeft--;
             } else {
                 clearInterval(countdownTimer);
             }
         }, 1000);
 
-        setTimeout(processNextInBatch, 5500);
+        setTimeout(() => {
+            isProcessingNext = false; // 대기 종료 후 플래그 해제
+            processNextInBatch();
+        }, 10500);
 
-    } catch (e) {
-        console.error(`Batch Error (${student.name}):`, e);
-        document.getElementById("batch-progress-text").innerText = "에러 발생! 10초 후 재시도...";
-        setTimeout(processNextInBatch, 10000);
+    } catch (err) {
+        console.error(`Batch Error (${student.name}):`, err);
+
+        if (err.status === 429) {
+            // 429 에러(한도 초과) 시 자동 재시도 로직
+            const waitSec = Math.ceil(err.retryAfter || 20) + 10; // 안내된 시간 + 10초 여유
+            let remain = waitSec;
+
+            const retryTimer = setInterval(() => {
+                if (remain > 0 && !stopRequested) {
+                    document.getElementById("batch-progress-text").innerText = `⚠️ API 한도 초과! ${remain}초 후 자동 재시도합니다...`;
+                    remain--;
+                } else {
+                    clearInterval(retryTimer);
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                isProcessingNext = false; // 재시도 대기 후 플래그 해제
+                processNextInBatch();
+            }, waitSec * 1000);
+        } else {
+            // 일반 에러 시 10초 후 다음 학생 시도 (혹은 현재 학생 다시 시도?)
+            // 여기선 현재 학생 다시 시도하도록 유지
+            document.getElementById("batch-progress-text").innerText = "에러 발생! 10초 후 재시도...";
+            setTimeout(() => {
+                isProcessingNext = false;
+                processNextInBatch();
+            }, 10000);
+        }
     }
 }
+
 
 async function runSilentAIAnalysis(pid, name) {
     let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
@@ -1299,7 +1459,9 @@ async function runSilentAIAnalysis(pid, name) {
       "action": "교사 조언"
     }`;
 
-    const result = await callGeminiAPI(apiKey, promptText, "");
+    const result = await callGeminiAPI(apiKey, promptText, "", 'gemini-2.0-flash');
+
+
 
     // DB 저장
     await supabase.from('student_insights').insert([
