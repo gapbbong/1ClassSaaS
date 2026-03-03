@@ -1162,6 +1162,17 @@ function initOwnerBatch() {
         updateBatchUI("중단 요청 중...", "stop");
     });
 
+    const resetKeyBtn = document.getElementById("batch-reset-key-btn");
+    if (resetKeyBtn) {
+        resetKeyBtn.onclick = () => {
+            if (confirm("저장된 제미나이 API 키를 삭제하고 다시 입력하시겠습니까?")) {
+                localStorage.removeItem('gemini_api_key');
+                alert("키가 삭제되었습니다. 다시 [자동 분석 시작]을 누르면 새 키를 물어봅니다.");
+                location.reload();
+            }
+        };
+    }
+
     // 실시간 모니터링 구독 시작
     subscribeToNewSurveys();
 }
