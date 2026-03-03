@@ -687,18 +687,26 @@ async function getAvailableModel(apiKey) {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
         const data = await res.json();
 
-        if (!data.models) throw new Error("모델 목록을 불러올 수 없습니다.");
+        if (!data.models) {
+            console.error("Model List Fetch Failed:", data);
+            throw new Error("모델 목록을 불러올 수 없습니다.");
+        }
 
-        // 검색 우선순위 설정
+        const availableModels = data.models.map(m => m.name);
+        console.log("All Available Models:", availableModels);
+
+        // 검색 우선순위 설정 (2.0은 쿼터 문제로 뒤로 미룸)
         const candidates = [
             'models/gemini-1.5-flash-latest',
             'models/gemini-1.5-flash',
-            'models/gemini-2.0-flash',
-            'models/gemini-pro'
+            'models/gemini-1.5-flash-001',
+            'models/gemini-1.5-flash-002',
+            'models/gemini-pro',
+            'models/gemini-1.0-pro',
+            'models/gemini-2.0-flash'
         ];
 
         // 존재하는 모델 중 가장 우선순위가 높은 것 선택
-        const availableModels = data.models.map(m => m.name);
         for (const cand of candidates) {
             if (availableModels.includes(cand)) {
                 selectedGeminiModel = cand;
@@ -706,13 +714,22 @@ async function getAvailableModel(apiKey) {
             }
         }
 
-        // 목록에 없으면 가장 성능이 좋을 것으로 예상되는 것을 임의 선택
+        // 목록에 없으면 'flash'가 포함된 1.5 계열 우선 검색
         if (!selectedGeminiModel) {
-            const flashModel = data.models.find(m => m.name.includes('flash') && m.supportedGenerationMethods.includes('generateContent'));
-            selectedGeminiModel = flashModel ? flashModel.name : data.models[0].name;
+            const flashModel = data.models.find(m =>
+                m.name.includes('flash') &&
+                !m.name.includes('2.0') &&
+                m.supportedGenerationMethods.includes('generateContent')
+            );
+            selectedGeminiModel = flashModel ? flashModel.name : null;
         }
 
-        console.log("Selected Model:", selectedGeminiModel);
+        // 최후의 수단: 아무 모델이나 선택
+        if (!selectedGeminiModel) {
+            selectedGeminiModel = availableModels.find(name => !name.includes('2.0')) || availableModels[0];
+        }
+
+        console.log("Final Selected Model:", selectedGeminiModel);
         return selectedGeminiModel;
     } catch (err) {
         console.error("Model Search Error:", err);
