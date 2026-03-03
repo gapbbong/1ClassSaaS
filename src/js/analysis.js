@@ -1238,7 +1238,7 @@ async function startBatchAnalysis() {
     stopRequested = false;
 
     // API 키 체크 (배치 시작 시 한 번만 확인)
-    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    let apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
         apiKey = prompt("제미나이(Gemini) API 키를 입력해주세요.\n(입력하신 키는 브라우저에 저장되어 배치 분석에 사용됩니다.)");
         if (!apiKey) {
@@ -1392,7 +1392,7 @@ async function processNextInBatch() {
 }
 
 async function runSilentAIAnalysis(pid, name) {
-    let apiKey = import.meta.env.VITE_GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+    let apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) throw new Error("API Key Missing");
 
     // 데이터 수집
