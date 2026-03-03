@@ -1,28 +1,6 @@
-headersOrigin = "config"
-redirectsOrigin = "config"
-plugins = []
-headers = []
-redirects = []
-
-[functions]
-
-  [functions."*"]
-
 [build]
-command = "npm run build"
-publish = "dist"
-publishOrigin = "config"
+  command = "npm run build"
+  publish = "dist"
 
-  [build.environment]
-
-  [build.processing]
-
-    [build.processing.css]
-
-    [build.processing.html]
-
-    [build.processing.images]
-
-    [build.processing.js]
-
-  [build.services]
+[build.environment]
+  NODE_VERSION = "20"
