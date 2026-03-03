@@ -681,7 +681,7 @@ async function runBatchClassAnalysis(classInfo) {
 async function callGeminiAPI(apiKey, prompt, context) {
     // 사용자의 최신 환경에 맞춰 Gemini 2.5 Flash 모델로 업데이트
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -689,7 +689,10 @@ async function callGeminiAPI(apiKey, prompt, context) {
             })
         });
         const res = await response.json();
-        if (res.error) throw new Error(res.error.message);
+        if (res.error) {
+            console.error('Gemini Raw Error:', res.error);
+            throw new Error(res.error.message || 'API 오류 발생');
+        }
         if (!res.candidates || !res.candidates[0].content.parts[0].text) throw new Error("AI 응답 형식이 올바르지 않습니다.");
 
         let text = res.candidates[0].content.parts[0].text;
