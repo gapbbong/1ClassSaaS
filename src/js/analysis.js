@@ -685,8 +685,7 @@ async function callGeminiAPI(apiKey, prompt, context) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: (context ? context + "\n" : "") + prompt }] }],
-                generationConfig: { responseMimeType: "application/json" }
+                contents: [{ parts: [{ text: (context ? context + "\n" : "") + prompt }] }]
             })
         });
         const res = await response.json();
