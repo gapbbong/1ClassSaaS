@@ -424,7 +424,8 @@ body {
 }
 
 #home-btn,
-#survey-viewer-btn {
+#survey-viewer-btn,
+#contact-download-btn {
     position: fixed;
     top: 15px;
     z-index: 1100;
@@ -449,14 +450,62 @@ body {
 #survey-viewer-btn {
     right: 15px;
     background: rgba(255, 248, 230, 0.7);
-    /* 살짝 노란 색감 추가 */
+}
+
+#contact-download-btn {
+    right: 60px;
+    background: rgba(240, 253, 244, 0.7);
 }
 
 #home-btn:hover,
-#survey-viewer-btn:hover {
+#survey-viewer-btn:hover,
+#contact-download-btn:hover {
     background: #fff;
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 인쇄용 명렬표 스타일 */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+        margin: 0;
+    }
+
+    #home-btn,
+    #survey-viewer-btn,
+    #contact-download-btn,
+    .floating-controls,
+    #popup,
+    #overlay {
+        display: none !important;
+    }
+
+    .student-grid {
+        display: block !important;
+        columns: 1 !important;
+        padding: 0 !important;
+    }
+
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    .print-table th,
+    .print-table td {
+        border: 1px solid #333;
+        padding: 8px;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    .print-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
 }
 
 /* 안내 툴팁 모달/팝업 스타일 */

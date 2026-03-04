@@ -1,6 +1,6 @@
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
-import { fetchStudentsByClass, fetchClassInfo, saveRecord, fetchDetailedRecordCounts } from './api.js';
+import { fetchStudentsByClass, fetchClassInfo, saveRecord, fetchDetailedRecordCounts, fetchClassSurveysForContacts } from './api.js';
 import { supabase } from './supabase.js';
 import CryptoJS from 'crypto-js';
 
@@ -236,20 +236,28 @@ function setupEventListeners(classInfo) {
         homeBtn.addEventListener("click", goHome);
     }
 
-    // [수정] 본인 담임반일 때만 기초조사 모아보기 버튼 노출
-    if (surveyBtn) {
+    // [수정] 본인 담임반일 때만 기초조사 모아보기 및 연락처 다운로드 버튼 노출
+    const downloadBtn = document.getElementById("contact-download-btn");
+    if (surveyBtn || downloadBtn) {
         const myEmail = getFullStoredEmail();
         const currentClassInfo = classInfo ? classInfo.find(c => c.grade === grade && c.class === classNum) : null;
 
-        const isMyClass = currentClassInfo && (currentClassInfo.homeroomEmail === myEmail || currentClassInfo.subEmail === myEmail);
+        const isMyClass = currentClassInfo && (currentClassInfo.homeroomEmail === myEmail || currentClassInfo.subEmail === myEmail || myEmail === 'assari@kse.hs.kr');
 
         if (isMyClass) {
-            surveyBtn.style.display = "flex";
-            surveyBtn.addEventListener("click", () => {
-                window.location.href = `class-analysis.html?grade=${grade}&class=${classNum}`;
-            });
+            if (surveyBtn) {
+                surveyBtn.style.display = "flex";
+                surveyBtn.addEventListener("click", () => {
+                    window.location.href = `class-analysis.html?grade=${grade}&class=${classNum}`;
+                });
+            }
+            if (downloadBtn) {
+                downloadBtn.style.display = "flex";
+                downloadBtn.addEventListener("click", downloadClassContacts);
+            }
         } else {
-            surveyBtn.style.display = "none";
+            if (surveyBtn) surveyBtn.style.display = "none";
+            if (downloadBtn) downloadBtn.style.display = "none";
         }
     }
 
@@ -1496,4 +1504,232 @@ window.showToast = function (message, type = 'error') {
             }
         });
     }, 3000);
+};
+
+// [신규] 학급 연락처 다운로드 및 인쇄 기능
+window.downloadClassContacts = async function () {
+    const downloadBtn = document.getElementById("contact-download-btn");
+    if (downloadBtn) downloadBtn.classList.add("loading");
+
+    try {
+        // 1. 학급 전체의 기초조사 데이터 가져오기
+        const surveys = await fetchClassSurveysForContacts(grade, classNum);
+        const surveyMap = {};
+        surveys.forEach(s => {
+            surveyMap[s.student_pid] = { ...s, ...(s.data || {}) };
+        });
+
+        if (downloadBtn) downloadBtn.classList.remove("loading");
+
+        // 2. 선택 모달 표시
+        const modal = document.createElement("div");
+        modal.className = "guidance-tooltip-overlay";
+        modal.id = "contact-select-modal";
+        modal.innerHTML = `
+            <div class="guidance-tooltip-content" style="max-width: 420px; border-radius: 28px; padding: 35px 25px;">
+                <div style="font-size: 3rem; margin-bottom: 15px;">☎️</div>
+                <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 10px;">연락처 저장 및 인쇄</h3>
+                <p style="color: #64748b; line-height: 1.5; margin-bottom: 25px;">
+                    우리 반 학생과 부모님의 연락처를<br>
+                    <strong>휴대폰에 한꺼번에 저장</strong>하거나<br>
+                    <strong>인쇄용 명렬표</strong>를 만들 수 있습니다.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="action-submit-btn" id="vcf-download-btn" style="background: #22c55e; height: 58px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
+                        📱 휴대폰 연락처 파일 (.vcf) 다운
+                    </button>
+                    <button class="action-submit-btn" id="print-list-btn" style="background: #0ea5e9; height: 58px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
+                        🖨️ 인쇄용 비상연락망 보기
+                    </button>
+                    <button class="never-see-again-btn" style="margin-top: 10px; color: #94a3b8;" onclick="this.closest('.guidance-tooltip-overlay').remove()">나중에 하기</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // 관계 이름 정규화 헬퍼 (예: 어머니 -> 모)
+        const normalizeRel = (rel, defaultVal = "부") => {
+            if (!rel || rel === "-" || rel === "." || rel === "보호자" || rel === "없음") return defaultVal;
+            if (rel.includes("어머니") || rel.includes("엄마")) return "모";
+            if (rel.includes("아버지") || rel.includes("아빠")) return "부";
+            if (rel.includes("할머니")) return "조모";
+            if (rel.includes("할아버지")) return "조부";
+            return rel.length >= 2 ? rel.substring(0, 1) : rel;
+        };
+
+        // 3. vCard(.vcf) 파일 생성 및 다운로드
+        document.getElementById("vcf-download-btn").onclick = () => {
+            const students = window.allStudents_Cache;
+            if (!students || students.length === 0) {
+                window.showToast("학생 데이터가 없습니다.", "error");
+                return;
+            }
+
+            let vcfContent = "";
+            let count = 0;
+
+            students.forEach(s => {
+                const survey = surveyMap[s.pid] || {};
+                const shortYear = String(s["학년"] || grade || "2026").slice(-2);
+                const studentID = String(s["학번"] || s.student_id || "");
+                const displayNum = studentID.slice(-2);
+                const prefix = `${shortYear}${studentID}${s.name}`;
+
+                // 학생 본인
+                const studentPhone = s["연락처"] || survey["연락처"] || survey["학생폰"] || "";
+                if (studentPhone && studentPhone.length > 5) {
+                    vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${prefix}\nTEL;TYPE=CELL:${studentPhone}\nNOTE:${grade}학년 ${classNum}반 ${displayNum}번 학생\nEND:VCARD\n`;
+                    count++;
+                }
+
+
+
+                // 관계 추출용 내부 헬퍼
+                const getRelationV = (obj, isSecondary = false) => {
+                    const keys = isSecondary ?
+                        ["보조보호자 관계", "보조보호자관계", "보조 보호자 관계", "제2보호자 관계", "부보호자 관계", "보조관계"] :
+                        ["주보호자 관계", "보호자 관계", "보호자관계", "부모 관계", "PARENT_RELATION", "관계"];
+
+                    const raw = getValue(obj, {}, ...keys);
+                    return normalizeRel(raw, isSecondary ? "모" : "부");
+                };
+
+                // 주보호자
+                const p1Phone = s["보호자연락처"] || getValue(survey, {}, "주보호자 연락처", "보호자 연락처", "보호자연락처", "PARENT_CONTACT") || "";
+                let p1Rel = getRelationV(survey);
+                if (p1Rel === "부" && s["보호자관계"]) p1Rel = normalizeRel(s["보호자관계"], "부");
+
+                if (p1Phone && p1Phone.length > 5) {
+                    vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${prefix}(${p1Rel})\nTEL;TYPE=CELL:${p1Phone}\nNOTE:${grade}학년 ${classNum}반 ${displayNum}번 ${s.name}의 ${p1Rel}\nEND:VCARD\n`;
+                    count++;
+                }
+
+                // 보조보호자
+                const p2Phone = getValue(survey, {}, "보조보호자 연락처", "보조보호자연락처", "보조 보호자 연락처") || "";
+                let p2Rel = getRelationV(survey, true);
+
+                if (p2Phone && p2Phone.length > 5) {
+                    vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${prefix}(${p2Rel})\nTEL;TYPE=CELL:${p2Phone}\nNOTE:${grade}학년 ${classNum}반 ${displayNum}번 ${s.name}의 ${p2Rel} (보조)\nEND:VCARD\n`;
+                    count++;
+                }
+            });
+
+            if (count === 0) {
+                window.showToast("저장할 연락처 정보가 없습니다.", "error");
+                return;
+            }
+
+            const blob = new Blob([vcfContent], { type: "text/vcard;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${grade}학년_${classNum}반_비상연락망.vcf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            modal.remove();
+            window.showToast(`${count}개의 연락처가 다운로드되었습니다.`, "success");
+        };
+
+        // 4. 인쇄용 명렬표 레이아웃 생성
+        document.getElementById("print-list-btn").onclick = () => {
+            const students = window.allStudents_Cache;
+            let tableRows = "";
+            students.forEach(s => {
+                const survey = surveyMap[s.pid] || {};
+                const dId = String(s["학번"] || s.student_id || "");
+                const shortYear = String(s["학년"] || grade || "2026").slice(-2);
+                const fullName = `${shortYear}${dId}${s.name}`;
+
+                const dNum = s["번호"] || (s["학번"] ? String(s["학번"]).slice(-2) : "??");
+                const sPhone = s["연락처"] || survey["연락처"] || survey["학생폰"] || "-";
+
+                const getRelation = (obj, isSecondary = false) => {
+                    const keys = isSecondary ?
+                        ["보조보호자 관계", "보조보호자관계", "보조 보호자 관계", "제2보호자 관계", "부보호자 관계", "보조관계"] :
+                        ["주보호자 관계", "보호자 관계", "보호자관계", "부모 관계", "PARENT_RELATION", "관계"];
+
+                    const raw = getValue(obj, {}, ...keys);
+                    return normalizeRel(raw, isSecondary ? "모" : "부");
+                };
+
+                const p1Phone = s["보호자연락처"] || getValue(survey, {}, "주보호자 연락처", "보호자 연락처", "보호자연락처") || "-";
+                let p1Rel = getRelation(survey);
+                if (p1Rel === "부" && s["보호자관계"]) p1Rel = normalizeRel(s["보호자관계"], "부");
+
+                const p2Phone = getValue(survey, {}, "보조보호자 연락처", "보조보호자연락처", "보조 보호자 연락처") || "-";
+                const p2Rel = (p2Phone === "-") ? "-" : getRelation(survey, true);
+
+                tableRows += `
+                    <tr>
+                        <td style="font-weight:bold;">${dNum}</td>
+                        <td style="font-size:0.95rem; font-weight:800;">${fullName}</td>
+                        <td style="letter-spacing:0.3px; font-size:0.85rem;">${sPhone}</td>
+                        <td>
+                            <span style="font-size:0.75rem; color:#666; margin-right:5px;">${p1Rel}</span>
+                            <span style="font-weight:bold; font-size:0.95rem;">${p1Phone}</span>
+                        </td>
+                        <td>
+                            <span style="font-size:0.75rem; color:#666; margin-right:5px;">${p2Phone === "-" ? "" : p2Rel}</span>
+                            <span style="font-size:0.9rem;">${p2Phone}</span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${grade}학년 ${classNum}반 비상연락망</title>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+                        body { font-family: 'Pretendard', sans-serif; padding: 20px; color: #333; }
+                        .header { text-align: center; margin-bottom: 15px; border-bottom: 3px double #333; padding-bottom: 10px; }
+                        h1 { font-size: 1.8rem; margin: 0; font-weight: 900; }
+                        .timestamp { text-align: right; color: #666; font-size: 0.8rem; margin-top: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 5px; table-layout: fixed; }
+                        th, td { border: 1px solid #000; padding: 8px 2px; text-align: center; overflow: hidden; white-space: nowrap; }
+                        th { background: #f8fafc; font-weight: 900; font-size: 0.85rem; }
+                        .no-print { margin-top: 30px; text-align: center; }
+                        @media print { .no-print { display: none; } }
+                        button { padding: 10px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>${grade}학년 ${classNum}반 비상연락망</h1>
+                        <div class="timestamp">출력일시: ${new Date().toLocaleString()}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="6%">번호</th>
+                                <th width="15%">이름</th>
+                                <th width="21%">학생 연락처</th>
+                                <th width="29%">주보호자 (관계 번호)</th>
+                                <th width="29%">보조보호자 (관계 번호)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                    <div class="no-print">
+                        <button onclick="window.print()" style="background: #3b82f6; color: white;">🖨️ 지금 인쇄하기</button>
+                        <button onclick="window.close()" style="background: #f1f5f9; color: #475569; margin-left: 10px;">닫기</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            modal.remove();
+        };
+
+    } catch (err) {
+        console.error("Download Menu Error:", err);
+        window.showToast("연락처 정보를 불러오지 못했습니다.", "error");
+        if (downloadBtn) downloadBtn.classList.remove("loading");
+    }
 };

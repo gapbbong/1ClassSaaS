@@ -503,6 +503,34 @@ export async function fetchDetailedRecordCounts(classInfo) {
 
 
 /**
+ * 특정 학급 전체의 기초조사 데이터를 가져옵니다.
+ */
+export async function fetchClassSurveysForContacts(grade, classNum) {
+    try {
+        const { data: students, error: sError } = await supabase
+            .from('students')
+            .select('pid')
+            .eq('class_info', `${grade}-${classNum}`)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
+
+        if (sError || !students) return [];
+        const pids = students.map(s => s.pid);
+
+        const { data, error } = await supabase
+            .from('surveys')
+            .select('*')
+            .in('student_pid', pids);
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error("Fetch Class Surveys Error:", error);
+        return [];
+    }
+}
+
+
+/**
  * 특정 학급의 모든 생활기록을 가져옵니다.
  * @param {string} classInfo - '1-1' 형식
  */
