@@ -1541,6 +1541,9 @@ window.downloadClassContacts = async function () {
                     <button class="action-submit-btn" id="print-list-btn" style="background: #0ea5e9; height: 58px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
                         🖨️ 인쇄용 비상연락망 보기
                     </button>
+                    <button class="action-submit-btn" id="excel-download-btn" style="background: #16a34a; height: 58px; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                        📊 엑셀 명부 다운로드 (.csv)
+                    </button>
                     <button class="never-see-again-btn" style="margin-top: 10px; color: #94a3b8;" onclick="this.closest('.guidance-tooltip-overlay').remove()">나중에 하기</button>
                 </div>
             </div>
@@ -1555,6 +1558,15 @@ window.downloadClassContacts = async function () {
             if (rel.includes("할머니")) return "조모";
             if (rel.includes("할아버지")) return "조부";
             return rel.length >= 2 ? rel.substring(0, 1) : rel;
+        };
+
+        const getRelationCommon = (surveyObj, isSecondary = false) => {
+            const keys = isSecondary ?
+                ["보조보호자 관계", "보조보호자관계", "보조 보호자 관계", "제2보호자 관계", "부보호자 관계", "보조관계"] :
+                ["주보호자 관계", "보호자 관계", "보호자관계", "부모 관계", "PARENT_RELATION", "관계"];
+
+            const raw = getValue(surveyObj, {}, ...keys);
+            return normalizeRel(raw, isSecondary ? "모" : "부");
         };
 
         // 3. vCard(.vcf) 파일 생성 및 다운로드
@@ -1581,22 +1593,9 @@ window.downloadClassContacts = async function () {
                     vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${prefix}\nTEL;TYPE=CELL:${studentPhone}\nNOTE:${grade}학년 ${classNum}반 ${displayNum}번 학생\nEND:VCARD\n`;
                     count++;
                 }
-
-
-
-                // 관계 추출용 내부 헬퍼
-                const getRelationV = (obj, isSecondary = false) => {
-                    const keys = isSecondary ?
-                        ["보조보호자 관계", "보조보호자관계", "보조 보호자 관계", "제2보호자 관계", "부보호자 관계", "보조관계"] :
-                        ["주보호자 관계", "보호자 관계", "보호자관계", "부모 관계", "PARENT_RELATION", "관계"];
-
-                    const raw = getValue(obj, {}, ...keys);
-                    return normalizeRel(raw, isSecondary ? "모" : "부");
-                };
-
                 // 주보호자
                 const p1Phone = s["보호자연락처"] || getValue(survey, {}, "주보호자 연락처", "보호자 연락처", "보호자연락처", "PARENT_CONTACT") || "";
-                let p1Rel = getRelationV(survey);
+                let p1Rel = getRelationCommon(survey);
                 if (p1Rel === "부" && s["보호자관계"]) p1Rel = normalizeRel(s["보호자관계"], "부");
 
                 if (p1Phone && p1Phone.length > 5) {
@@ -1606,7 +1605,7 @@ window.downloadClassContacts = async function () {
 
                 // 보조보호자
                 const p2Phone = getValue(survey, {}, "보조보호자 연락처", "보조보호자연락처", "보조 보호자 연락처") || "";
-                let p2Rel = getRelationV(survey, true);
+                let p2Rel = getRelationCommon(survey, true);
 
                 if (p2Phone && p2Phone.length > 5) {
                     vcfContent += `BEGIN:VCARD\nVERSION:3.0\nFN:${prefix}(${p2Rel})\nTEL;TYPE=CELL:${p2Phone}\nNOTE:${grade}학년 ${classNum}반 ${displayNum}번 ${s.name}의 ${p2Rel} (보조)\nEND:VCARD\n`;
@@ -1645,21 +1644,12 @@ window.downloadClassContacts = async function () {
                 const dNum = s["번호"] || (s["학번"] ? String(s["학번"]).slice(-2) : "??");
                 const sPhone = s["연락처"] || survey["연락처"] || survey["학생폰"] || "-";
 
-                const getRelation = (obj, isSecondary = false) => {
-                    const keys = isSecondary ?
-                        ["보조보호자 관계", "보조보호자관계", "보조 보호자 관계", "제2보호자 관계", "부보호자 관계", "보조관계"] :
-                        ["주보호자 관계", "보호자 관계", "보호자관계", "부모 관계", "PARENT_RELATION", "관계"];
-
-                    const raw = getValue(obj, {}, ...keys);
-                    return normalizeRel(raw, isSecondary ? "모" : "부");
-                };
-
                 const p1Phone = s["보호자연락처"] || getValue(survey, {}, "주보호자 연락처", "보호자 연락처", "보호자연락처") || "-";
-                let p1Rel = getRelation(survey);
+                let p1Rel = getRelationCommon(survey);
                 if (p1Rel === "부" && s["보호자관계"]) p1Rel = normalizeRel(s["보호자관계"], "부");
 
                 const p2Phone = getValue(survey, {}, "보조보호자 연락처", "보조보호자연락처", "보조 보호자 연락처") || "-";
-                const p2Rel = (p2Phone === "-") ? "-" : getRelation(survey, true);
+                const p2Rel = (p2Phone === "-") ? "-" : getRelationCommon(survey, true);
 
                 tableRows += `
                     <tr>
@@ -1725,6 +1715,47 @@ window.downloadClassContacts = async function () {
             `);
             printWindow.document.close();
             modal.remove();
+        };
+
+        // 5. 엑셀(CSV) 파일 생성 및 다운로드
+        document.getElementById("excel-download-btn").onclick = () => {
+            const students = window.allStudents_Cache;
+            if (!students || students.length === 0) {
+                window.showToast("학생 데이터가 없습니다.", "error");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; // UTF-8 BOM
+            csvContent += "번호,학번,이름,학생 연락처,주보호자 관계,주보호자 번호,보조보호자 관계,보조보호자 번호,주소\n";
+
+            students.forEach(s => {
+                const survey = surveyMap[s.pid] || {};
+                const dId = String(s["학번"] || s.student_id || "");
+                const dNum = s["번호"] || (dId ? dId.slice(-2) : "??");
+                const sPhone = s["연락처"] || survey["연락처"] || survey["학생폰"] || "-";
+
+                let p1Rel = getRelationCommon(survey);
+                if (p1Rel === "부" && s["보호자관계"]) p1Rel = normalizeRel(s["보호자관계"], "부");
+                const p1Phone = s["보호자연락처"] || getValue(survey, {}, "주보호자 연락처", "보호자 연락처", "보호자연락처") || "-";
+
+                const p2Phone = getValue(survey, {}, "보조보호자 연락처", "보조보호자연락처", "보조 보호자 연락처") || "-";
+                const p2Rel = (p2Phone === "-") ? "-" : getRelationCommon(survey, true);
+
+                const fullAddr = (s["주소"] || survey["집주소"] || survey["주소"] || "-").replace(/,/g, " ");
+                csvContent += `${dNum},${dId},${s.name},${sPhone},${p1Rel},${p1Phone},${p2Rel},${p2Phone},"${fullAddr}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${grade}학년_${classNum}반_비상연락망.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            modal.remove();
+            window.showToast("엑셀 명부가 다운로드되었습니다.", "success");
         };
 
     } catch (err) {
