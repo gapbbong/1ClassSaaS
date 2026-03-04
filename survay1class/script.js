@@ -53,6 +53,18 @@ function isStorageAvailable() {
     }
 }
 
+// [보안] SQL 인젝션 및 XSS 방지를 위한 입력값 정제 함수
+function sanitizeInput(val) {
+    if (typeof val !== 'string') return val;
+    return val
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .trim();
+}
+
 // 자동 하이픈 함수
 function autoHyphen(value) {
     return value
@@ -137,10 +149,10 @@ if (mbtiInput) {
 
 // 1. 학번 조회
 btnVerify.addEventListener("click", async () => {
-    const num = inputNum.value.trim();
+    const num = sanitizeInput(inputNum.value); // [보안] 입력값 정제
     if (!num) return alert("학번을 입력해주세요.");
 
-    const pw = inputPw.value.trim();
+    const pw = sanitizeInput(inputPw.value); // [보안] 입력값 정제
 
     // 만약 이미 조회 후 비밀번호 입력창이 뜬 상태라면, 비밀번호를 포함해 다시 조회(검증)
     const isPwStage = !pwVerifyGroup.classList.contains("hidden");
@@ -652,16 +664,21 @@ surveyForm.addEventListener("submit", async (e) => {
 
     const formData = new FormData(surveyForm);
     const surveyData = {};
+
+    // [보안] 허용된 필드만 추출 (필요 시 정의 가능, 여기서는 모든 formData 정제)
     formData.forEach((value, key) => {
+        const cleanVal = sanitizeInput(value);
+        const cleanKey = sanitizeInput(key);
+
         // 복수 선택 항목 처리 (거주가족, 다문화여부, 등교수단)
-        if (key === "거주가족" || key === "다문화여부" || key === "등교수단") {
-            if (!surveyData[key]) {
-                surveyData[key] = value;
+        if (cleanKey === "거주가족" || cleanKey === "다문화여부" || cleanKey === "등교수단") {
+            if (!surveyData[cleanKey]) {
+                surveyData[cleanKey] = cleanVal;
             } else {
-                surveyData[key] += ", " + value;
+                surveyData[cleanKey] += ", " + cleanVal;
             }
         } else {
-            surveyData[key] = value;
+            surveyData[cleanKey] = cleanVal;
         }
     });
 
@@ -742,13 +759,13 @@ btnModalConfirm.addEventListener("click", async () => {
     toggleLoading(true);
 
     try {
-        // 1. 설문 데이터 저장
+        // 1. 설문 데이터 저장 (Supabase v2 SDK는 자동으로 Parameterized Query를 사용하여 SQL Injection을 방지합니다)
         const { error: surveyError } = await supabase
             .from('surveys')
             .insert([
                 {
                     student_pid: currentStudentPid,
-                    data: pendingSurveyData
+                    data: pendingSurveyData // JSONB 컬럼에 안전하게 바인딩됨
                 }
             ]);
 

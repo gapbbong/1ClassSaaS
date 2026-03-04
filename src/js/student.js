@@ -1726,7 +1726,7 @@ window.downloadClassContacts = async function () {
             }
 
             let csvContent = "\uFEFF"; // UTF-8 BOM
-            csvContent += "번호,학번,이름,학생 연락처,주보호자 관계,주보호자 번호,보조보호자 관계,보조보호자 번호,주소\n";
+            csvContent += "번호,학번,이름,학생 연락처,주보호자 관계,주보호자 번호,보조보호자 관계,보조보호자 번호,주소,알러지\n";
 
             students.forEach(s => {
                 const survey = surveyMap[s.pid] || {};
@@ -1742,7 +1742,8 @@ window.downloadClassContacts = async function () {
                 const p2Rel = (p2Phone === "-") ? "-" : getRelationCommon(survey, true);
 
                 const fullAddr = (s["주소"] || survey["집주소"] || survey["주소"] || "-").replace(/,/g, " ");
-                csvContent += `${dNum},${dId},${s.name},${sPhone},${p1Rel},${p1Phone},${p2Rel},${p2Phone},"${fullAddr}"\n`;
+                const allergy = (survey["알레르기"] || survey["알러지"] || "-").replace(/,/g, " ");
+                csvContent += `${dNum},${dId},${s.name},${sPhone},${p1Rel},${p1Phone},${p2Rel},${p2Phone},"${fullAddr}","${allergy}"\n`;
             });
 
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
