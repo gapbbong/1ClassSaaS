@@ -371,8 +371,9 @@ async function loadStudentAnalysis(pid) {
     // 동급생 캐싱 (이전/다음 버튼용)
     if (!window.currentClassStudents || window.currentClassStudents.length === 0 || window.currentClassStudents[0].class_info !== student.class_info) {
         const { data: classmates } = await supabase.from('students')
-            .select('pid, student_id, name, class_info')
+            .select('pid, student_id, name, class_info, academic_year')
             .eq('class_info', student.class_info)
+            .eq('academic_year', student.academic_year)
             .order('student_id', { ascending: true });
         window.currentClassStudents = classmates || [];
     }
@@ -416,8 +417,8 @@ async function loadStudentAnalysis(pid) {
 
         renderChart();
     } else {
-        // 기초조사 데이터 유무 선제 확인
-        const { data: survey } = await supabase.from('surveys').select('id').eq('student_pid', pid).maybeSingle();
+        // 기초조사 데이터 유무 선제 확인 (.limit(1) 추가하여 중복 설문 시에도 오류 방지)
+        const { data: survey } = await supabase.from('surveys').select('id').eq('student_pid', pid).limit(1).maybeSingle();
         if (!survey) {
             document.getElementById("loading-view").style.display = "none";
             alert("해당 학생의 기초조사(설문) 데이터가 없습니다. 분석을 진행할 수 없습니다.");
