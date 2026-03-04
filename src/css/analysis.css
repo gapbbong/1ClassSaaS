@@ -539,3 +539,64 @@ body {
     margin: 0;
     text-align: center;
 }
+
+/* 플로팅 컨트롤 (학생 내비게이션) - stu-list.css 스타일 계승 */
+.floating-controls {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 120px;
+    /* 분석화면 배치를 고려하여 간격 확대 */
+    z-index: 1001;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    pointer-events: none;
+}
+
+.floating-controls button {
+    pointer-events: auto;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 50% !important;
+    border: 1px solid #e2e8f0 !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    transition: all 0.25s ease !important;
+}
+
+.floating-controls button svg {
+    width: 28px !important;
+    height: 28px !important;
+    fill: #4A90E2 !important;
+}
+
+.floating-controls button:hover {
+    background-color: #4A90E2 !important;
+    transform: scale(1.15) !important;
+}
+
+.floating-controls button:hover svg {
+    fill: #fff !important;
+}
+
+.floating-controls button:active {
+    transform: scale(0.95) !important;
+}
+
+@media screen and (max-width: 480px) {
+    .floating-controls {
+        gap: 100px;
+        bottom: 20px;
+    }
+}
