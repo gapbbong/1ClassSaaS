@@ -856,7 +856,7 @@ function updateSectionUI(type, data, extra, hasAccess = true) {
             case 'action': title = "💡 추천 액션 플랜"; break;
             case 'counseling': title = "상담 시급도"; break;
         }
-        el.innerHTML = `< h3 style = "color:#94a3b8; margin-top:0;" > ${title}</h3 >
+        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">${title}</h3>
     <div style="background:#f1f5f9; padding:20px; border-radius:12px; border:1px dashed #cbd5e1; text-align:center;">
         <p style="color:#64748b; font-size:0.95rem; margin:0;">🔒 이 정보는 담당 교사, 상담 교사 또는 관리자만 볼 수 있습니다.</p>
     </div>`;
@@ -875,9 +875,9 @@ function updateSectionUI(type, data, extra, hasAccess = true) {
                 studentType = data.student_type || "";
             }
 
-            const typeBadgeHtml = studentType ? `< div style = "margin-top: 10px; margin-bottom: 12px;" > <span style="background:linear-gradient(135deg, #FF9A9E, #FECFEF); color:#D81B60; padding:6px 12px; border-radius:20px; font-size:0.95rem; font-weight:800; border:1px solid #FF80AB; display:inline-flex; align-items:center; gap:6px;">✨ ${studentType}</span></div > ` : '';
-            el.innerHTML = `< h3 style = "color:#4A90E2; margin-top:0;" >⭐ AI 핵심 요약</h3 >
-    ${typeBadgeHtml}
+            const typeBadgeHtml = studentType ? `<div style="margin-top: 10px; margin-bottom: 12px;"><span style="background:linear-gradient(135deg, #FF9A9E, #FECFEF); color:#D81B60; padding:6px 12px; border-radius:20px; font-size:0.95rem; font-weight:800; border:1px solid #FF80AB; display:inline-flex; align-items:center; gap:6px;">✨ ${studentType}</span></div>` : '';
+            el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">⭐ AI 핵심 요약</h3>
+                            ${typeBadgeHtml}
                             <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${summaryText}</p>
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
             break;
@@ -885,15 +885,15 @@ function updateSectionUI(type, data, extra, hasAccess = true) {
             renderHolisticProfile(data, extra);
             break;
         case 'stats':
-            el.innerHTML = `< h3 style = "color:#4A90E2; margin-top:0;" >📊 다면 평가 수치</h3 >
+            el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>
     <div style="height:300px; display:flex; justify-content:center; align-items:center; background:#f8fafc; border-radius:12px; padding:10px;"><canvas id="aiStatsChart"></canvas></div>`;
             break;
         case 'detective':
             if (!data || !data.clues) {
-                el.innerHTML = `< h3 style = "color:#D35400; margin-top:0;" >🕵️ 특이점 추론(Detective)</h3 > <p style="padding:10px; color:#94a3b8;">데이터가 없습니다.</p>`;
+                el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론(Detective)</h3> <p style="padding:10px; color:#94a3b8;">데이터가 없습니다.</p>`;
                 break;
             }
-            el.innerHTML = `< h3 style = "color:#D35400; margin-top:0;" >🕵️ 특이점 추론(Detective)</h3 >
+            el.innerHTML = `<h3 style="color:#D35400; margin-top:0;">🕵️ 특이점 추론(Detective)</h3>
     <div style="background:#fdf6e3; padding:16px; border-radius:12px; border-left:4px solid #D35400; font-size:0.95rem; line-height:1.6; color:#444; word-break:keep-all;">
         <p style="font-weight:bold; margin:0 0 8px 0; color:#D35400;">발견된 단서 (Clues)</p>
         <ul style="margin:0 0 12px 0; padding-left:24px; color:#555; word-break:keep-all;">${(data.clues || []).map(c => `<li style="margin-bottom:4px;">${c}</li>`).join('')}</ul>
@@ -902,7 +902,7 @@ function updateSectionUI(type, data, extra, hasAccess = true) {
     </div>`;
             break;
         case 'action':
-            el.innerHTML = `< h3 style = "color:var(--ai-primary); margin-top:0;" >💡 교사를 위한 추천 액션 플랜</h3 >
+            el.innerHTML = `<h3 style="color:var(--ai-primary); margin-top:0;">💡 교사를 위한 추천 액션 플랜</h3>
     <p style="font-size:1.05rem; font-weight:bold; word-break:keep-all; color:#333; line-height:1.7; background:#eef2ff; padding:16px; border-radius:12px; margin:0; border:1px solid #cce4f7;">${data || "추천 액션이 없습니다."}</p>`;
             break;
     }
@@ -981,7 +981,7 @@ function renderCounselingPriority(priority, hasAccess = true) {
     const highlight = bgInfo[currentLevel] || bgInfo['안정'];
 
     let html = `
-        < div style = "background:${highlight.bg}; border:2px solid ${highlight.border}; border-radius:16px; padding:18px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);" >
+        <div style="background:${highlight.bg}; border:2px solid ${highlight.border}; border-radius:16px; padding:18px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; border-bottom:1px solid rgba(0,0,0,0.05); padding-bottom:10px; flex-wrap:wrap; gap:10px;">
                 <div style="font-weight:800; color:#1e293b; font-size:1rem;">상담 시급도</div>
                 <div style="display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.5); padding:4px 12px; border-radius:20px; border:1px solid rgba(0,0,0,0.03);">
@@ -1004,7 +1004,7 @@ function renderCounselingPriority(priority, hasAccess = true) {
                 <span style="display:inline-block; background:${highlight.border}; color:#fff; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; margin-right:6px; vertical-align:middle;">AI 소견</span>
                 <span style="vertical-align:middle;">${priority.reason}</span>
             </div>
-        </div >
+        </div>
     `;
 
     el.innerHTML = html;
@@ -1017,8 +1017,8 @@ function renderHolisticProfile(analysis, role) {
     el.classList.remove('loading-section');
 
     if (!analysis) {
-        el.innerHTML = `< h3 style = "color:#94a3b8; margin-top:0;" >🌈 전인적 분석 프로파일</h3 >
-    <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
+        el.innerHTML = `<h3 style="color:#94a3b8; margin-top:0;">🌈 전인적 분석 프로파일</h3>
+            <p style="color:#94a3b8; font-size:0.9rem; text-align:center; padding:20px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1;">구버전 분석 데이터입니다. 새로운 분석을 실행하면 전인적 프로파일이 표시됩니다.</p>`;
         return;
     }
 
@@ -1037,7 +1037,7 @@ function renderHolisticProfile(analysis, role) {
     config.forEach(cfg => {
         const selected = analysis[cfg.key];
         html += `
-        < div style = "background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;" >
+                <div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding:12px;">
                 <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">${cfg.label}</div>
                 <div style="display:flex; flex-wrap:wrap; gap:6px;">
                     ${cfg.items.map(item => {
@@ -1045,21 +1045,22 @@ function renderHolisticProfile(analysis, role) {
             return `<span style="padding:4px 10px; border-radius:8px; font-size:0.9rem; ${isActive ? 'background:#4A90E2; color:#fff; font-weight:bold; box-shadow:0 2px 4px rgba(74,144,226,0.3);' : 'background:#f1f5f9; color:#94a3b8;'}">${item}</span>`;
         }).join('')}
                 </div>
-            </div >
-    `;
+                </div>
+            `;
     });
     html += '</div>';
 
     if (role) {
         html += `
-    < div style = "margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;" >
+            <div style="margin-top:20px; background:linear-gradient(to right, #f0f7ff, #fdf2f8); border-radius:12px; padding:16px; border:1px solid #bae6fd;">
                 <div style="font-weight:bold; color:#0369a1; margin-bottom:8px;">👥 모둠 활동 추천 역할</div>
                 <div style="display:flex; align-items:center; gap:10px;">
                     <span style="background:#0369a1; color:#fff; padding:4px 12px; border-radius:20px; font-weight:bold;">${role}</span>
                     <span style="color:#0c4a6e; font-size:0.95rem;">활동 시 위 역할을 맡을 때 가장 높은 시너지를 낼 수 있습니다.</span>
                 </div>
-            </div >
-    `;
+                </div>
+            </div>
+            `;
     }
 
     el.innerHTML = html;
