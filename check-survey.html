@@ -26,11 +26,13 @@
         <!-- 컨트롤 패널 -->
         <section class="control-panel">
             <div class="search-container">
-                <select id="class-dropdown" class="styled-select">
-                    <option value="">학급을 선택하세요</option>
-                    <!-- JS에서 학급 옵션 자동 생성 -->
-                </select>
-                <button id="search-btn" class="action-btn" disabled>조회</button>
+                <div class="nav-controls">
+                    <button id="prev-class-btn" class="nav-btn" title="이전 반">◀</button>
+                    <select id="class-dropdown" class="styled-select">
+                        <option value="">학급을 선택하세요</option>
+                    </select>
+                    <button id="next-class-btn" class="nav-btn" title="다음 반">▶</button>
+                </div>
             </div>
         </section>
 
@@ -94,6 +96,17 @@
 
             </div>
         </main>
+
+        <!-- 전교생 미제출자 섹션 (프리미엄 디자인) -->
+        <section class="admin-only-footer">
+            <button id="all-pending-btn" class="premium-btn" style="display:none;">
+                <span class="btn-icon-pulse">📊</span>
+                전교생 미제출자 명단 확인
+            </button>
+            <div id="all-pending-result" style="display: none; margin-top: 20px;">
+                <!-- 이 아래에 명단이 출력됨 -->
+            </div>
+        </section>
     </div>
 
     <!-- 스크립트 연결 -->

@@ -40,21 +40,26 @@ async function initClassDropdown() {
                     .eq('email', teacherEmail)
                     .single();
 
-                if (!error && teacherData && teacherData.assigned_class) {
-                    dropdown.value = teacherData.assigned_class;
-                    document.getElementById('search-btn').disabled = false;
+                if (!error && teacherData) {
+                    const isAdmin = teacherData.role === 'admin' || teacherData.role === 'owner';
 
-                    // 관리자가 아닌 일반 교사는 다른 반을 조회할 수 없도록 드롭다운 비활성화
-                    if (teacherData.role !== 'admin') {
-                        dropdown.disabled = true;
+                    if (isAdmin) {
+                        document.getElementById('all-pending-btn').style.display = 'inline-block';
                     }
 
-                    // 바로 조회 실행
-                    setTimeout(() => {
+                    if (teacherData.assigned_class) {
+                        dropdown.value = teacherData.assigned_class;
+
+                        // 관리자가 아닌 일반 교사는 다른 반을 조회할 수 없도록 드롭다운 비활성화
+                        if (!isAdmin) {
+                            dropdown.disabled = true;
+                            document.getElementById('prev-class-btn').disabled = true;
+                            document.getElementById('next-class-btn').disabled = true;
+                        }
+
+                        // 바로 조회 실행
                         loadClassSurveyStatus();
-                    }, 100);
-                } else {
-                    console.log("선생님 배정 학급 정보 없음 또는 조회 실패");
+                    }
                 }
             }
         }
@@ -62,15 +67,21 @@ async function initClassDropdown() {
         console.error("선생님 정보 호출 실패:", err);
     }
 
-    // 선택 감지
+    // 선택 감지 시 바로 조회 (관리자/소유자용)
     dropdown.addEventListener('change', () => {
-        const analyzeBtn = document.getElementById('search-btn');
-        analyzeBtn.disabled = !dropdown.value;
+        if (dropdown.value) {
+            loadClassSurveyStatus();
+        }
     });
 }
 
 function setupEventListeners() {
-    document.getElementById('search-btn').addEventListener('click', loadClassSurveyStatus);
+    // 반 이동 버튼
+    document.getElementById('prev-class-btn').addEventListener('click', () => navigateClass(-1));
+    document.getElementById('next-class-btn').addEventListener('click', () => navigateClass(1));
+
+    // 전교생 미제출자 버튼
+    document.getElementById('all-pending-btn').addEventListener('click', loadAllPendingStudents);
 
     // 필터 탭 이벤트
     const tabs = document.querySelectorAll('.filter-tab');
@@ -84,10 +95,27 @@ function setupEventListeners() {
     });
 }
 
+function navigateClass(direction) {
+    const dropdown = document.getElementById('class-dropdown');
+    const currentIndex = dropdown.selectedIndex;
+    if (currentIndex === -1) return;
+
+    let nextIndex = currentIndex + direction;
+    // 범위 체크 (0번째는 "학급을 선택하세요")
+    if (nextIndex < 1) nextIndex = dropdown.options.length - 1;
+    if (nextIndex >= dropdown.options.length) nextIndex = 1;
+
+    dropdown.selectedIndex = nextIndex;
+    loadClassSurveyStatus();
+}
+
 // 1. 학급 명단과 제출 데이터 로드 및 병합
 async function loadClassSurveyStatus() {
     const classInfo = document.getElementById('class-dropdown').value;
     if (!classInfo) return;
+
+    // 전교생 미제출자 결과창 열려있으면 닫기
+    document.getElementById('all-pending-result').style.display = 'none';
 
     // UI 상태 변경
     document.getElementById('welcome-view').style.display = 'none';
@@ -268,19 +296,22 @@ function renderSummary() {
 }
 
 // 3. 학생 리스트 렌더링
-function renderStudentList() {
-    const tbody = document.getElementById('student-tbody');
+function renderStudentList(targetTbodyId = 'student-tbody', data = currentClassData) {
+    const tbody = document.getElementById(targetTbodyId);
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
-    // 필터링 적용
-    const filteredData = currentClassData.filter(d => {
-        if (currentFilter === 'all') return true;
-        if (currentFilter === 'submitted') return d.survey !== null;
-        if (currentFilter === 'pending') return d.survey === null;
-        return true;
-    });
+    // 필터링 적용 (학급 조회용일 때만 필터 적용)
+    let filteredData = data;
+    if (targetTbodyId === 'student-tbody') {
+        filteredData = data.filter(d => {
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'submitted') return d.survey !== null;
+            if (currentFilter === 'pending') return d.survey === null;
+            return true;
+        });
+    }
 
     if (filteredData.length === 0) {
         const tr = document.createElement('tr');
@@ -298,24 +329,34 @@ function renderStudentList() {
             tr.classList.add('miss'); // 배경색 연한 빨강 처리용 클래스
         }
 
-        // 제출 시간 포맷팅
-        let timeStr = '-';
-        if (isSubmitted && item.survey.submitted_at) {
-            const date = new Date(item.survey.submitted_at);
-            timeStr = `${date.getMonth() + 1}월 ${date.getDate()}일 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-        }
-
         // 상태 뱃지
         const statusBadge = isSubmitted
             ? `<span class="badge submitted">제출 완료</span>`
             : `<span class="badge pending">미제출</span>`;
 
-        // 이름 렌더링 (전화번호 툴팁 추가 등 가능)
-        const nameHtml = `<div style="font-weight:bold;">${student['이름'] || student.name}</div>
-                          <div style="font-size:0.8rem; color:#64748b;">${student['연락처'] || student.contact || ''}</div>`;
+        // 이름 렌더링 (이름 밑에 연락처)
+        // 미제출자인데 연락처가 미리 보이는 것은 어색하므로, 제출 완료된 경우에만 노출되거나 강조 표시
+        const contactInfo = isSubmitted ? (student['연락처'] || student.contact || '-') : '-';
+        const nameHtml = `<div style="font-weight:bold; line-height:1.2;">${student['이름'] || student.name}</div>
+                          <div style="font-size:0.75rem; color:${isSubmitted ? '#64748b' : '#cbd5e1'}; margin-top:2px;">${contactInfo}</div>`;
+
+        // 학번/반 정보 표시 최적화
+        let idDisplay = student['학번'] || student.student_id || '';
+        if (student.class_info && !idDisplay.includes(student.class_info)) {
+            idDisplay = `<span style="font-weight:normal; color:#64748b; font-size:0.82em;">${student.class_info}</span><br>${idDisplay}`;
+        }
+
+        // 제출 시간 포맷팅 (2줄 고정)
+        let timeStr = '-';
+        if (isSubmitted && item.survey.submitted_at) {
+            const date = new Date(item.survey.submitted_at);
+            const monthDay = `${date.getMonth() + 1}월 ${date.getDate()}일`;
+            const hourMin = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+            timeStr = `<div style="line-height:1.3;">${monthDay}<br><span style="font-size:0.8em; opacity:0.8;">${hourMin}</span></div>`;
+        }
 
         tr.innerHTML = `
-            <td><strong>${student['학번'] || student.student_id || ''}</strong></td>
+            <td><strong>${idDisplay}</strong></td>
             <td>${nameHtml}</td>
             <td>${statusBadge}</td>
             <td class="submit-time">${timeStr}</td>
@@ -323,4 +364,120 @@ function renderStudentList() {
 
         tbody.appendChild(tr);
     });
+}
+
+/**
+ * 전교생 중 미제출자 명단을 한꺼번에 가져옵니다.
+ */
+async function loadAllPendingStudents() {
+    const resultContainer = document.getElementById('all-pending-result');
+
+    // 이미 열려있으면 닫기 (토글 방식)
+    if (resultContainer.style.display === 'block') {
+        resultContainer.style.display = 'none';
+        return;
+    }
+
+    resultContainer.innerHTML = '<div class="loading-dots" style="padding: 20px;">데이터 분석 중...</div>';
+    resultContainer.style.display = 'block';
+
+    try {
+        // 1. 전교생 명단 가져오기
+        const { data: allStudents, error: sError } = await supabase
+            .from('students')
+            .select('pid, student_id, name, class_info, contact')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .neq('status', 'graduated')
+            .order('student_id', { ascending: true });
+
+        if (sError) throw sError;
+
+        // 2. 전체 설문 데이터의 student_pid 목록 가져오기
+        const { data: surveys, error: surveyError } = await supabase
+            .from('surveys')
+            .select('student_pid');
+
+        if (surveyError) throw surveyError;
+
+        const submittedPids = new Set(surveys.map(s => String(s.student_pid)));
+
+        // 3. 미제출자 필터링
+        const pendingStudents = allStudents.filter(s => !submittedPids.has(String(s.pid)));
+
+        // 4. 반별 미제출 인원 통계 계산
+        const classStats = {};
+        pendingStudents.forEach(s => {
+            const cInfo = s.class_info || '미배정';
+            classStats[cInfo] = (classStats[cInfo] || 0) + 1;
+        });
+
+        // 학급 순서대로 정렬 (1-1, 1-2...)
+        const sortedClasses = Object.keys(classStats).sort((a, b) => {
+            if (a === '미배정') return 1;
+            if (b === '미배정') return -1;
+            const splitA = a.split('-');
+            const splitB = b.split('-');
+            const gA = parseInt(splitA[0]), cA = parseInt(splitA[1]);
+            const gB = parseInt(splitB[0]), cB = parseInt(splitB[1]);
+            return gA !== gB ? gA - gB : cA - cB;
+        });
+
+        // 5. 통계 요약 HTML 생성
+        let statsHtml = `
+            <div class="class-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-bottom: 30px;">
+        `;
+        sortedClasses.forEach(cInfo => {
+            statsHtml += `
+                <div style="background: white; border: 1.5px solid #fee2e2; padding: 12px 6px; border-radius: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); text-align: center;">
+                    <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-bottom: 5px;">${cInfo}</div>
+                    <div style="font-size: 1.2rem; font-weight: 800; color: #ef4444;">${classStats[cInfo]}<span style="font-size: 0.75rem; font-weight: normal; margin-left:2px;">명</span></div>
+                </div>
+            `;
+        });
+        statsHtml += `</div>`;
+
+        // 6. 전체 결과 HTML 조합
+        resultContainer.innerHTML = `
+            <div class="student-list-box" style="margin-top: 15px; border-top: 1px solid var(--border-color); padding: 30px 10px;">
+                <h3 style="font-size: 1.15rem; margin-bottom: 20px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #fee2e2; color: #ef4444; padding: 5px 12px; border-radius: 10px; font-size: 0.85rem;">요약</span>
+                    반별 미제출 현황
+                </h3>
+                
+                ${statsHtml}
+
+                <h3 style="font-size: 1.15rem; margin: 40px 0 20px; color: var(--text-main); font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                    <span style="background: #f1f5f9; color: #475569; padding: 5px 12px; border-radius: 10px; font-size: 0.85rem;">목록</span>
+                    미제출자 상세 명단 (${pendingStudents.length}명)
+                </h3>
+                
+                <table class="status-table">
+                    <thead>
+                        <tr>
+                            <th>반/학번</th>
+                            <th>이름</th>
+                            <th>상태</th>
+                            <th>제출일시</th>
+                        </tr>
+                    </thead>
+                    <tbody id="all-pending-tbody"></tbody>
+                </table>
+            </div>
+        `;
+
+        // 7. 실등 리스트 렌더링
+        const dataForRendering = pendingStudents.map(s => ({
+            student: s,
+            survey: null
+        }));
+
+        renderStudentList('all-pending-tbody', dataForRendering);
+
+        // 결과 영역으로 스크롤 내리기
+        resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (error) {
+        console.error("전체 미제출자 로드 오류:", error);
+        resultContainer.innerHTML = '<div style="color: red; padding: 20px;">데이터 로드 오류가 발생했습니다.</div>';
+    }
 }

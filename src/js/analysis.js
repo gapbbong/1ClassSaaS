@@ -39,7 +39,7 @@ async function initTeacherAuth() {
             console.log("Teacher auth token found.");
             const { data, error } = await supabase
                 .from('teachers')
-                .select('name, email, role, assigned_class')
+                .select('name, email, role, assigned_class, sub_grade, sub_class')
                 .eq('email', teacherEmail.trim().toLowerCase())
                 .maybeSingle();
 
@@ -60,13 +60,19 @@ function hasFullAnalysisAccess(student) {
     if (!currentTeacher) return false;
 
     // 1. 관리자 또는 소유자 (admin, gapbbong@naver.com)
-    if (currentTeacher.role === 'admin' || currentTeacher.email === 'gapbbong@naver.com') return true;
+    if (currentTeacher.role === 'admin' || currentTeacher.email.trim().toLowerCase() === 'gapbbong@naver.com') return true;
 
     // 2. 상담 교사 (counselor)
     if (currentTeacher.role === 'counselor') return true;
 
     // 3. 해당 학급 담임교사
     if (currentTeacher.assigned_class && currentTeacher.assigned_class === student.class_info) return true;
+
+    // 4. 해당 학급 부담임교사
+    if (currentTeacher.sub_grade && currentTeacher.sub_class) {
+        const subClassInfo = `${currentTeacher.sub_grade}-${currentTeacher.sub_class}`;
+        if (subClassInfo === student.class_info) return true;
+    }
 
     return false;
 }
@@ -398,10 +404,15 @@ async function loadStudentAnalysis(pid) {
         const fullAccess = hasFullAnalysisAccess(student);
 
         // 캐시 데이터 로드 시 권한에 따라 섹션 업데이트
+        // 권한에 따른 섹션 업데이트
         updateSectionUI('summary', currentInsight, currentInsight.tags, fullAccess);
-        updateSectionUI('stats', currentInsight.stats, null, true); // Stats는 항상 노출 (요청사항)
+        updateSectionUI('stats', currentInsight.stats, null, true); // 다면평가는 항상 노출
+        updateSectionUI('profile', currentInsight.holistic_analysis, currentInsight.group_role, true); // 프로파일 항상 노출
         updateSectionUI('detective', currentInsight.detective || {}, null, fullAccess);
         updateSectionUI('action', currentInsight.action || "분석 데이터가 없습니다.", null, fullAccess);
+
+        // 시급도 렌더링 (권한 체크 포함됨)
+        renderCounselingPriority(currentInsight.counseling_priority, fullAccess);
 
         renderChart();
     } else {
@@ -535,10 +546,12 @@ async function runBatchAIAnalysis(pid) {
 
         setTimeout(() => {
             updateSectionUI('stats', currentInsight.stats, null, true);
+            updateSectionUI('profile', currentInsight.holistic_analysis, currentInsight.group_role, true);
             renderChart();
         }, 700);
 
         setTimeout(() => {
+            renderCounselingPriority(currentInsight.counseling_priority, fullAccess);
             updateSectionUI('detective', currentInsight.detective, null, fullAccess);
         }, 1000);
 
@@ -876,10 +889,9 @@ function updateSectionUI(type, data, extra, hasAccess = true) {
                             ${typeBadgeHtml}
                             <p style="font-size:1.05rem; line-height:1.7; word-break:keep-all; color:#333; background:#f8fafc; padding:16px; border-radius:12px; margin:0 0 12px 0;">${summaryText}</p>
                             <div>${(extra || []).map(t => `<span class="badge" style="background:var(--ai-primary); color:white; padding:4px 8px; border-radius:4px; font-size:0.85rem; margin-right:6px;">#${t}</span>`).join('')}</div>`;
-
-            // 상담 시급도 및 프로파일 자동 렌더링 호출
-            renderCounselingPriority(data.counseling_priority);
-            renderHolisticProfile(data.holistic_analysis, data.group_role);
+            break;
+        case 'profile':
+            renderHolisticProfile(data, extra);
             break;
         case 'stats':
             el.innerHTML = `<h3 style="color:#4A90E2; margin-top:0;">📊 다면 평가 수치</h3>

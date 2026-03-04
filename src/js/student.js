@@ -1,6 +1,6 @@
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
-import { fetchStudentsByClass, fetchClassInfo, saveRecord, fetchDetailedRecordCounts, fetchClassSurveysForContacts } from './api.js';
+import { fetchStudentsByClass, fetchClassInfo, saveRecord, fetchDetailedRecordCounts, fetchClassSurveysForContacts, getTeacherProfile } from './api.js';
 import { supabase } from './supabase.js';
 import CryptoJS from 'crypto-js';
 
@@ -55,6 +55,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     // DB에서 교사 정보 호출
     const classInfo = await fetchClassInfo();
     window.classInfoData = classInfo; // 전역 저장
+
+    // [추가] 현재 교사 프로필 및 권한 정보 로드
+    const myEmail = getFullStoredEmail();
+    if (myEmail) {
+        window.currentTeacher = await getTeacherProfile(myEmail);
+    }
 
     // 1. 타이틀 및 교사 정보 설정
     setupHeader(classInfo);
@@ -252,7 +258,8 @@ function setupEventListeners(classInfo) {
         const myEmail = getFullStoredEmail();
         const currentClassInfo = classInfo ? classInfo.find(c => c.grade === grade && c.class === classNum) : null;
 
-        const isMyClass = currentClassInfo && (currentClassInfo.homeroomEmail === myEmail || currentClassInfo.subEmail === myEmail || myEmail === 'assari@kse.hs.kr');
+        const isAdmin = window.currentTeacher && (window.currentTeacher.role === 'admin' || window.currentTeacher.role === 'counselor' || window.currentTeacher.email.toLowerCase() === 'gapbbong@naver.com');
+        const isMyClass = isAdmin || (currentClassInfo && (currentClassInfo.homeroomEmail === myEmail || currentClassInfo.subEmail === myEmail || myEmail === 'assari@kse.hs.kr'));
 
         if (isMyClass) {
             if (surveyBtn) {
@@ -707,14 +714,18 @@ async function showPopup(student) {
         }
     });
 
-    // 권한 확인 (본인 학급 담임/부담임 여부)
+    // 권한 확인 (본인 학급 담임/부담임 여부 또는 관리자)
     const myEmail = getFullStoredEmail();
     const currentClassInfo = window.classInfoData ? window.classInfoData.find(c => c.grade === grade && c.class === classNum) : null;
-    const isAuthorized = currentClassInfo && (
+
+    // 관리자/소유자/상담교사 권한 체크
+    const isAdmin = window.currentTeacher && (window.currentTeacher.role === 'admin' || window.currentTeacher.role === 'counselor' || window.currentTeacher.email.toLowerCase() === 'gapbbong@naver.com');
+
+    const isAuthorized = isAdmin || (currentClassInfo && (
         currentClassInfo.homeroomEmail === myEmail ||
         currentClassInfo.subEmail === myEmail ||
         myEmail === 'assari@kse.hs.kr'
-    );
+    ));
 
     if (!isAuthorized) {
         infoHtml3 = `<div class="no-access-msg" style="padding:20px; text-align:center; color:#999; font-size:0.9em;">
