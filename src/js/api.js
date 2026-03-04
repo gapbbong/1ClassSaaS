@@ -576,16 +576,23 @@ export async function fetchClassRecords(classInfo) {
 /**
  * 특정 반의 학생 목록만 가져옵니다. (Supabase 버전)
  */
-export async function fetchStudentsByClass(grade, classNum) {
+export async function fetchStudentsByClass(grade, classNum, year = null) {
     try {
+        const targetYear = year || API_CONFIG.CURRENT_ACADEMIC_YEAR;
         const classTarget = `${grade}-${classNum}`;
-        const { data, error } = await supabase
+        let query = supabase
             .from('students')
             .select('*')
             .eq('class_info', classTarget)
-            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
-            .neq('status', 'graduated')
+            .eq('academic_year', targetYear)
             .order('student_id', { ascending: true });
+
+        // 현재 학년도가 아닐 경우(아카이브) 졸업생 여부와 관계없이 모두 가져옵니다.
+        if (targetYear === API_CONFIG.CURRENT_ACADEMIC_YEAR) {
+            query = query.neq('status', 'graduated');
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         return data.map(mapStudentData);
@@ -769,5 +776,22 @@ export async function deleteRecordComment(commentId) {
     } catch (error) {
         console.error("Delete Comment Error:", error);
         throw new Error("삭제 권한이 없거나 실패했습니다.");
+    }
+}
+
+/**
+ * 모든 교사 정보를 가져옵니다.
+ */
+export async function fetchAllTeachers() {
+    try {
+        const { data, error } = await supabase
+            .from('teachers')
+            .select('*');
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error("Fetch All Teachers Error:", error);
+        return [];
     }
 }

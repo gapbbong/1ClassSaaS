@@ -34,7 +34,7 @@ async function sleep(ms) {
 }
 
 async function callGemini(promptText, retries = 5) {
-    const model = 'gemini-2.0-flash';
+    const model = 'gemini-1.5-flash'; // 2.0 보다 할당량이 안정적인 1.5 Flash로 전환
 
     for (let i = 1; i <= retries; i++) {
         let keysAttemptedInThisTurn = 0;
@@ -58,13 +58,13 @@ async function callGemini(promptText, retries = 5) {
 
                     if (keysAttemptedInThisTurn < GEMINI_KEYS.length) {
                         rotateKey();
-                        console.log(`-> 구글의 감시를 피해 40초간 정적으로 대기한 후 다음 계정을 사용합니다...`);
-                        await sleep(40000);
+                        console.log(`-> 안전을 위해 60초간 숨을 고른 뒤 다음 계정으로 재시도합니다...`);
+                        await sleep(60000);
                         continue;
                     } else {
-                        const waitTime = 900000; // 15분 (900초) 초강력 숙면
+                        const waitTime = 600000; // 10분으로 약간 단축하되 더 자주 체크
                         console.error(`\n🚨 모든 계정의 한도가 일시적으로 막혔습니다.`);
-                        console.error(`🚨 IP 차단 해제를 위해 15분간 전체 분석을 중단하고 숙면 모드에 진입합니다...`);
+                        console.error(`🚨 10분간 분석 마라톤을 중단하고 휴식 모드에 진입합니다...`);
                         await sleep(waitTime);
                         rotateKey();
                         keysAttemptedInThisTurn = 0;
@@ -106,7 +106,7 @@ async function callGemini(promptText, retries = 5) {
 
 async function main() {
     console.log("\n==================================================");
-    console.log("🚀 백그라운드 AI 분석 엔진 (초정밀 모드 V3.2) 가동");
+    console.log("🚀 백그라운드 AI 분석 엔진 (안정화 모드 V3.3) 가동");
     console.log(`-> 연동된 API 계정: ${GEMINI_KEYS.length}개`);
     console.log("==================================================\n");
 
@@ -131,7 +131,7 @@ async function main() {
             return;
         }
 
-        const CHUNK_SIZE = 2; // 구글의 의심을 사지 않도록 2명씩 조심스럽게 처리합니다.
+        const CHUNK_SIZE = 2;
         for (let i = 0; i < targetStudents.length; i += CHUNK_SIZE) {
             const chunk = targetStudents.slice(i, i + CHUNK_SIZE);
             const names = chunk.map(s => s.name).join(', ');
@@ -139,7 +139,12 @@ async function main() {
             console.log(`📦 [섹션 ${Math.floor(i / CHUNK_SIZE) + 1}] 분석 진행 중: ${names}`);
 
             const studentsContext = chunk.map(student => {
-                const survey = surveys.find(s => s.student_pid === student.pid)?.data || {};
+                const rawSurvey = surveys.find(s => s.student_pid === student.pid)?.data || {};
+
+                // 데이터 다이어트: 분석에 불필요한 개인정보 항목 제거하여 토큰 절약
+                const cleanSurvey = { ...rawSurvey };
+                ['입력시간', '비밀번호', '학생폰', '주보호자연락처', '보조보호자연락처', '집주소', '상세주소'].forEach(k => delete cleanSurvey[k]);
+
                 const records = allRecords
                     .filter(r => r.student_pid === student.pid && r.content && r.content.trim().length > 5)
                     .map(r => ({ category: r.category, content: r.content }));
@@ -148,18 +153,22 @@ async function main() {
                     pid: student.pid,
                     name: student.name,
                     gender: student.gender,
-                    class_info: student.class_info,
-                    survey,
+                    survey: cleanSurvey,
                     records
                 };
             });
 
             const promptText = `
-다음 학생들의 정보를 개별적으로 분석하여 JSON 배열 형식으로 답변하세요.
+다음 학생들의 정보를 개별적으로 정밀 분석하여 JSON 배열 형식으로 답변하세요.
 데이터: ${JSON.stringify(studentsContext)}
 
+분석 방향:
+1. 학생의 장단점 및 특이사항 발견
+2. 선생님이 유의해서 보아야 할 생활지도 포인트 추출
+3. 전체적인 심리 상태 및 태도 요약
+
 반드시 아래 형식의 JSON 배열로만 답변하세요:
-[{"pid": "학생의 pid", "analysis": {"summary": "요약", "student_type": "성향", "tags": ["키워드"], ...}}]
+[{"pid": "학생의 pid", "analysis": {"summary": "...", "student_type": "...", "tags": ["..."], "attitude": "...", "needs_care": boolean}}]
 `;
 
             try {
@@ -176,11 +185,11 @@ async function main() {
                 const { error: insertErr } = await supabase.from('student_insights').insert(insertData);
                 if (insertErr) throw insertErr;
 
-                console.log(`  ✔️ ${insertData.length}명 분석 데이터가 DB에 무사히 안착했습니다.`);
+                console.log(`  ✔️ ${insertData.length}명 분석 완료!`);
 
                 if (i + CHUNK_SIZE < targetStudents.length) {
-                    console.log(`  ⏳ 다음 호출까지 60초간 평화를 유지합니다...`);
-                    await sleep(60000);
+                    console.log(`  ⏳ 다음 호출까지 70초간 평화를 유지합니다... (할당량 방어용)`);
+                    await sleep(70000);
                 }
 
             } catch (err) {

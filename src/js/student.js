@@ -43,8 +43,15 @@ function maskEmailPrefix(prefix) {
 const urlParams = new URLSearchParams(window.location.search);
 const grade = parseInt(urlParams.get("grade"));
 const classNum = parseInt(urlParams.get("class"));
+const year = urlParams.get("year"); // 2025 등 추가
 
 document.addEventListener("DOMContentLoaded", async () => {
+    // 0. 아카이브 모드(2025)인 경우 타이틀 및 일부 버튼 제어
+    if (year === '2025') {
+        const surveyBtn = document.getElementById("survey-viewer-btn");
+        if (surveyBtn) surveyBtn.style.display = 'none'; // 과거 데이터는 분석 기능 비활성화
+    }
+
     // DB에서 교사 정보 호출
     const classInfo = await fetchClassInfo();
     window.classInfoData = classInfo; // 전역 저장
@@ -59,7 +66,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners(classInfo);
 
     // 4. 안내 메시지 추가
-    setupGuidance();
+    // 아카이브 모드일 때는 팁 안보여줌
+    if (year !== '2025') {
+        setupGuidance();
+    }
 
     // 5. 서비스 워커 등록
     registerServiceWorker();
@@ -275,10 +285,18 @@ function loadStudents() {
 
     const classKey = `${grade}-${classNum}`;
 
-    Promise.all([
-        fetchStudentsByClass(grade, classNum),
-        fetchDetailedRecordCounts(classKey)
-    ])
+    // 2025년도 아카이브는 실시간 배지가 불필요하므로 건너뜁니다
+    const fetchPromises = [
+        fetchStudentsByClass(grade, classNum, year)
+    ];
+
+    if (year !== '2025') {
+        fetchPromises.push(fetchDetailedRecordCounts(classKey));
+    } else {
+        fetchPromises.push(Promise.resolve({})); // 빈 객체로 채움
+    }
+
+    Promise.all(fetchPromises)
         .then(([data, detailedCounts]) => {
             list.classList.remove("loading");
             list.innerHTML = "";
@@ -1456,11 +1474,17 @@ function goToRelativeClass(direction) {
     if (g < 1) g = 3;
     if (g > 3) g = 1;
 
-    window.location.href = `stu-list.html?grade=${g}&class=${c}`;
+    let targetUrl = `stu-list.html?grade=${g}&class=${c}`;
+    if (year) targetUrl += `&year=${year}`;
+    window.location.href = targetUrl;
 }
 
 function goHome() {
-    window.location.href = "index.html";
+    if (year === '2025') {
+        window.location.href = "index-2025.html";
+    } else {
+        window.location.href = "index.html";
+    }
 }
 
 // 서비스 워커 등록
