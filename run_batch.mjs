@@ -49,35 +49,47 @@ async function main() {
     console.log(`\n🔥 [날카로운 심화 분석 모드 V12.1] 실행 중...`);
 
     try {
-        // 1. 재분석 대상 선정 (1학년 4반 전체 + 최근 3시간 내 분석된 학생)
-        const threeHoursAgo = new Date(Date.now() - (3 * 3600000)).toISOString();
-
-        const { data: recentInsights, error: insError } = await supabase
-            .from('student_insights')
-            .select('student_pid')
-            .eq('insight_type', 'omni')
-            .gt('analyzed_at', threeHoursAgo);
-
-        if (insError) throw new Error("분석 기록 조회 실패: " + insError.message);
-
-        // 1학년 4반 학생들도 강제로 포함
-        const { data: class4Students } = await supabase
+        // 1. 모든 학생 조회
+        const { data: allStudents } = await supabase
             .from('students')
             .select('pid')
-            .eq('class_info', '1-4')
             .eq('academic_year', 2026);
 
-        const targetPidSet = new Set((recentInsights || []).map(i => i.student_pid));
-        (class4Students || []).forEach(s => targetPidSet.add(s.pid));
+        const allPids = allStudents.map(s => s.pid);
+
+        // 2. 가장 최근 분석 내역들 조회
+        const { data: allInsights } = await supabase
+            .from('student_insights')
+            .select('student_pid, content')
+            .eq('insight_type', 'omni')
+            .order('analyzed_at', { ascending: false });
+
+        const targetPidSet = new Set();
+
+        for (const student of allStudents) {
+            const latestInsight = allInsights.find(i => i.student_pid === student.pid);
+
+            if (!latestInsight) {
+                targetPidSet.add(student.pid);
+            } else {
+                const content = latestInsight.content;
+                const hasStats = content && content.stats && typeof content.stats === 'object' && Object.keys(content.stats).length > 0;
+                const hasHolistic = content && content.holistic_analysis && typeof content.holistic_analysis === 'object' && Object.keys(content.holistic_analysis).length > 0;
+
+                if (!hasStats || !hasHolistic) {
+                    targetPidSet.add(student.pid);
+                }
+            }
+        }
 
         const targetPids = Array.from(targetPidSet);
 
         if (targetPids.length === 0) {
-            console.log("🎯 재분석 대상자가 없습니다.");
+            console.log("🎯 모든 학생이 최신 버전으로 분석되어 있습니다.");
             return;
         }
 
-        console.log(`🎯 재분석 대상: ${targetPids.length}명 (1-4반 및 최근 분석 대상)`);
+        console.log(`🎯 재분석 대상: ${targetPids.length}명 (최신 지표 누락 또는 미분석)`);
 
         // 2. 데이터 벌크 로드
         const { data: stds } = await supabase.from('students').select('*').in('pid', targetPids);
@@ -119,13 +131,23 @@ async function main() {
               {
                 "pid": "학생pid",
                 "analysis": {
-                  "summary": "학생의 본질을 꿰뚫는 강렬한 한 문장",
-                  "student_type": "철학적이고 핵심적인 유형명",
-                  "tags": ["심리태그1", "관리주의", "교우관계"],
-                  "counseling_priority": 1~5,
-                  "holistic_analysis": "학생의 심리/행동 양식에 대한 고도의 전문적 분석 (최소 4-5줄)",
-                  "group_role": "학급 내 영향력 및 상호작용 방식",
-                  "stats": {"감성": 0~100, "사교": 0~100, "성취": 0~100, "안정": 0~100},
+                  "summary": "학생의 전반적인 특징을 요약한 3줄 문장",
+                  "student_type": "학생의 핵심 성향 (1~2단어)",
+                  "tags": ["키워드1", "키워드2", "키워드3"],
+                  "counseling_priority": {
+                    "level": "시급/주의/관심/안정 중 택1",
+                    "reason": "해당 순위로 판단한 AI 소견 (1문장)"
+                  },
+                  "holistic_analysis": {
+                    "career": "목표지향형/탐색형/방황형 중 택1",
+                    "disposition": "내향 집중형/외향 활동형/균형형 중 택1",
+                    "family": "보호 안정형/정서 의존형/책임 조기성숙형 중 택1",
+                    "hobby_life": "경쟁 몰입형/창작 몰입형/소비형 중 택1",
+                    "rhythm": "건강 안정형/수면 부족형 중 택1",
+                    "emotion": "자기 인식형/고민 내재형/도움 요청형 중 택1"
+                  },
+                  "group_role": "리더형/전략가형/실행형/분위기 메이커형/자료 탐색형/책임 분산형/독주형 중 택1",
+                  "stats": {"study": 85, "routine": 70, "emotion": 90, "social": 80, "self": 75, "resilience": 88},
                   "detective": {"clues": ["실제 답변 내용"], "deduction": "답변 이면의 심리적 통찰"},
                   "action": "교사를 위한 실전적 밀착 지도 팁"
                 }

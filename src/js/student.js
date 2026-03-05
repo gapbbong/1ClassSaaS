@@ -941,6 +941,18 @@ window.showActionModal = function (student) {
                 <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
                    <span class="action-icon">🧠</span> 학생 분석
                 </button>
+                <button class="action-btn" onclick="showCounsel(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#fff9db; border-color:#ffe066; color:#e67e22;">
+                   <span class="action-icon">💬</span> 상담 기록 작성
+                </button>
+                <button class="action-btn" onclick="showRecord(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">📒</span> 생활기록 작성
+                </button>
+                <button class="action-btn" onclick="openAttendanceModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">🏃</span> 근태기록 (조퇴/외출)
+                </button>
+                <button class="action-btn" onclick="openStatusModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
+                   <span class="action-icon">🪪</span> 학적상태 변경
+                </button>
             </div>
         </div>
     `;
