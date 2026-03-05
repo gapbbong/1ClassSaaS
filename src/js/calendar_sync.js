@@ -11,12 +11,14 @@ const CONFIG = {
     DOCS: {
         PLANNING: '1AdtB1ed5T3kAdwEZZN7EWVKUwK0-Q0bV', // 기획협의회 폴더 ID
         MONTHLY: '1qZ2NZPBJZiticNtzYUhwiBRkwUF2ORyb',  // 월중행사계획표 폴더 ID
-        ACADEMIC: '1VKHdSREQbEcCTcFFgwWxAcNbMxSx_kYgcwxvyMcWeJk' // 학사일정 스프레드시트 ID
+        ACADEMIC: '1VKHdSREQbEcCTcFFgwWxAcNbMxSx_kYgcwxvyMcWeJk', // 학사일정 스프레드시트 ID
+        CREATIVE: '1iqMpHw9VW7Xz6hwTFr7WUC36v4ibtZRuUHfsKVpexr8' // 창체운영계획 스프레드시트 ID
     },
     PREFIX: {
         PLANNING: '[기획]',
         MONTHLY: '[월중]',
-        ACADEMIC: '[학사]'
+        ACADEMIC: '[학사]',
+        CREATIVE: '[창체]'
     }
 };
 
@@ -27,6 +29,57 @@ function syncAllSchedules() {
     syncAcademicSchedule(calendar);
     syncMonthlySchedule(calendar);
     syncPlanningMeeting(calendar);
+    syncCreativeActivities(calendar);
+}
+
+/**
+ * 4. 창체운영계획 파싱
+ * 구조: A열(날짜: "2026년 03 06일 금" 등), E열(6교시), F열(7교시)
+ */
+function syncCreativeActivities(calendar) {
+    const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
+    const sheet = ss.getSheets()[0];
+    const data = sheet.getDataRange().getValues();
+
+    Logger.log("[창체] 동기화 중...");
+
+    for (let r = 1; r < data.length; r++) { // 1행(헤더) 제외
+        const dateStr = data[r][0]?.toString() || "";
+        const topic6 = data[r][4]?.toString().trim() || "";
+        const topic7 = data[r][5]?.toString().trim() || "";
+
+        if (dateStr && (topic6 || topic7)) {
+            // 정규식 강화: "3월 6일" 형태 또는 "03 06일" 형태 모두 대응
+            const dateMatch = dateStr.match(/(\d+)월\s*(\d+)일/) ||
+                dateStr.match(/(\d+)\s+(\d+)일/);
+
+            if (dateMatch) {
+                const m = parseInt(dateMatch[1]);
+                const d = parseInt(dateMatch[2]);
+                const y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const date = new Date(y, m - 1, d);
+
+                // 유효한 주제인지 확인 (단순 숫자나 수업마커 제외)
+                const filterGarbage = (t) => {
+                    if (!t || /^\d+$/.test(t) || /^[월화수목금]\d+$/.test(t) || t.length < 2) return "";
+                    return t;
+                };
+
+                const f6 = filterGarbage(topic6);
+                const f7 = filterGarbage(topic7);
+
+                if (f6 || f7) {
+                    let combinedTopic = (f6 && f7) ? `${f6} / ${f7}` : (f6 || f7);
+                    const title = CONFIG.PREFIX.CREATIVE + " " + combinedTopic;
+
+                    if (!isAlreadyExists(calendar, title, date)) {
+                        calendar.createAllDayEvent(title, date, { description: `6교시: ${topic6}\n7교시: ${topic7}` });
+                        Logger.log(`[창체] 추가: ${m}/${d} - ${combinedTopic}`);
+                    }
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -53,18 +106,22 @@ function syncAcademicSchedule(calendar) {
         // 월~금 (Index 2, 4, 6, 8, 10)
         for (let c = 2; c <= 10; c += 2) {
             const day = data[r][c];
-            const eventName = data[r][c + 1];
+            const eventName = data[r][c + 1]?.toString().trim() || "";
 
-            if (day && !isNaN(day) && eventName && eventName.toString().trim().length > 1) {
-                // 주간 단위 배치로 인해 이전 달 날짜가 포함된 경우 처리 (예: 4월 1주 로우에 3/30이 있는 경우)
+            // 유효한 형태인지 확인 (단순 숫자나 '월1', '화2' 같은 수업 시수 데이터는 제외)
+            const isGarbage = !eventName ||
+                /^\d+$/.test(eventName) ||
+                /^[월화수목금]\d+$/.test(eventName) ||
+                eventName.length < 2;
+
+            if (day && !isNaN(day) && !isGarbage) {
+                // 주간 단위 배치로 인해 이전 달 날짜가 포함된 경우 처리
                 let actualMonth = rowMonth;
-                if (day > 20 && c < 6) { // 월/화인데 날짜가 크면 이전 달일 확률 높음
-                    if (rowMonth > 1) actualMonth = rowMonth - 1;
-                }
+                if (day > 20 && c < 6 && rowMonth > 1) actualMonth = rowMonth - 1;
 
                 const year = (actualMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
                 const date = new Date(year, actualMonth - 1, parseInt(day));
-                const title = CONFIG.PREFIX.ACADEMIC + " " + eventName.toString().trim();
+                const title = CONFIG.PREFIX.ACADEMIC + " " + eventName;
 
                 if (!isAlreadyExists(calendar, title, date)) {
                     calendar.createAllDayEvent(title, date, { description: "출처: 학사일정" });

@@ -114,10 +114,11 @@ function updateDynamicCalendar() {
   if (calendarLink) {
     const isMobile = window.innerWidth <= 768;
     const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
-    const mode = isMobile ? "WEEK" : "MONTH";
+    const mode = isMobile ? "week" : "month";
+    const wkst = 1; // 1: Sunday
 
-    // Google Calendar r/ 모드를 사용하여 뷰를 강제합니다.
-    calendarLink.href = `https://calendar.google.com/calendar/u/0/r/${mode.toLowerCase()}?cid=${cid}`;
+    // Google Calendar r/ 모드를 사용하여 뷰를 강제하고, wkst=1로 일요일 시작 요청
+    calendarLink.href = `https://calendar.google.com/calendar/u/0/r/${mode}?cid=${cid}&wkst=${wkst}`;
   }
 }
 
