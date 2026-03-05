@@ -112,13 +112,16 @@ function updateDynamicCalendar() {
 
   // 2. 반응형 캘린더 뷰 링크 설정
   if (calendarLink) {
-    const isMobile = window.innerWidth <= 1024; // 태블릿 포함 임계값 상향
+    const isMobile = window.innerWidth <= 1024;
     const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
-    const mode = isMobile ? "week" : "month";
-    const wkst = 1; // 1: Sunday
 
-    // Google Calendar r/ 모드를 사용하여 뷰를 강제하고, wkst=1로 일요일 시작 요청
-    calendarLink.href = `https://calendar.google.com/calendar/u/0/r/${mode}?cid=${cid}&wkst=${wkst}`;
+    if (isMobile) {
+      // 모바일 최적화 뷰 (gp=1 또는 mu 모드)
+      calendarLink.href = `https://calendar.google.com/calendar/u/0/gp?cid=${cid}`;
+    } else {
+      // PC 모드 (r/month)
+      calendarLink.href = `https://calendar.google.com/calendar/u/0/r/month?cid=${cid}&wkst=1`;
+    }
   }
 }
 

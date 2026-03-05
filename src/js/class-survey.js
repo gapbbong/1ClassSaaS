@@ -19,6 +19,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("survey-list").classList.remove("loading");
     }
 
+    // 수정: '사진 명렬'로 돌아가는 뒤로가기 버튼 설정
+    const backBtn = document.querySelector(".back-btn");
+    if (backBtn && grade && classNum) {
+        backBtn.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = `stu-list.html?grade=${grade}&class=${classNum}`;
+        };
+    }
+
     // 필터링 이벤트 등록
     document.getElementById("search-input").addEventListener("input", renderSurveys);
     document.getElementById("filter-select").addEventListener("change", renderSurveys);

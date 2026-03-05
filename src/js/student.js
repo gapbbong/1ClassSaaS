@@ -666,10 +666,7 @@ async function showPopup(student) {
 
         return `<div class="detail-info-row">
             <span class="detail-label">${label}</span>
-            <span class="detail-value">
-                ${displayVal} 
-                ${(isPhone && valStr !== ".") ? `<a href="tel:${valStr}" class="contact-icon">📞</a>` : ''} 
-            </span>
+            <span class="detail-value">${displayVal}</span>
         </div>`;
     };
 
@@ -743,12 +740,13 @@ async function showPopup(student) {
 
     popup.innerHTML = `
         <div class="popup-header">
+            <button class="close-btn back-link" onclick="closePopup()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#64748b;">◀</button>
             <div class="popup-title-center">
-                <span class="student-id-badge">${student["학번"]}</span>
+                <span class="student-id-badge"><strong>${student["학번"]}</strong></span>
                 <span class="student-name-text">${student["이름"]}</span>
-                <button class="popup-record-btn" onclick="showRecord(${escapedStudent})">📒 생활기록 작성</button>
+                <button class="popup-analysis-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#4A90E2; color:#4A90E2; padding: 4px 10px; border-radius: 8px; font-weight: 800; border: 1.5px solid; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.9rem;">🧠 분석</button>
             </div>
-            <button class="close-btn" onclick="closePopup()">✕</button>
+            <button class="close-btn" onclick="closePopup()" style="visibility: hidden;">✕</button>
         </div>
         
         <div class="popup-content-layout">

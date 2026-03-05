@@ -385,6 +385,7 @@ async function loadStudentAnalysis(pid) {
         if (idx === -1) return;
         const targetIdx = idx + dir;
         if (targetIdx >= 0 && targetIdx < window.currentClassStudents.length) {
+            window.scrollTo(0, 0); // 페이지 상단으로 이동
             loadStudentAnalysis(window.currentClassStudents[targetIdx].pid);
         }
     };

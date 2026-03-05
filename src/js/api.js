@@ -67,9 +67,12 @@ function mapStudentData(s) {
         "번호": s.student_id ? parseInt(s.student_id.slice(-2)) : 0,
         "사진저장링크": s.photo_url,
         "연락처": s.contact || "",
+        "학생폰": s.contact || "", // 검색 페이지 연동용
         "인스타": s.instagram || s.insta || "",
         "생년월일": s.birth_date || "",
         "주소": s.address || "",
+        "집주소": s.address || "", // 검색 페이지 연동용
+        "출신중": s.middle_school || s["출신중"] || "", // 검색 페이지 연동용
         "보호자연락처": s.parent_contact || "",
         "보호자관계": s.parent_relation || "",
         "학적": s.status === 'active' ? '재학' : (s.status === 'transferred' ? '전출' : (s.status === 'withdrawn' ? '자퇴' : s.status)),
@@ -77,22 +80,35 @@ function mapStudentData(s) {
 }
 
 /**
- * 학생 정보를 검색합니다. (Supabase 버전)
+ * 학생 정보를 검색합니다. (Supabase 버전 + 설문 데이터 통합)
  * @returns {Promise<Array>} 학생 목록
  */
 export async function fetchAllStudents() {
     try {
+        // students와 surveys를 left join하여 한꺼번에 가져옵니다.
         const { data, error } = await supabase
             .from('students')
-            .select('*')
+            .select('*, surveys(data)')
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .neq('status', 'graduated')
             .order('student_id', { ascending: true });
 
         if (error) throw error;
-        return data.map(mapStudentData);
+
+        return data.map(s => {
+            const surveyData = s.surveys && s.surveys.length > 0 ? s.surveys[0].data : {};
+            const mapped = mapStudentData(s);
+
+            // 설문 데이터 통합 (기존 학생 마스터 정보가 없으면 설문에서 채움)
+            return {
+                ...mapped,
+                "출신중": mapped["출신중"] || surveyData["출신중"] || surveyData["출신 중학교"] || surveyData["중학교"] || "",
+                "집주소": mapped["집주소"] || surveyData["집주소"] || surveyData["주소"] || "",
+                "학생폰": mapped["학생폰"] || surveyData["학생폰"] || surveyData["연락처"] || surveyData["학생 연락처"] || "",
+            };
+        });
     } catch (error) {
-        console.error("Supabase Fetch Error:", error);
+        console.error("Supabase Fetch All Students Error:", error);
         throw new Error("학생 데이터를 불러오지 못했습니다.");
     }
 }
@@ -519,7 +535,8 @@ export async function fetchClassSurveysForContacts(grade, classNum) {
         const { data, error } = await supabase
             .from('surveys')
             .select('*')
-            .in('student_pid', pids);
+            .in('student_pid', pids)
+            .order('submitted_at', { ascending: false });
 
         if (error) throw error;
         return data || [];

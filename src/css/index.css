@@ -34,14 +34,14 @@
 }
 
 .dynamic-calendar-icon {
-    width: 36px;
-    height: 38px;
+    width: 45px;
+    height: 48px;
     background: #fff;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     border: 1px solid #ddd;
 }
 
@@ -49,9 +49,9 @@
     background: #ea4335;
     /* Google Calendar Red */
     color: white;
-    font-size: 0.55rem;
+    font-size: 0.7rem;
     font-weight: 800;
-    padding: 2px 0;
+    padding: 3px 0;
     text-align: center;
     text-transform: uppercase;
 }
@@ -61,7 +61,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1.4rem;
     font-weight: 900;
     color: #3c4043;
     background: #ffffff;
