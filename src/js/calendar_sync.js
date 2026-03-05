@@ -1,59 +1,46 @@
 /**
- * 학교 일정 통합 자동화 비서 (V1.9 - 꼬리말 방식 및 창체 최적화)
- * 
- * 기능: 학사(연간), 월중, 기획, 창체 데이터를 읽어 구글 캘린더로 자동 동기화
+ * 학교 일정 통합 자동화 비서 (V2.1 - 창체 파싱 해결 및 꼬리말 강제 적용)
  */
 
 const CONFIG = {
     CALENDAR_ID: 'ks.cal153@gmail.com',
     YEAR: 2026,
     DOCS: {
-        PLANNING: '1AdtB1ed5T3kAdwEZZN7EWVKUwK0-Q0bV', // 기획협의회 폴더 ID
-        MONTHLY: '1qZ2NZPBJZiticNtzYUhwiBRkwUF2ORyb',  // 월중행사계획표 폴더 ID
-        ACADEMIC: '1VKHdSREQbEcCTcFFgwWxAcNbMxSx_kYgcwxvyMcWeJk', // 학사일정 스프레드시트 ID
-        CREATIVE: '1iqMpHw9VW7Xz6hwTFr7WUC36v4ibtZRuUHfsKVpexr8' // 창체운영계획 스프레드시트 ID
+        PLANNING: '1AdtB1ed5T3kAdwEZZN7EWVKUwK0-Q0bV',
+        MONTHLY: '1qZ2NZPBJZiticNtzYUhwiBRkwUF2ORyb',
+        ACADEMIC: '1VKHdSREQbEcCTcFFgwWxAcNbMxSx_kYgcwxvyMcWeJk',
+        CREATIVE: '1iqMpHw9VW7Xz6hwTFr7WUC36v4ibtZRuUHfsKVpexr8'
     },
     PREFIX: {
         PLANNING: '[기획]',
         MONTHLY: '[월중]',
-        ACADEMIC: '[연간]', // 학사 -> 연간으로 변경
+        ACADEMIC: '[연간]',
         CREATIVE: '[창체]'
     }
 };
 
-/**
- * 전체 동기화 실행 함수
- */
 function syncAllSchedules() {
     const calendar = CalendarApp.getCalendarById(CONFIG.CALENDAR_ID);
     if (!calendar) return Logger.log("❌ 오류: 캘린더를 찾을 수 없습니다.");
 
-    Logger.log("=== 프로세스 시작 (V1.9) ===");
-
-    // 1. 기존 일정 클린업 (머리말/꼬리말 방식 모두 대응)
+    Logger.log("=== 프로세스 시작 (V2.1) ===");
     cleanupGarbageEvents(calendar);
-
-    // 2. 각 일정별 동기화
     syncAcademicSchedule(calendar);
     syncMonthlySchedule(calendar);
     syncPlanningMeeting(calendar);
     syncCreativeActivities(calendar);
-
     Logger.log("=== 모든 프로세스 종료 ===");
 }
 
-/**
- * 꼬리말/머리말 방식 및 쓰레기 데이터 삭제
- */
 function cleanupGarbageEvents(calendar) {
-    Logger.log("🧹 클린업 시작 (오늘 이후 일정만 대상)...");
-    const startTime = new Date(); // 오늘부터 시작
-    startTime.setHours(0, 0, 0, 0); // 오늘 0시부터
+    Logger.log("🧹 클린업 시작 (오늘 이후 일정 대상, 구버전 머리말 강제 삭제)...");
+    const startTime = new Date();
+    startTime.setHours(0, 0, 0, 0);
     const endTime = new Date(CONFIG.YEAR + 1, 1, 28);
     const events = calendar.getEvents(startTime, endTime);
     let count = 0;
 
-    // 이전 버전의 머리말들과 현재 꼬리말들 모두 체크
+    // 머리말 방식들을 찾아 삭제하여 꼬리말 방식으로 교체되도록 유도
     const markers = ['[기획]', '[월중]', '[학사]', '[연간]', '[창체]'];
 
     events.forEach(event => {
@@ -61,10 +48,13 @@ function cleanupGarbageEvents(calendar) {
         let shouldDelete = false;
 
         markers.forEach(m => {
-            if (title.startsWith(m) || title.endsWith(m)) {
-                // 특정 키워드 제거 후 남은 내용 분석
+            // 1. [머리말] 방식이면 무조건 삭제 (꼬리말로 교체 위함)
+            if (title.startsWith(m)) {
+                shouldDelete = true;
+            }
+            // 2. [꼬리말] 방식인데 내용이 쓰레기거나 중복 시간 지정이면 삭제
+            else if (title.endsWith(m)) {
                 const content = title.replace(m, "").replace("( )", "").trim();
-                // 쓰레기 데이터이거나, 시간이 설정된 구버전 기획 일정이면 삭제
                 if (isGarbageContent(content) || (m === '[기획]' && !event.isAllDayEvent())) {
                     shouldDelete = true;
                 }
@@ -82,18 +72,15 @@ function cleanupGarbageEvents(calendar) {
 function isGarbageContent(text) {
     if (!text) return true;
     const t = text.toString().trim();
-    return /^\d+$/.test(t) || /^[월화수목금]\d+$/.test(t) || t.length < 2;
+    // 숫자만 있거나, '월1' 같은 수업교시만 있거나, 1글자 이하면 무시 (창체 제외)
+    return /^\d+$/.test(t) || /^[월화수목금]\d+$/.test(t) || (t.length < 2 && t !== "창" && t !== "체");
 }
 
-/**
- * 1. 연간(학사)일정 파싱
- */
 function syncAcademicSchedule(calendar) {
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
     const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
     let rowMonth = 3;
-
     for (let r = 0; r < data.length; r++) {
         if (data[r][0]) {
             const mMatch = data[r][0].toString().match(/(\d+)/);
@@ -108,17 +95,12 @@ function syncAcademicSchedule(calendar) {
                 const year = (actualMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
                 const date = new Date(year, actualMonth - 1, parseInt(day));
                 const title = eventName + " " + CONFIG.PREFIX.ACADEMIC;
-                if (!isAlreadyExists(calendar, title, date)) {
-                    calendar.createAllDayEvent(title, date);
-                }
+                if (!isAlreadyExists(calendar, title, date)) calendar.createAllDayEvent(title, date);
             }
         }
     }
 }
 
-/**
- * 2. 월중행사계획표 파싱
- */
 function syncMonthlySchedule(calendar) {
     const folder = DriveApp.getFolderById(CONFIG.DOCS.MONTHLY);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
@@ -145,9 +127,7 @@ function syncMonthlySchedule(calendar) {
                     if (content.length > 0) {
                         const summary = content[0].substring(0, 15) + (content.length > 1 ? " 외" : "");
                         const title = summary + " " + CONFIG.PREFIX.MONTHLY;
-                        if (!isAlreadyExists(calendar, title, date)) {
-                            calendar.createAllDayEvent(title, date, { description: content.join('\n') });
-                        }
+                        if (!isAlreadyExists(calendar, title, date)) calendar.createAllDayEvent(title, date, { description: content.join('\n') });
                     }
                 }
             }
@@ -155,9 +135,6 @@ function syncMonthlySchedule(calendar) {
     }
 }
 
-/**
- * 3. 기획협의회 파싱
- */
 function syncPlanningMeeting(calendar) {
     const folder = DriveApp.getFolderById(CONFIG.DOCS.PLANNING);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
@@ -178,11 +155,8 @@ function syncPlanningMeeting(calendar) {
                     if (mMatch) {
                         const m = parseInt(mMatch[1]), d = parseInt(mMatch[2]);
                         const date = new Date((m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR), m - 1, d);
-                        // 부서명은 괄호로, 말머리는 뒤로
                         const title = eventInfo + (dept ? " (" + dept + ")" : "") + " " + CONFIG.PREFIX.PLANNING;
-                        if (!isAlreadyExists(calendar, title, date)) {
-                            calendar.createAllDayEvent(title, date, { description: "파일: " + file.getUrl() });
-                        }
+                        if (!isAlreadyExists(calendar, title, date)) calendar.createAllDayEvent(title, date);
                     }
                 }
             }
@@ -190,14 +164,10 @@ function syncPlanningMeeting(calendar) {
     }
 }
 
-/**
- * 4. 창체운영계획 파싱
- */
 function syncCreativeActivities(calendar) {
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
     const sheet = ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
-    Logger.log(`[창체] ${data.length}행 분석 시작...`);
 
     for (let r = 1; r < data.length; r++) {
         const dateStr = data[r][0]?.toString().trim() || "";
@@ -205,13 +175,13 @@ function syncCreativeActivities(calendar) {
         const topic7 = data[r][5]?.toString().trim() || "";
 
         if (dateStr && (topic6 || topic7)) {
-            // 날짜 인식 강화
-            const dateMatch = dateStr.match(/(\d+)[월년\s]+(\d+)/);
-            if (dateMatch) {
-                const m = parseInt(dateMatch[1]), d = parseInt(dateMatch[2]);
-                const date = new Date((m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR), m - 1, d);
+            const parts = dateStr.match(/\d+/g);
+            if (parts && parts.length >= 2) {
+                let m, d;
+                if (parts.length >= 3) { m = parseInt(parts[1]); d = parseInt(parts[2]); }
+                else { m = parseInt(parts[0]); d = parseInt(parts[1]); }
 
-                // 창체 주제는 1글자여도 허용 (예: "창", "체" 등 특수 경우 대응)
+                const date = new Date((m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR), m - 1, d);
                 const f6 = (topic6 && !/^\d+$/.test(topic6)) ? topic6 : "";
                 const f7 = (topic7 && !/^\d+$/.test(topic7)) ? topic7 : "";
 
@@ -220,7 +190,7 @@ function syncCreativeActivities(calendar) {
                     const title = combined + " " + CONFIG.PREFIX.CREATIVE;
                     if (!isAlreadyExists(calendar, title, date)) {
                         calendar.createAllDayEvent(title, date, { description: `6교시: ${topic6}\n7교시: ${topic7}` });
-                        Logger.log(`[창체] 추가완료: ${m}/${d} - ${combined}`);
+                        Logger.log(`[창체] 추가완료: ${m}월 ${d}일 - ${combined}`);
                     }
                 }
             }

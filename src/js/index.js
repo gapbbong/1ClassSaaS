@@ -112,7 +112,7 @@ function updateDynamicCalendar() {
 
   // 2. 반응형 캘린더 뷰 링크 설정
   if (calendarLink) {
-    const isMobile = window.innerWidth <= 768;
+    const isMobile = window.innerWidth <= 1024; // 태블릿 포함 임계값 상향
     const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
     const mode = isMobile ? "week" : "month";
     const wkst = 1; // 1: Sunday
