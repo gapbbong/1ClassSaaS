@@ -85,11 +85,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // 5. 모달 이벤트 등록
+  // 5. 모달 서비스 및 기타 UI 초기화
   initContactModal();
   initGlobalTip();
   initHeaderMenu();
+  updateDynamicCalendar();
 });
+
+/**
+ * 캘린더 아이콘에 오늘 날짜와 요일을 표시합니다.
+ */
+function updateDynamicCalendar() {
+  const dayEl = document.querySelector('.cal-day');
+  const dateEl = document.querySelector('.cal-date');
+  if (!dayEl || !dateEl) return;
+
+  const now = new Date();
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
+  dayEl.innerText = days[now.getDay()];
+  dateEl.innerText = now.getDate();
+}
 
 
 // ----------------------------------------------------
