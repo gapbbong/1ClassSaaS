@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>학교 일정 캘린더</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <style>
+        body {
+            background: #f8f9fa;
+            margin: 0;
+            padding: 0;
+        }
+
+        .calendar-container {
+            padding: 15px;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 15px;
+            z-index: 100;
+        }
+
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #333;
+        }
+
+        .nav-btn {
+            background: #f1f5f9;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .day-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .day-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+            border-left: 6px solid #ccc;
+        }
+
+        .day-card.today {
+            background: #f0f7ff;
+            box-shadow: 0 0 10px rgba(51, 153, 255, 0.2);
+        }
+
+        .day-info {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .date-num {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        .day-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        /* 요일별 고유 색상 정의 (띠 & 글자 동기화) */
+        .day-card.sun {
+            border-left-color: #ea4335;
+        }
+
+        .day-card.sun .date-num,
+        .day-card.sun .day-name {
+            color: #ea4335;
+        }
+
+        .day-card.mon {
+            border-left-color: #f57c00;
+        }
+
+        .day-card.mon .date-num,
+        .day-card.mon .day-name {
+            color: #f57c00;
+        }
+
+        .day-card.tue {
+            border-left-color: #388e3c;
+        }
+
+        .day-card.tue .date-num,
+        .day-card.tue .day-name {
+            color: #388e3c;
+        }
+
+        .day-card.wed {
+            border-left-color: #1976d2;
+        }
+
+        .day-card.wed .date-num,
+        .day-card.wed .day-name {
+            color: #1976d2;
+        }
+
+        .day-card.thu {
+            border-left-color: #7b1fa2;
+        }
+
+        .day-card.thu .date-num,
+        .day-card.thu .day-name {
+            color: #7b1fa2;
+        }
+
+        .day-card.fri {
+            border-left-color: #00796b;
+        }
+
+        .day-card.fri .date-num,
+        .day-card.fri .day-name {
+            color: #00796b;
+        }
+
+        .day-card.sat {
+            border-left-color: #303f9f;
+        }
+
+        .day-card.sat .date-num,
+        .day-card.sat .day-name {
+            color: #303f9f;
+        }
+
+        .event-item {
+            font-size: 0.95rem;
+            color: #444;
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .event-item:last-child {
+            border-bottom: none;
+        }
+
+        .event-tag {
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .tag-academic {
+            background: #5c6bc0;
+        }
+
+        .tag-monthly {
+            background: #66bb6a;
+        }
+
+        .tag-planning {
+            background: #ffa726;
+        }
+
+        .tag-creative {
+            background: #ab47bc;
+        }
+
+        .no-event {
+            color: #999;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+
+        .version-tag {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: #ccc;
+        }
+
+        /* 로딩 스피너 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3399ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>일정을 불러오고 있습니다...</p>
+    </div>
+
+    <div class="calendar-container">
+        <div class="calendar-header">
+            <button class="nav-btn" onclick="changeWeek(-1)">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                </svg>
+            </button>
+            <h2 id="current-month-view">2026년 3월</h2>
+            <button class="nav-btn" onclick="changeWeek(1)">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="day-list" class="day-list">
+            <!-- 요일 카드들이 동적으로 생성됩니다 -->
+        </div>
+    </div>
+
+    <div class="version-tag">v2.11</div>
+
+    <script src="src/js/calendar.js" type="module"></script>
+</body>
+
+</html>

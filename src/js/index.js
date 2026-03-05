@@ -105,15 +105,15 @@ function updateDynamicCalendar() {
   if (!dayEl || !dateEl) return;
 
   const now = new Date();
-  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
   const dayColors = [
-    '#ea4335', // SUN: Red
-    '#00897b', // MON: Teal
-    '#00897b', // TUE: Teal
-    '#00897b', // WED: Teal
-    '#00897b', // THU: Teal
-    '#00897b', // FRI: Teal
-    '#1a73e8'  // SAT: Blue
+    '#ea4335', // 일: 빨강
+    '#f57c00', // 월: 주황
+    '#388e3c', // 화: 초록
+    '#1976d2', // 수: 파랑
+    '#7b1fa2', // 목: 보라
+    '#00796b', // 금: 청록
+    '#303f9f'  // 토: 남색
   ];
 
   const dayIndex = now.getDay();
@@ -127,13 +127,9 @@ function updateDynamicCalendar() {
   dateEl.style.color = dayColor;
 
   if (calendarLink) {
-    const isMobile = window.innerWidth <= 1024;
-    const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
-    if (isMobile) {
-      calendarLink.href = `https://calendar.google.com/calendar/u/0/gp?cid=${cid}`;
-    } else {
-      calendarLink.href = `https://calendar.google.com/calendar/u/0/r/month?cid=${cid}&wkst=1`;
-    }
+    calendarLink.href = "calendar.html";
+    // 타겟 제거 (현재창 이동)
+    calendarLink.removeAttribute("target");
   }
 }
 
