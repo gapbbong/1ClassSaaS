@@ -15,7 +15,15 @@ export default defineConfig({
         check_survey: resolve(__dirname, 'check-survey.html'),
         analysis: resolve(__dirname, 'analysis.html'),
         class_analysis: resolve(__dirname, 'class-analysis.html'),
-        keeper: resolve(__dirname, 'keeper.html')
+        keeper: resolve(__dirname, 'keeper.html'),
+        quiz: resolve(__dirname, 'quiz.html'),
+        quiz_start: resolve(__dirname, 'quiz-start.html'),
+        index_2025: resolve(__dirname, 'index-2025.html'),
+        photo_quiz: resolve(__dirname, 'photo-quiz.html'),
+        quiz_photo: resolve(__dirname, 'quiz-photo.html'),
+        random_photo: resolve(__dirname, 'random-photo.html'),
+        show_one_photo: resolve(__dirname, 'show-one-photo.html'),
+        select_range: resolve(__dirname, 'select-range.html')
       }
     }
   },
