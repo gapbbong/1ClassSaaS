@@ -23,7 +23,8 @@ export default defineConfig({
         quiz_photo: resolve(__dirname, 'quiz-photo.html'),
         random_photo: resolve(__dirname, 'random-photo.html'),
         show_one_photo: resolve(__dirname, 'show-one-photo.html'),
-        select_range: resolve(__dirname, 'select-range.html')
+        select_range: resolve(__dirname, 'select-range.html'),
+        admin: resolve(__dirname, 'admin.html')
       }
     }
   },

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자/화면 분석 - 관리자</title>
+    <link rel="stylesheet" href="src/css/main.css">
+    <style>
+        body {
+            background: #f8fafc;
+            padding: 20px;
+            font-family: sans-serif;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .admin-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .back-btn {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .stat-box:last-child {
+            border-right: none;
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2563eb;
+            display: block;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="admin-header">
+        <h1>📊 사용자/화면 분석 (관리자)</h1>
+        <button class="back-btn" onclick="location.href='index.html'">홈으로</button>
+    </header>
+
+    <main>
+        <div class="admin-card stats-grid">
+            <div class="stat-box">
+                <span id="total-views" class="stat-val">-</span>
+                <span class="stat-label">누적 페이지뷰</span>
+            </div>
+            <div class="stat-box">
+                <span id="active-teachers" class="stat-val">-</span>
+                <span class="stat-label">활동 교사 수</span>
+            </div>
+            <div class="stat-box">
+                <span id="top-page" class="stat-val">-</span>
+                <span class="stat-label">인기 페이지</span>
+            </div>
+        </div>
+
+        <div class="admin-card">
+            <h2 style="font-size: 1.1rem; margin-bottom: 15px;">최근 활동 로그</h2>
+            <div id="log-list" style="font-size: 0.9rem; color: #334155;">
+                데이터를 불러오는 중입니다...
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { supabase } from './src/js/supabase.js';
+
+        async function loadStats() {
+            try {
+                // 전체 로그 가져오기
+                const { data, error } = await supabase
+                    .from('user_logs')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100);
+
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    document.getElementById('log-list').innerHTML = "아직 수집된 로그가 없습니다.";
+                    return;
+                }
+
+                // 기초 통계 계산
+                document.getElementById('total-views').textContent = data.length + "+";
+
+                const uniqueTeachers = new Set(data.map(l => l.teacher_email)).size;
+                document.getElementById('active-teachers').textContent = uniqueTeachers;
+
+                const pageCounts = {};
+                data.forEach(l => {
+                    pageCounts[l.page_path] = (pageCounts[l.page_path] || 0) + 1;
+                });
+                const topPage = Object.keys(pageCounts).reduce((a, b) => pageCounts[a] > pageCounts[b] ? a : b);
+                document.getElementById('top-page').textContent = topPage.split('/').pop() || "홈";
+
+                // 로그 리스트 렌더링
+                let html = '<table style="width:100%; border-collapse: collapse;">';
+                html += '<tr style="text-align:left; border-bottom:2px solid #f1f5f9;"><th style="padding:10px;">시간</th><th>교사</th><th>페이지</th></tr>';
+
+                data.slice(0, 20).forEach(l => {
+                    const time = new Date(l.created_at).toLocaleString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    html += `<tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:10px; color:#64748b;">${time}</td>
+                        <td style="font-weight:600;">${l.teacher_email.split('@')[0]}</td>
+                        <td>${l.page_path}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('log-list').innerHTML = html;
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('log-list').innerHTML = "로그를 불러오는데 실패했습니다: " + err.message;
+            }
+        }
+
+        loadStats();
+    </script>
+</body>
+
+</html>
