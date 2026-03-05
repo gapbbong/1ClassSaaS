@@ -101,7 +101,7 @@ function updateDynamicCalendar() {
   if (!dayEl || !dateEl) return;
 
   const now = new Date();
-  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
 
   dayEl.innerText = days[now.getDay()];
   dateEl.innerText = now.getDate();
