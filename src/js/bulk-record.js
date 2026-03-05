@@ -307,10 +307,10 @@ async function loadSettings() {
             const dressIdx = list.indexOf("복장불량");
             if (dressIdx !== -1) {
                 if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
-                if (!list.includes("악세사리")) list.splice(list.indexOf("화장") + 1, 0, "악세사리");
+                if (!list.includes("악세사리 착용")) list.splice(list.indexOf("화장") + 1, 0, "악세사리 착용");
             } else {
                 if (!list.includes("화장")) list.push("화장");
-                if (!list.includes("악세사리")) list.push("악세사리");
+                if (!list.includes("악세사리 착용")) list.push("악세사리 착용");
             }
 
             list.forEach(item => {
@@ -323,7 +323,7 @@ async function loadSettings() {
     } catch (e) {
         console.error("Settings load error:", e);
         // 실패 시 기본 항목이라도 표시
-        const badItems = ["지각", "복장불량", "화장", "악세사리", "신발불량", "가방없음", "두발불량"];
+        const badItems = ["지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량"];
         const badSelect = document.getElementById("bad-select");
         badItems.forEach(item => {
             const opt = document.createElement("option");
