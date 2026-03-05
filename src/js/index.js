@@ -90,21 +90,35 @@ document.addEventListener("DOMContentLoaded", async () => {
   initGlobalTip();
   initHeaderMenu();
   updateDynamicCalendar();
+  window.addEventListener('resize', updateDynamicCalendar);
 });
 
 /**
- * 캘린더 아이콘에 오늘 날짜와 요일을 표시합니다.
+ * 캘린더 아이콘에 오늘 날짜와 요일을 표시하고,
+ * 화면 크기에 따라 PC(월별), 모바일(주별) 링크를 다르게 설정합니다.
  */
 function updateDynamicCalendar() {
   const dayEl = document.querySelector('.cal-day');
   const dateEl = document.querySelector('.cal-date');
+  const calendarLink = document.getElementById('calendar-link');
   if (!dayEl || !dateEl) return;
 
+  // 1. 아이콘 텍스트 업데이트
   const now = new Date();
   const days = ['일', '월', '화', '수', '목', '금', '토'];
 
   dayEl.innerText = days[now.getDay()];
   dateEl.innerText = now.getDate();
+
+  // 2. 반응형 캘린더 뷰 링크 설정
+  if (calendarLink) {
+    const isMobile = window.innerWidth <= 768;
+    const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
+    const mode = isMobile ? "WEEK" : "MONTH";
+
+    // Google Calendar r/ 모드를 사용하여 뷰를 강제합니다.
+    calendarLink.href = `https://calendar.google.com/calendar/u/0/r/${mode.toLowerCase()}?cid=${cid}`;
+  }
 }
 
 
