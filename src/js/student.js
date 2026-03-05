@@ -603,9 +603,15 @@ async function showPopup(student) {
     // 배경 스크롤 방지
     document.body.style.overflow = "hidden";
 
-    // 옆반 이동 버튼 숨기기
-    const floatingControls = document.querySelector(".floating-controls");
-    if (floatingControls) floatingControls.style.display = "none";
+    // [수정] 모든 플로팅 버튼 숨기기
+    const floaters = ["#home-btn", "#survey-viewer-btn", "#contact-download-btn", ".floating-controls"];
+    floaters.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.dataset.prevDisplay = window.getComputedStyle(el).display;
+            el.style.display = "none";
+        }
+    });
 
     // 팝업 열 때 기초조사 데이터 추가 로딩
     let surveyRaw = {};
@@ -659,7 +665,15 @@ async function showPopup(student) {
         const isPhone = (label.includes("전화") || label.includes("연락처") || (label.includes("번호") && label !== "번호" && label !== "학번" && !label.includes("우편")) || label.includes("폰"));
         const isInsta = lowLabel.includes("인스타") || lowLabel.includes("insta");
 
-        if (isInsta && valStr !== ".") {
+        if (isPhone && valStr !== "." && valStr.length > 5) {
+            const cleanPhone = valStr.replace(/[^0-9]/g, "");
+            displayVal = `
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>${valStr}</span>
+                    <a href="tel:${cleanPhone}" onclick="event.stopPropagation();" style="display: inline-flex; align-items: center; justify-content: center; background: #fee2e2; color: #ef4444; width: 28px; height: 28px; border-radius: 50%; text-decoration: none; font-size: 0.9rem; transition: transform 0.2s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'">📞</a>
+                </div>
+            `;
+        } else if (isInsta && valStr !== ".") {
             const cleanId = valStr.replace('@', '').trim();
             displayVal = `<a href="https://instagram.com/${cleanId}" target="_blank" style="color: #c13584; text-decoration: underline; font-weight: 800;">${valStr}</a>`;
         }
@@ -740,13 +754,18 @@ async function showPopup(student) {
 
     popup.innerHTML = `
         <div class="popup-header">
-            <button class="close-btn back-link" onclick="closePopup()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:#64748b;">◀</button>
-            <div class="popup-title-center">
-                <span class="student-id-badge"><strong>${student["학번"]}</strong></span>
-                <span class="student-name-text">${student["이름"]}</span>
-                <button class="popup-analysis-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#4A90E2; color:#4A90E2; padding: 4px 10px; border-radius: 8px; font-weight: 800; border: 1.5px solid; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.9rem;">🧠 분석</button>
+            <button class="popup-back-btn" onclick="closePopup()" style="width: 44px; height: 44px; background: #f1f5f9; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-shrink: 0;">
+                <svg viewBox="0 0 24 24" style="width: 24px; height: 24px; fill: #64748b;"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+            <div class="popup-title-center" style="display: flex; align-items: center; gap: 8px;">
+                <span class="student-id-badge" style="background: #eff6ff; color: #3b82f6; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.95rem;">${student["학번"]}</span>
+                <span class="student-name-text" style="font-size: 1.25rem; font-weight: 800; color: #1e293b;">${student["이름"]}</span>
+                <div style="display: flex; gap: 6px;">
+                    <button class="popup-analysis-btn" onclick="goToAnalysis(${escapedStudent})" style="background:#f0f7ff; border: 1.5px solid #4A90E2; color:#4A90E2; padding: 6px 14px; border-radius: 10px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.9rem; transition: all 0.2s;">🧠 분석</button>
+                    <button class="popup-record-btn" onclick="showRecord(${escapedStudent})" style="background:#ffffff; border: 1.5px solid #0f52ba; color:#0f52ba; padding: 6px 14px; border-radius: 10px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; font-size: 0.9rem; transition: all 0.2s;">📝 생활기록</button>
+                </div>
             </div>
-            <button class="close-btn" onclick="closePopup()" style="visibility: hidden;">✕</button>
+            <div style="width: 44px;"></div> <!-- 우측 균형용 빈 공간 -->
         </div>
         
         <div class="popup-content-layout">
@@ -862,9 +881,22 @@ window.closePopup = function () {
         window._popupKeyHandler = null;
     }
 
-    // 옆반 이동 버튼 다시 보이기
-    const floatingControls = document.querySelector(".floating-controls");
-    if (floatingControls) floatingControls.style.display = "flex";
+    // [수정] 모든 플로팅 버튼 다시 보이기
+    const floaters = ["#home-btn", "#survey-viewer-btn", "#contact-download-btn", ".floating-controls"];
+    floaters.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            // 저장된 이전 상태로 복구 (또는 기본값)
+            el.style.display = el.dataset.prevDisplay || (selector.startsWith('.') ? "flex" : "block");
+
+            // 만약 연락처 버튼 등 특정 조건에서만 보여야 하는 버튼은 원래 로직이 다시 체크하도록 유도하거나 
+            // 여기서는 단순히 display만 복구함 (setupEventListeners에서 조건부 노출함)
+            if (selector === "#contact-download-btn" || selector === "#survey-viewer-btn") {
+                // 이 버튼들은 권한에 따라 다시 세팅되어야 할 수도 있으므로 체크 필요
+                // 여기서는 일단 보이게 함
+            }
+        }
+    });
 }
 
 // 페이지 이동 및 모달 액션
@@ -908,18 +940,6 @@ window.showActionModal = function (student) {
             <div id="action-grid-main" style="display: flex; flex-direction: column; gap: 12px;">
                 <button class="action-btn" onclick="goToAnalysis(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#f0f7ff; border-color:#cce4f7; color:#0f52ba;">
                    <span class="action-icon">🧠</span> 학생 분석
-                </button>
-                <button class="action-btn" onclick="showCounsel(${JSON.stringify(student).replace(/"/g, '&quot;')})" style="background:#fff9db; border-color:#ffe066; color:#e67e22;">
-                   <span class="action-icon">💬</span> 상담 기록 작성
-                </button>
-                <button class="action-btn" onclick="showRecord(${JSON.stringify(student).replace(/"/g, '&quot;')})">
-                   <span class="action-icon">📒</span> 생활기록 작성
-                </button>
-                <button class="action-btn" onclick="openAttendanceModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
-                   <span class="action-icon">🏃</span> 근태기록 (조퇴/외출)
-                </button>
-                <button class="action-btn" onclick="openStatusModal(${JSON.stringify(student).replace(/"/g, '&quot;')})">
-                   <span class="action-icon">🪪</span> 학적상태 변경
                 </button>
             </div>
         </div>

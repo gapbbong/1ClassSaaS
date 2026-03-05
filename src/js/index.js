@@ -365,7 +365,7 @@ function renderInitialGrid(container) {
         box.innerHTML = `
                     <section class="class-section" 
                              style="background-color: ${bgColor}; ${light < 55 ? 'color: #fff;' : ''}; cursor: pointer; -webkit-tap-highlight-color: transparent;">
-                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : ''}; pointer-events: none; text-shadow: ${light < 55 ? '0 1px 3px rgba(0,0,0,0.6)' : '0 1px 2px rgba(0,0,0,0.2)'};">
+                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : ''}; pointer-events: none; text-shadow: ${light < 55 ? '0 2px 4px rgba(0,0,0,0.5)' : '0 2px 4px rgba(0,0,0,0.3)'};">
                             <span class="class-label">${grade}-${classNum}반</span>
                             <span id="badge-${grade}-${classNum}" class="badge-placeholder"></span>
                         </h3>

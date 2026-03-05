@@ -923,6 +923,19 @@ body {
     box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3) !important;
 }
 
+.popup-header .popup-back-btn {
+    transition: all 0.2s !important;
+}
+
+.popup-header .popup-back-btn:hover {
+    background: #e2e8f0 !important;
+    transform: scale(1.1) !important;
+}
+
+.popup-header .popup-back-btn:active {
+    transform: scale(0.95) !important;
+}
+
 .popup-header .close-btn {
     background: rgba(255, 255, 255, 0.95) !important;
     border: 1px solid #e2e8f0 !important;

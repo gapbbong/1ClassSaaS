@@ -143,6 +143,7 @@ function initSearch() {
     const primaryInput = document.getElementById("search-id"); // 앞쪽: 학번 또는 이름
     const secondaryInput = document.getElementById("search-name"); // 뒷쪽: 연동 정보 (학번 -> 이름, 이름 -> 학번)
     const applyBtn = document.getElementById("search-apply-btn");
+    const recordBtn = document.getElementById("search-record-btn");
     const resultsDropdown = document.getElementById("search-results");
 
     let isInternalUpdate = false;
@@ -155,6 +156,7 @@ function initSearch() {
         if (query.length === 0) {
             secondaryInput.value = "";
             resultsDropdown.style.display = "none";
+            window._lastSelectedStudent = null;
             return;
         }
 
@@ -171,8 +173,12 @@ function initSearch() {
                 if (data) {
                     secondaryInput.value = data.name;
                     resultsDropdown.style.display = "none";
+                    if (recordBtn) recordBtn.style.display = "block";
+                    // 현재 선택된 학생 정보 임시 저장
+                    window._lastSelectedStudent = data;
                 } else {
                     secondaryInput.value = "기록 없음";
+                    if (recordBtn) recordBtn.style.display = "none";
                 }
             } catch (err) {
                 console.error("ID lookup failed:", err);
@@ -197,18 +203,24 @@ function initSearch() {
                 if (exactMatches.length === 1) {
                     secondaryInput.value = exactMatches[0].student_id;
                     secondaryInput.style.backgroundColor = "#f1f5f9";
+                    if (recordBtn) recordBtn.style.display = "block";
+                    window._lastSelectedStudent = exactMatches[0];
                 } else if (exactMatches.length > 1) {
                     secondaryInput.value = "동명이인 선택 필요";
                     secondaryInput.style.backgroundColor = "#fff5f5";
+                    if (recordBtn) recordBtn.style.display = "none";
                 } else {
                     secondaryInput.value = "검색 중...";
+                    if (recordBtn) recordBtn.style.display = "none";
                 }
             } else {
                 resultsDropdown.style.display = "none";
                 secondaryInput.value = "결과 없음";
+                if (recordBtn) recordBtn.style.display = "none";
             }
         } else {
             resultsDropdown.style.display = "none";
+            if (recordBtn) recordBtn.style.display = "none";
         }
     });
 
@@ -222,7 +234,7 @@ function initSearch() {
         // 이미 연동된 정보가 있다면 해당 pid로 로드 시도
         // (정확한 연동을 위해 DB 재확인)
         let queryBuilder = supabase.from('students')
-            .select('pid')
+            .select('*') // pid 외 다른 정보도 필요할 수 있음
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
 
         if (/^\d{4}$/.test(primaryVal)) {
@@ -242,8 +254,10 @@ function initSearch() {
         }
 
         if (data.length === 1) {
+            window._lastSelectedStudent = data[0];
             loadStudentAnalysis(data[0].pid);
             resultsDropdown.style.display = "none";
+            if (recordBtn) recordBtn.style.display = "block";
         } else {
             // 동명이인 등의 경우 드롭다운에서 선택 유도
             alert("동명이인이 있습니다. 아래 목록에서 매칭되는 학생을 선택해주세요.");
@@ -252,6 +266,15 @@ function initSearch() {
     };
 
     applyBtn.addEventListener("click", handleLookup);
+    if (recordBtn) {
+        recordBtn.addEventListener("click", () => {
+            if (window._lastSelectedStudent) {
+                window.goToRecord(window._lastSelectedStudent);
+            } else {
+                alert("학생을 먼저 선택하거나 조회해주세요.");
+            }
+        });
+    }
 
     primaryInput.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
@@ -306,7 +329,11 @@ function renderSearchResults(students, queryName = "") {
                 <div style="flex: 1; min-width: 0;">
                     <div style="font-weight:800; color:#1a202c; font-size:1.2rem; margin-bottom:6px; letter-spacing: -0.02em;">${s.name}</div>
                     <div style="color:#4a5568; font-size:1rem; font-weight: 500; margin-bottom:4px;">학번: ${s.student_id}</div>
-                    <div style="display: inline-block; padding: 4px 10px; background: #edf2f7; border-radius: 8px; color: #718096; font-size:0.9rem; font-weight: 600;">${s.class_info}</div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="display: inline-block; padding: 4px 10px; background: #edf2f7; border-radius: 8px; color: #718096; font-size:0.9rem; font-weight: 600;">${s.class_info}</div>
+                        <button class="record-quick-btn" data-pid="${s.pid}" data-sid="${s.student_id}" data-name="${s.name}" 
+                            style="padding: 4px 10px; background: #f0fdf4; border: 1px solid #bcf0da; color: #166534; border-radius: 8px; font-size: 0.85rem; font-weight: 700; cursor: pointer;">📝 기록</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -354,6 +381,18 @@ function renderSearchResults(students, queryName = "") {
             loadStudentAnalysis(pid);
             resultsDropdown.style.display = "none";
         });
+
+        const qBtn = item.querySelector(".record-quick-btn");
+        if (qBtn) {
+            qBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const student = {
+                    name: qBtn.getAttribute("data-name"),
+                    student_id: qBtn.getAttribute("data-sid")
+                };
+                window.goToRecord(student);
+            });
+        }
     });
 }
 
@@ -367,6 +406,7 @@ async function loadStudentAnalysis(pid) {
     const { data: student } = await supabase.from('students').select('*').eq('pid', pid).single();
     if (!student) return alert("학생 정보를 찾을 수 없습니다.");
     currentStudent = student;
+    window._lastSelectedStudent = student; // 생활기록 이동을 위해 전역 변수 업데이트
 
     // 동급생 캐싱 (이전/다음 버튼용)
     if (!window.currentClassStudents || window.currentClassStudents.length === 0 || window.currentClassStudents[0].class_info !== student.class_info) {
@@ -754,6 +794,15 @@ async function callGeminiAPI(apiKey, prompt, context, targetModel = 'gemini-1.5-
     }
 }
 
+// 생활기록 페이지로 이동
+window.goToRecord = function (student) {
+    if (!student) return;
+    const name = encodeURIComponent(student.name);
+    const num = encodeURIComponent(student.student_id);
+    window.location.href = `record.html?num=${num}&name=${name}`;
+};
+
+
 
 
 // UI: Initial Result View (Skeleton)
@@ -783,6 +832,23 @@ function renderResultView() {
             photoMini.innerHTML = `<img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.src='https://ovpcrjovaypvnstzptvi.supabase.co/storage/v1/object/public/student_photos/default-avatar.png'; this.onerror=null; this.parentElement.innerHTML='👤';">`;
         } else {
             photoMini.innerHTML = "👤";
+        }
+
+        // [추가] 생활기록 버튼 주입 (분석 버튼은 이미 다른 곳에 있을 수 있지만, 헤더 카드에 통합)
+        const actionArea = document.getElementById("header-action-area");
+        if (actionArea) {
+            actionArea.innerHTML = ""; // 기존 버튼 제거
+
+            const recordBtn = document.createElement("button");
+            recordBtn.className = "btn-survey-view";
+            recordBtn.style.background = "#ffffff";
+            recordBtn.style.color = "#0f52ba";
+            recordBtn.innerHTML = "📝 생활기록 바로가기";
+            recordBtn.onclick = (e) => {
+                e.stopPropagation();
+                window.goToRecord(currentStudent);
+            };
+            actionArea.appendChild(recordBtn);
         }
     } else {
         headerName.innerText = `${currentClassInfo} 학급 전체`;
