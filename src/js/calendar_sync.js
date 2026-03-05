@@ -46,8 +46,9 @@ function syncAllSchedules() {
  * 꼬리말/머리말 방식 및 쓰레기 데이터 삭제
  */
 function cleanupGarbageEvents(calendar) {
-    Logger.log("🧹 클린업 시작...");
-    const startTime = new Date(CONFIG.YEAR, 2, 1);
+    Logger.log("🧹 클린업 시작 (오늘 이후 일정만 대상)...");
+    const startTime = new Date(); // 오늘부터 시작
+    startTime.setHours(0, 0, 0, 0); // 오늘 0시부터
     const endTime = new Date(CONFIG.YEAR + 1, 1, 28);
     const events = calendar.getEvents(startTime, endTime);
     let count = 0;
