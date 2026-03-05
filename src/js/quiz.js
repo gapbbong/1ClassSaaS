@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
         currentTeacherEmail = bytes.toString(CryptoJS.enc.Utf8).trim().toLowerCase();
         currentTeacherId = currentTeacherEmail.split('@')[0];
-        currentTeacherId = currentTeacherEmail.split('@')[0];
+        console.log("Teacher Authenticated:", currentTeacherEmail);
     } catch (e) {
         console.error("Auth Decrypt Error:", e);
     }
@@ -41,7 +41,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     showRanking();
 
-    // 5. Score Guide Modal
+    // 5. Score Guide Modal (Reset once to show warm message)
+    localStorage.removeItem('hideScoreGuide_v1');
     const hideGuide = localStorage.getItem('hideScoreGuide_v1');
     if (!hideGuide) {
         document.getElementById("score-guide-modal").style.display = 'flex';
@@ -156,12 +157,7 @@ function renderClassGrid() {
     for (let c = 1; c <= 6; c++) {
         for (let g = 1; g <= 3; g++) {
             const classTarget = `${g}-${c}`;
-            let hue = g === 1 ? 150 : (g === 2 ? 210 : 30);
-            let light = 90 - (c * 12);
-            let bgColor = `hsl(${hue}, 60%, ${light}%)`;
-            let color = light < 55 ? '#fff' : '#1e293b';
-
-            html += `<button class="option-btn" style="background-color: ${bgColor}; color: ${color}; border: none;" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
+            html += `<button class="option-btn btn-g${g}" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
         }
     }
     grid.innerHTML = html;
@@ -407,14 +403,17 @@ async function showRanking() {
 
         if (error) throw error;
 
-        const lists = document.querySelectorAll('.ranking-list');
-        if (lists.length === 0) return;
+        const listResult = document.getElementById("ranking-list-result");
+        const listModal = document.getElementById("ranking-list-modal");
 
-        let contentHtml = '';
+        if (!listResult && !listModal) return;
+
+        let htmlString = "";
+
         if (!data || data.length === 0) {
-            contentHtml = '<p style="text-align:center; color:#94a3b8;">아직 기록이 없습니다.</p>';
+            htmlString = '<p style="text-align:center; color:#94a3b8;">아직 기록이 없습니다.</p>';
         } else {
-            contentHtml = data.map((item, idx) => {
+            htmlString = data.map((item, idx) => {
                 const id = item.teacher_email.split('@')[0];
                 const maskedId = maskId(id);
                 return `
@@ -429,9 +428,8 @@ async function showRanking() {
             }).join('');
         }
 
-        lists.forEach(list => {
-            list.innerHTML = contentHtml;
-        });
+        if (listResult) listResult.innerHTML = htmlString;
+        if (listModal) listModal.innerHTML = htmlString;
     } catch (e) {
         console.warn("Ranking failed", e);
     }

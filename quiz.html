@@ -119,44 +119,11 @@
       border: none;
     }
 
-    /* Grade 1: hsl(150, 60%, X) -> Mint Green */
-    .btn-g1 {
-      background: hsl(150, 60%, 88%);
-      border-color: hsl(150, 60%, 80%);
-      color: #0f5132;
-    }
-
-    .btn-g1:hover {
-      background: hsl(150, 60%, 80%);
-    }
-
-    /* Grade 2: hsl(210, 60%, X) -> Blue */
-    .btn-g2 {
-      background: hsl(210, 60%, 88%);
-      border-color: hsl(210, 60%, 80%);
-      color: #084298;
-    }
-
-    .btn-g2:hover {
-      background: hsl(210, 60%, 80%);
-    }
-
-    /* Grade 3: hsl(30, 60%, X) -> Orange/Yellow */
-    .btn-g3 {
-      background: hsl(30, 80%, 88%);
-      border-color: hsl(30, 80%, 80%);
-      color: #854d0e;
-    }
-
-    .btn-g3:hover {
-      background: hsl(30, 80%, 80%);
-    }
-
     /* Game Screen */
     .game-screen {
       display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 20px;
       animation: fadeIn 0.3s ease-out;
     }
 
@@ -190,18 +157,49 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: none;
+      background: rgba(255, 255, 255, 0.2);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--quiz-primary);
+      text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 0 4px 10px rgba(0, 0, 0, 0.3);
       font-size: 3rem;
       font-weight: 900;
-      text-shadow: 2px 2px 8px rgba(255, 255, 255, 1), -2px -2px 8px rgba(255, 255, 255, 1), 2px -2px 8px rgba(255, 255, 255, 1), -2px 2px 8px rgba(255, 255, 255, 1);
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity 0.2s;
       pointer-events: none;
       z-index: 10;
+    }
+
+    /* Colored Buttons for Selection (Matched to Home Screen) */
+    .btn-g1 {
+      background: hsl(150, 60%, 78%);
+      color: #064e3b;
+      border-color: hsl(150, 60%, 65%);
+    }
+
+    .btn-g1:hover {
+      background: hsl(150, 60%, 85%);
+    }
+
+    .btn-g2 {
+      background: hsl(210, 60%, 78%);
+      color: #1e3a8a;
+      border-color: hsl(210, 60%, 65%);
+    }
+
+    .btn-g2:hover {
+      background: hsl(210, 60%, 85%);
+    }
+
+    .btn-g3 {
+      background: hsl(30, 60%, 78%);
+      color: #78350f;
+      border-color: hsl(30, 60%, 65%);
+    }
+
+    .btn-g3:hover {
+      background: hsl(30, 60%, 85%);
     }
 
     .correct-name-overlay.show {
@@ -450,7 +448,7 @@
 <body>
   <div class="quiz-container">
     <div class="header">
-      <button class="back-btn" title="메인으로" onclick="handleBack()">🏠</button>
+      <button class="back-btn" onclick="handleBack()">←</button>
       <h1 class="game-title">인물 퀴즈</h1>
       <div style="width: 24px;"></div> <!-- Spacer -->
     </div>
@@ -489,7 +487,7 @@
       <div class="selection-group">
         <h3>반별 선택</h3>
         <div id="class-grid" class="btn-grid">
-          <!-- JS에서 렌더링 -->
+          <!-- JS에서 생성 -->
         </div>
       </div>
     </div>
@@ -527,7 +525,7 @@
 
     <div class="ranking-card">
       <h3 style="margin-top: 0;">🏆 선생님 랭킹</h3>
-      <div id="ranking-list" class="ranking-list">
+      <div id="ranking-list-result" class="ranking-list">
         <!-- JS에서 생성 -->
       </div>
     </div>
@@ -559,7 +557,7 @@
         <button onclick="document.getElementById('ranking-modal').style.display='none'"
           style="border:none; background:none; font-size:1.5rem; cursor:pointer;">×</button>
       </h3>
-      <div id="ranking-list" class="ranking-list">
+      <div id="ranking-list-modal" class="ranking-list">
         <!-- JS에서 생성 -->
       </div>
     </div>
@@ -574,8 +572,13 @@
         💡 인물 퀴즈 안내
       </h3>
       <p style="color: #334155; line-height: 1.6; margin-bottom: 20px;">
-        <strong>인물 출제 범위를 선택하시면 바로 시작합니다.</strong><br><br>
-        정답을 맞힐 때마다 <strong>해당 출제 범위의 총 인원수</strong>만큼 점수가 올라갑니다!<br>
+        <span style="font-size: 1.05rem; font-weight: bold; color: var(--quiz-primary);">"내가 그의 이름을 불러주었을 때,<br>그는 나에게로
+          와서 꽃이 되었다."</span><br>
+        <span style="font-size: 0.9rem; color: #64748b; margin-top: 5px; display: inline-block;">- 김춘수,
+          「꽃」</span><br><br>
+        학생들의 아름다운 이름을 외우러 오신 선생님, 진심으로 환영하고 응원합니다! 😊<br><br>
+        <strong>인물 출제 범위를 선택하시면 바로 퀴즈가 시작됩니다.</strong><br>
+        정답을 맞힐 때마다 <strong>해당 출제 범위의 총 인원수</strong>만큼 점수가 올라가니 재미있게 도전해 보세요!<br>
         <span
           style="font-size: 0.9rem; color: #64748b; background: #f8fafc; padding: 10px; display: block; border-radius: 8px; margin-top: 5px;">
           (예: 50명 범위면 1문제당 50점 획득)
