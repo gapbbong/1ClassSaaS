@@ -198,16 +198,13 @@ function syncPlanningMeeting(calendar) {
                     if (timeMatch) {
                         const m = parseInt(timeMatch[1]);
                         const d = parseInt(timeMatch[2]);
-                        const hh = timeMatch[3] ? parseInt(timeMatch[3]) : 15; // 시간 없으면 기본 15시
-                        const mm = timeMatch[4] ? parseInt(timeMatch[4]) : 50; // 분 없으면 기본 50분
-
                         const y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                        const start = new Date(y, m - 1, d, hh, mm);
+                        const date = new Date(y, m - 1, d);
                         const title = CONFIG.PREFIX.PLANNING + " " + (dept ? dept + ": " : "") + eventInfo;
 
-                        if (!isAlreadyExists(calendar, title, start)) {
-                            calendar.createEvent(title, start, new Date(start.getTime() + 3600000), { description: "파일: " + file.getUrl() });
-                            Logger.log(`[기획] 추가: ${m}/${d} ${hh}:${mm} - ${eventInfo}`);
+                        if (!isAlreadyExists(calendar, title, date)) {
+                            calendar.createAllDayEvent(title, date, { description: "파일: " + file.getUrl() });
+                            Logger.log(`[기획] 추가: ${m}/${d} - ${eventInfo}`);
                         }
                     }
                 }
