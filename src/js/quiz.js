@@ -157,7 +157,14 @@ function renderClassGrid() {
     for (let c = 1; c <= 6; c++) {
         for (let g = 1; g <= 3; g++) {
             const classTarget = `${g}-${c}`;
-            html += `<button class="option-btn btn-g${g}" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
+
+            let hue = g === 1 ? 150 : (g === 2 ? 210 : 30);
+            let light = 90 - (c * 12);
+            let bgColor = `hsl(${hue}, 60%, ${light}%)`;
+            let textColor = light < 55 ? '#ffffff' : (g === 1 ? '#064e3b' : (g === 2 ? '#1e3a8a' : '#78350f'));
+            let borderColor = `hsl(${hue}, 60%, ${light - 15}%)`;
+
+            html += `<button class="option-btn" style="background-color: ${bgColor}; color: ${textColor}; border-color: ${borderColor}; text-shadow: ${light < 55 ? '0 1px 2px rgba(0,0,0,0.5)' : 'none'};" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
         }
     }
     grid.innerHTML = html;
