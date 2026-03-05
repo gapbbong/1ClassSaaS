@@ -89,7 +89,7 @@ window.showRankingModal = function () {
 
 function showCustomConfirm(message) {
     return new Promise((resolve) => {
-        document.getElementById('custom-confirm-message').innerText = message;
+        document.getElementById('custom-confirm-message').innerHTML = message;
         document.getElementById('custom-confirm-modal').style.display = 'flex';
 
         window.closeCustomConfirm = function (result) {
