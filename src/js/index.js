@@ -98,28 +98,40 @@ document.addEventListener("DOMContentLoaded", async () => {
  * 화면 크기에 따라 PC(월별), 모바일(주별) 링크를 다르게 설정합니다.
  */
 function updateDynamicCalendar() {
-  const dayEl = document.querySelector('.cal-day');
-  const dateEl = document.querySelector('.cal-date');
-  const calendarLink = document.getElementById('calendar-link');
+  const dayEl = document.querySelector(".cal-day");
+  const dateEl = document.querySelector(".cal-date");
+  const calendarLink = document.getElementById("calendar-link");
+
   if (!dayEl || !dateEl) return;
 
-  // 1. 아이콘 텍스트 업데이트
   const now = new Date();
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const dayColors = [
+    '#ea4335', // SUN: Red
+    '#00897b', // MON: Teal
+    '#00897b', // TUE: Teal
+    '#00897b', // WED: Teal
+    '#00897b', // THU: Teal
+    '#00897b', // FRI: Teal
+    '#1a73e8'  // SAT: Blue
+  ];
 
-  dayEl.innerText = days[now.getDay()];
-  dateEl.innerText = now.getDate();
+  const dayIndex = now.getDay();
+  const dayName = days[dayIndex];
+  const dayColor = dayColors[dayIndex];
+  const dateNum = now.getDate();
 
-  // 2. 반응형 캘린더 뷰 링크 설정
+  dayEl.innerText = dayName;
+  dayEl.style.backgroundColor = dayColor;
+  dateEl.innerText = dateNum;
+  dateEl.style.color = dayColor;
+
   if (calendarLink) {
     const isMobile = window.innerWidth <= 1024;
     const cid = "a3MuY2FsMTUzQGdtYWlsLmNvbQ"; // ks.cal153@gmail.com
-
     if (isMobile) {
-      // 모바일 최적화 뷰 (gp=1 또는 mu 모드)
       calendarLink.href = `https://calendar.google.com/calendar/u/0/gp?cid=${cid}`;
     } else {
-      // PC 모드 (r/month)
       calendarLink.href = `https://calendar.google.com/calendar/u/0/r/month?cid=${cid}&wkst=1`;
     }
   }
@@ -365,7 +377,7 @@ function renderInitialGrid(container) {
         box.innerHTML = `
                     <section class="class-section" 
                              style="background-color: ${bgColor}; ${light < 55 ? 'color: #fff;' : ''}; cursor: pointer; -webkit-tap-highlight-color: transparent;">
-                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : ''}; pointer-events: none; text-shadow: ${light < 55 ? '0 2px 4px rgba(0,0,0,0.5)' : '0 2px 4px rgba(0,0,0,0.3)'};">
+                        <h3 class="class-title" style="${light < 55 ? 'color: #fff;' : 'color: #333; -webkit-text-stroke: 0.5px #fff; paint-order: stroke fill;'}; pointer-events: none; text-shadow: ${light < 55 ? '0 2px 4px rgba(0,0,0,0.5)' : '0 2px 3px rgba(0,0,0,0.2)'};">
                             <span class="class-label">${grade}-${classNum}반</span>
                             <span id="badge-${grade}-${classNum}" class="badge-placeholder"></span>
                         </h3>
