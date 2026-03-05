@@ -614,6 +614,8 @@ async function showPopup(student) {
             .from('surveys')
             .select('*')
             .eq('student_pid', student.pid)
+            .order('submitted_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
 
         if (!error && data) {

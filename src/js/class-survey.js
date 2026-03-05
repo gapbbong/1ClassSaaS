@@ -47,12 +47,21 @@ async function loadSurveys() {
         const { data: surveys, error: surveyError } = await supabase
             .from('surveys')
             .select('*')
-            .in('student_pid', studentPids);
+            .in('student_pid', studentPids)
+            .order('submitted_at', { ascending: false });
 
         if (surveyError) throw surveyError;
 
+        // 학생별 최신 설문 1개씩만 추출 (중복 제거)
+        const surveyMap = new Map();
+        surveys.forEach(s => {
+            if (!surveyMap.has(s.student_pid)) {
+                surveyMap.set(s.student_pid, s);
+            }
+        });
+
         // 학번/번호 순 정렬
-        allSurveys = surveys.map(s => s.data).sort((a, b) => {
+        allSurveys = Array.from(surveyMap.values()).map(s => s.data).sort((a, b) => {
             const numA = parseInt(a["번호"] || (a["학번"] ? String(a["학번"]).slice(-2) : 0));
             const numB = parseInt(b["번호"] || (b["학번"] ? String(b["학번"]).slice(-2) : 0));
             return numA - numB;

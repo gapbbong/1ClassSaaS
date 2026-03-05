@@ -1383,7 +1383,7 @@ async function runSilentAIAnalysis(pid, name) {
 
     // 데이터 수집
     const [sData, rData, sInfo] = await Promise.all([
-        supabase.from('surveys').select('data').eq('student_pid', pid).maybeSingle(),
+        supabase.from('surveys').select('data').eq('student_pid', pid).order('submitted_at', { ascending: false }).limit(1).maybeSingle(),
         supabase.from('life_records').select('category, content, is_positive').eq('student_pid', pid).limit(15),
         supabase.from('students').select('*').eq('pid', pid).single()
     ]);
