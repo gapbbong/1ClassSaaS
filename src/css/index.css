@@ -17,6 +17,26 @@
 
 .title-left {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.calendar-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.2s;
+}
+
+.calendar-link:hover {
+    transform: scale(1.1);
+}
+
+.calendar-link img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
 }
 
 .school-name {
