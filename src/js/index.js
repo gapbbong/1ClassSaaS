@@ -1,5 +1,5 @@
 import { isLightColor } from './utils.js';
-import { fetchClassStats, fetchClassInfo, getTeacherProfile } from './api.js';
+import { fetchClassStats, fetchClassInfo, getTeacherProfile, logPageView } from './api.js';
 import { API_CONFIG } from './config.js';
 
 // CryptoJS 임포트 (Vite 환경)
@@ -17,6 +17,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isAuthenticated = await initAuth();
     console.log("Authentication result:", isAuthenticated);
     if (!isAuthenticated) return;
+
+    // [Step 2] 활동 로그 기록
+    const email = getFullStoredEmail();
+    if (email) {
+      logPageView(email, "메인 홈 (index.html)");
+    }
 
     const container = document.getElementById("class-list");
     if (!container) {
@@ -121,6 +127,64 @@ function initHeaderMenu() {
   }
 }
 
+/**
+ * 암호화된 이메일 불러오기 (마스킹됨)
+ */
+function getStoredEmail() {
+  const encrypted = localStorage.getItem('teacher_auth_token');
+  if (!encrypted) return null;
+  try {
+    const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+    const email = bytes.toString(CryptoJS.enc.Utf8);
+    return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
+  } catch (e) {
+    return "교사";
+  }
+}
+
+/**
+ * 암호화된 전체 이메일 불러오기
+ */
+function getFullStoredEmail() {
+  const encrypted = localStorage.getItem('teacher_auth_token');
+  if (!encrypted) return "";
+  try {
+    const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (e) {
+    return "";
+  }
+}
+
+/**
+ * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
+ */
+function maskEmail(email) {
+  if (!email || !email.includes('@')) return email;
+  const [prefix, domain] = email.split('@');
+  if (prefix.length <= 3) return prefix + '@' + domain;
+  return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
+}
+
+/**
+ * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
+ */
+function maskEmailPrefix(prefix) {
+  if (!prefix) return "";
+  if (prefix.length >= 2) {
+    return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
+  }
+  return prefix.substring(0, 1) + '*';
+}
+
+/**
+ * 암호화하여 저장
+ */
+function setStoredEmail(email) {
+  const encrypted = CryptoJS.AES.encrypt(email, API_CONFIG.SECRET_KEY).toString();
+  localStorage.setItem('teacher_auth_token', encrypted);
+}
+
 // ----------------------------------------------------
 // 교사 인증 로직 (Local Storage + Crypto JS)
 // ----------------------------------------------------
@@ -132,65 +196,16 @@ async function initAuth() {
   const titleBar = document.querySelector('.title-bar');
   const classGrid = document.querySelector('.class-grid');
 
-  // 암호화된 이메일 불러오기
-  function getStoredEmail() {
-    const encrypted = localStorage.getItem('teacher_auth_token');
-    if (!encrypted) return null;
-    try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
-      const email = bytes.toString(CryptoJS.enc.Utf8);
-      return email ? maskEmailPrefix(email.split('@')[0]) : "교사";
-    } catch (e) {
-      return "교사";
-    }
-  }
-
-  /**
-   * 암호화된 전체 이메일 불러오기
-   */
-  function getFullStoredEmail() {
-    const encrypted = localStorage.getItem('teacher_auth_token');
-    if (!encrypted) return "";
-    try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
-      return bytes.toString(CryptoJS.enc.Utf8);
-    } catch (e) {
-      return "";
-    }
-  }
-
-  /**
-   * 이메일 마스킹 처리 (앞 3글자 + 도메인 유지)
-   */
-  function maskEmail(email) {
-    if (!email || !email.includes('@')) return email;
-    const [prefix, domain] = email.split('@');
-    if (prefix.length <= 3) return prefix + '@' + domain;
-    return prefix.substring(0, 3) + '*'.repeat(prefix.length - 3) + '@' + domain;
-  }
-
-  /**
-   * 이메일 아이디 마스킹 (두 글자 제외 마스킹)
-   */
-  function maskEmailPrefix(prefix) {
-    if (!prefix) return "";
-    if (prefix.length >= 2) {
-      return prefix.substring(0, 2) + '*'.repeat(prefix.length - 2);
-    }
-    return prefix.substring(0, 1) + '*';
-  }
-
-  // 암호화하여 저장
-  function setStoredEmail(email) {
-    const encrypted = CryptoJS.AES.encrypt(email, API_CONFIG.SECRET_KEY).toString();
-    localStorage.setItem('teacher_auth_token', encrypted);
-  }
-
   const storedEmail = getStoredEmail();
+  const fullEmail = getFullStoredEmail();
 
   // 이미 인증되어있다면 모달 숨기고 진행
   if (storedEmail) {
-    if (storedEmail === 'keeper@kse.hs.kr') {
+    if (fullEmail && window.clarity) {
+      window.clarity("identify", fullEmail);
+    }
+
+    if (storedEmail === 'keeper@kse.hs.kr' || fullEmail === 'keeper@kse.hs.kr') {
       window.location.href = 'keeper.html';
       return false;
     }
@@ -235,6 +250,11 @@ async function initAuth() {
         } else {
           // 인증 통과
           setStoredEmail(data.email);
+
+          if (window.clarity) {
+            window.clarity("identify", data.email);
+          }
+
           if (data.email === 'keeper@kse.hs.kr') {
             window.location.href = 'keeper.html';
             resolve(false);
@@ -560,7 +580,14 @@ async function checkClassAnalysisPermission() {
 
     const teacher = await getTeacherProfile(email);
     const menuBtn = document.getElementById("menu-class-analysis");
-    if (menuBtn && teacher && (teacher.role === 'homeroom_teacher' || teacher.role === 'admin' || email === 'assari@kse.hs.kr')) {
+    const keeperBtn = document.getElementById("menu-keeper");
+
+    // [추가] 소유자(관리자) 전용 메뉴 노출
+    if (keeperBtn && (email === 'gapbbong@naver.com' || email === 'assari@kse.hs.kr')) {
+      keeperBtn.style.display = "block";
+    }
+
+    if (menuBtn && teacher && (teacher.role === 'homeroom_teacher' || teacher.role === 'admin' || email === 'assari@kse.hs.kr' || email === 'gapbbong@naver.com')) {
       menuBtn.style.display = "block";
 
       // 링크 설정: assigned_class가 있으면 해당 반으로, 없는데 관리자면 1-1로

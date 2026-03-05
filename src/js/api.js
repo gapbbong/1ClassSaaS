@@ -795,3 +795,23 @@ export async function fetchAllTeachers() {
         return [];
     }
 }
+
+/**
+ * 사용자 활동 로그를 기록합니다. (분석용)
+ * @param {string} email - 교사 이메일
+ * @param {string} pageName - 페이지명
+ * @param {string} action - 작업 종류 (기본 page_view)
+ */
+export async function logPageView(email, pageName, action = 'page_view') {
+    if (!email) return;
+    try {
+        await supabase.from('user_logs').insert({
+            teacher_email: email,
+            page_path: pageName || window.location.pathname,
+            action: action
+        });
+    } catch (error) {
+        // 통계 로그 실패가 메인 기능에 영향을 주지 않도록 로깅만 합니다.
+        console.warn("Analytics log failed:", error);
+    }
+}
