@@ -481,7 +481,18 @@ async function loadSettings() {
         if (badSelect) {
             badSelect.innerHTML = '<option value="">선택</option>';
             if (settings.bad && Array.isArray(settings.bad)) {
-                settings.bad.forEach(item => {
+                // [추가] 화장, 악세사리 항목 보강 (복장불량 밑에 없으면 삽입)
+                let list = [...settings.bad];
+                const dressIdx = list.indexOf("복장불량");
+                if (dressIdx !== -1) {
+                    if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
+                    if (!list.includes("악세사리")) list.splice(list.indexOf("화장") + 1, 0, "악세사리");
+                } else {
+                    if (!list.includes("화장")) list.push("화장");
+                    if (!list.includes("악세사리")) list.push("악세사리");
+                }
+
+                list.forEach(item => {
                     const opt = document.createElement("option");
                     opt.value = item;
                     opt.textContent = item;
@@ -491,8 +502,18 @@ async function loadSettings() {
         }
     } catch (error) {
         console.error("Settings Load Error:", error);
-        if (goodSelect) goodSelect.innerHTML = '<option value="">데이터 로드 실패</option>';
-        if (badSelect) badSelect.innerHTML = '<option value="">데이터 로드 실패</option>';
+        // 실패 시 기본 항목이라도 표시
+        const badItems = ["지각", "복장불량", "화장", "악세사리", "신발불량", "가방없음", "두발불량"];
+        if (goodSelect) goodSelect.innerHTML = '<option value="">선택</option>';
+        if (badSelect) {
+            badSelect.innerHTML = '<option value="">선택</option>';
+            badItems.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = item;
+                opt.textContent = item;
+                badSelect.appendChild(opt);
+            });
+        }
     }
 }
 

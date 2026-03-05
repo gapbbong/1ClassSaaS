@@ -302,7 +302,18 @@ async function loadSettings() {
             });
         }
         if (settings.bad && Array.isArray(settings.bad)) {
-            settings.bad.forEach(item => {
+            // [추가] 화장, 악세사리 항목 보강 (복장불량 밑에 없으면 삽입)
+            let list = [...settings.bad];
+            const dressIdx = list.indexOf("복장불량");
+            if (dressIdx !== -1) {
+                if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
+                if (!list.includes("악세사리")) list.splice(list.indexOf("화장") + 1, 0, "악세사리");
+            } else {
+                if (!list.includes("화장")) list.push("화장");
+                if (!list.includes("악세사리")) list.push("악세사리");
+            }
+
+            list.forEach(item => {
                 const opt = document.createElement("option");
                 opt.value = item;
                 opt.textContent = item;
@@ -312,7 +323,7 @@ async function loadSettings() {
     } catch (e) {
         console.error("Settings load error:", e);
         // 실패 시 기본 항목이라도 표시
-        const badItems = ["지각", "복장불량", "신발불량", "가방없음", "두발불량"];
+        const badItems = ["지각", "복장불량", "화장", "악세사리", "신발불량", "가방없음", "두발불량"];
         const badSelect = document.getElementById("bad-select");
         badItems.forEach(item => {
             const opt = document.createElement("option");
