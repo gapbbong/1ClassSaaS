@@ -155,31 +155,59 @@ function syncMonthlySchedule(calendar) {
 
 /**
  * 3. 기획협의회 파싱
+ * 구조: 드라이브 폴더 내 '26.3월' 같은 스프레드시트 -> 그 안에 '26.3.9.' 같은 주 단위 시트
+ * 시트 내부: A열(부서-병합됨), B열(날짜/시간), C열(내용)
  */
 function syncPlanningMeeting(calendar) {
     const folder = DriveApp.getFolderById(CONFIG.DOCS.PLANNING);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+
     Logger.log("[기획] 동기화 중...");
+
     while (files.hasNext()) {
         const file = files.next();
         const ss = SpreadsheetApp.open(file);
-        ss.getSheets().forEach(sheet => {
-            if (!sheet.getName().includes('.')) return;
+        const sheets = ss.getSheets();
+
+        sheets.forEach(sheet => {
+            const name = sheet.getName();
+            // 시트명이 '26.3.9.' 형태이거나 날짜 구분자(.)가 포함된 경우만 처리
+            if (!name.includes('.')) return;
+
             const data = sheet.getDataRange().getValues();
+            let lastDept = ""; // 병합된 셀 처리를 위한 변수
+
+            // 보편적으로 5~7행 근처부터 데이터가 시작되나, 1행부터 탐색하며 유효 데이터 확인
             for (let r = 1; r < data.length; r++) {
-                const dept = data[r][0];
+                let dept = data[r][0]?.toString().trim() || "";
+                if (dept) {
+                    lastDept = dept; // 새로운 부서명이 나오면 업데이트
+                } else {
+                    dept = lastDept; // 빈 셀이면 이전 부서명 유지 (병합 셀 대응)
+                }
+
                 const dateStr = data[r][1]?.toString() || "";
                 const eventInfo = data[r][2]?.toString().trim() || "";
+
                 if (dateStr && !isGarbageContent(eventInfo)) {
-                    const timeMatch = dateStr.match(/(\d+)\.(\d+)\.?\(.\)\s*(\d+):(\d+)/) || dateStr.match(/(\d+)\/(\d+)\s*(\d+):(\d+)/);
+                    // 다양한 날짜 포맷 대응 (M.D. 또는 M/D 및 시간)
+                    const timeMatch = dateStr.match(/(\d+)\.(\d+)\.?\(.\)\s*(\d+):(\d+)/) ||
+                        dateStr.match(/(\d+)\/(\d+)\s*(\d+):(\d+)/) ||
+                        dateStr.match(/(\d+)\.(\d+)\.?\(.\)/); // 시간 없는 경우
+
                     if (timeMatch) {
                         const m = parseInt(timeMatch[1]);
                         const d = parseInt(timeMatch[2]);
+                        const hh = timeMatch[3] ? parseInt(timeMatch[3]) : 15; // 시간 없으면 기본 15시
+                        const mm = timeMatch[4] ? parseInt(timeMatch[4]) : 50; // 분 없으면 기본 50분
+
                         const y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                        const start = new Date(y, m - 1, d, parseInt(timeMatch[3]), parseInt(timeMatch[4]));
+                        const start = new Date(y, m - 1, d, hh, mm);
                         const title = CONFIG.PREFIX.PLANNING + " " + (dept ? dept + ": " : "") + eventInfo;
+
                         if (!isAlreadyExists(calendar, title, start)) {
                             calendar.createEvent(title, start, new Date(start.getTime() + 3600000), { description: "파일: " + file.getUrl() });
+                            Logger.log(`[기획] 추가: ${m}/${d} ${hh}:${mm} - ${eventInfo}`);
                         }
                     }
                 }
