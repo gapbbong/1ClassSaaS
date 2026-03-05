@@ -1148,13 +1148,22 @@ window.saveAttendance = async function (student) {
     const end = document.getElementById('out-end-time').value;
     const ampm = document.getElementById('ampm-toggle')?.getAttribute("data-current") || "";
 
+    // [추가] 00:00 가 12:00로 보이도록 보정 (사용자 가독성용)
+    const formatTime = (t) => {
+        let [h, m] = t.split(':').map(Number);
+        if (h === 0) h = 12; // 00시는 12시로 표시
+        else if (h > 12) h -= 12; // 13시 이상은 12를 뺌
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
     let detailMsg = "";
     if (selectedType === '조퇴') {
         if (!start) {
             window.showToast("조퇴 시간을 입력해주세요.", "error");
             return;
         }
-        detailMsg = `${ampm} 조퇴(${start}~)`;
+        const displayStart = formatTime(start);
+        detailMsg = `${ampm} 조퇴(${displayStart}~)`;
     } else { // 외출
         if (!start || !end) {
             window.showToast("외출 시간을 모두 입력해주세요.", "error");
@@ -1168,14 +1177,6 @@ window.saveAttendance = async function (student) {
             window.showToast("종료 시간은 시작 시간보다 늦어야 합니다.", "error");
             return;
         }
-
-        // [추가] 00:00 가 12:00로 보이도록 보정 (사용자 가독성용)
-        const formatTime = (t) => {
-            let [h, m] = t.split(':').map(Number);
-            if (h === 0) h = 12; // 00시는 12시로 표시
-            else if (h > 12) h -= 12; // 13시 이상은 12를 뺌
-            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        };
 
         const displayStart = formatTime(start);
         const displayEnd = formatTime(end);

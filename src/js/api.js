@@ -488,8 +488,13 @@ export async function fetchDetailedRecordCounts(classInfo) {
                                     return h * 100 + m;
                                 };
 
-                                const start24 = convertTo24h(startStr, isPm);
-                                const end24 = convertTo24h(endStr, isPm);
+                                let start24 = convertTo24h(startStr, isPm);
+                                let end24 = convertTo24h(endStr, isPm);
+
+                                // 12시간제를 넘어가면서 종료 시간이 시작 시간보다 작아진 경우 보정 (예: 11:30 ~ 01:30)
+                                if (end24 < start24) {
+                                    end24 += 1200;
+                                }
 
                                 const nowObj = new Date();
                                 const nowTime = nowObj.getHours() * 100 + nowObj.getMinutes();
@@ -645,9 +650,9 @@ export async function bulkSaveRecords(targets, recordData) {
 
             return {
                 student_pid: s.pid,
-                category: recordData.good || recordData.bad || "일반",
+                category: recordData.category || recordData.good || recordData.bad || "일반",
                 content: recordData.detail || "",
-                is_positive: !!recordData.good,
+                is_positive: recordData.hasOwnProperty('is_positive') ? recordData.is_positive : !!recordData.good,
                 teacher_email_prefix: teacherValue,
                 created_at: new Date().toISOString()
             };
