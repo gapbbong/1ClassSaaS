@@ -31,36 +31,44 @@ function syncAllSchedules() {
 
 /**
  * 1. 학사일정 파싱 (그리드 레이아웃)
+ * 구조: A열(월-숫자), C/E/G/I/K열(일), D/F/H/J/L열(내용)
  */
 function syncAcademicSchedule(calendar) {
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
     const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
 
-    Logger.log("학사일정 동기화 중...");
+    Logger.log("[학사] 동기화 중 (시트: " + sheet.getName() + ")");
 
-    let currentMonth = 1;
+    let rowMonth = 3; // 기본 3월 시작 (학기 시작)
     for (let r = 0; r < data.length; r++) {
         const row = data[r];
-        // A열에 월 정보가 있는 경우 업데이트
-        if (row[0] && typeof row[0] === 'string' && row[0].includes('월')) {
-            currentMonth = parseInt(row[0]);
+
+        // A열에 월 정보(숫자 또는 'X월')가 있는 경우 업데이트
+        if (row[0]) {
+            const mMatch = row[0].toString().match(/(\d+)/);
+            if (mMatch) rowMonth = parseInt(mMatch[1]);
         }
 
-        // C(2), E(4), G(6), I(8), K(10) 열이 '일' 정보
-        // D(3), F(5), H(7), J(9), L(11) 열이 '이벤트' 정보
+        // 월~금 (Index 2, 4, 6, 8, 10)
         for (let c = 2; c <= 10; c += 2) {
             const day = data[r][c];
             const eventName = data[r][c + 1];
 
-            if (day && typeof day === 'number' && eventName && eventName.toString().trim() !== "") {
-                const year = (currentMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR; // 1,2월은 다음해
-                const date = new Date(year, currentMonth - 1, day);
-                const title = CONFIG.PREFIX.ACADEMIC + " " + eventName;
+            if (day && !isNaN(day) && eventName && eventName.toString().trim().length > 1) {
+                // 주간 단위 배치로 인해 이전 달 날짜가 포함된 경우 처리 (예: 4월 1주 로우에 3/30이 있는 경우)
+                let actualMonth = rowMonth;
+                if (day > 20 && c < 6) { // 월/화인데 날짜가 크면 이전 달일 확률 높음
+                    if (rowMonth > 1) actualMonth = rowMonth - 1;
+                }
 
-                if (!isAlreadyExists(calendar, title, date, true)) {
-                    calendar.createAllDayEvent(title, date, { description: "출처: 학사일정 시트" });
-                    Logger.log(`[학사] 추가: ${currentMonth}/${day} - ${eventName}`);
+                const year = (actualMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const date = new Date(year, actualMonth - 1, parseInt(day));
+                const title = CONFIG.PREFIX.ACADEMIC + " " + eventName.toString().trim();
+
+                if (!isAlreadyExists(calendar, title, date)) {
+                    calendar.createAllDayEvent(title, date, { description: "출처: 학사일정" });
+                    Logger.log(`[학사] 추가: ${actualMonth}/${day} - ${eventName}`);
                 }
             }
         }
@@ -69,12 +77,13 @@ function syncAcademicSchedule(calendar) {
 
 /**
  * 2. 월중행사계획표 파싱
+ * 구조: 시트명 '26학년도3월', A열(날짜-혼합형), C열 이후(내용)
  */
 function syncMonthlySchedule(calendar) {
     const folder = DriveApp.getFolderById(CONFIG.DOCS.MONTHLY);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
 
-    Logger.log("월중행사 동기화 중...");
+    Logger.log("[월중] 동기화 중...");
 
     while (files.hasNext()) {
         const file = files.next();
@@ -82,25 +91,38 @@ function syncMonthlySchedule(calendar) {
         const sheets = ss.getSheets();
 
         sheets.forEach(sheet => {
-            if (!sheet.getName().includes('학년도')) return;
+            const sName = sheet.getName();
+            if (!sName.includes('월')) return;
 
             const data = sheet.getDataRange().getValues();
-            const monthMatch = sheet.getName().match(/(\d+)월/);
+            const monthMatch = sName.match(/(\d+)월/);
             if (!monthMatch) return;
 
             const month = parseInt(monthMatch[1]);
             const year = (month < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
 
             for (let r = 0; r < data.length; r++) {
-                const dayValue = data[r][0]; // A열: 날짜
-                if (dayValue && !isNaN(dayValue)) {
-                    const day = parseInt(dayValue);
-                    const date = new Date(year, month - 1, day);
+                let dayValue = data[r][0]; // A열
+                if (!dayValue) continue;
 
-                    // C열 이후의 모든 텍스트를 하나로 합침
+                let day;
+                if (typeof dayValue === 'number') {
+                    day = dayValue;
+                } else if (typeof dayValue === 'string') {
+                    const match = dayValue.match(/(\d+)/);
+                    if (match) day = parseInt(match[1]);
+                } else if (dayValue instanceof Date) {
+                    day = dayValue.getDate();
+                }
+
+                if (day) {
+                    const date = new Date(year, month - 1, day);
                     let content = [];
                     for (let c = 2; c < data[r].length; c++) {
-                        if (data[r][c]) content.push(data[r][c].toString().trim());
+                        const val = data[r][c];
+                        if (val && val.toString().trim().length > 1) {
+                            content.push(val.toString().trim());
+                        }
                     }
 
                     if (content.length > 0) {
@@ -108,7 +130,7 @@ function syncMonthlySchedule(calendar) {
                         const summaryTitle = content[0].substring(0, 15) + (content.length > 1 ? " 외" : "");
                         const title = CONFIG.PREFIX.MONTHLY + " " + summaryTitle;
 
-                        if (!isAlreadyExists(calendar, title, date, true)) {
+                        if (!isAlreadyExists(calendar, title, date)) {
                             calendar.createAllDayEvent(title, date, { description: description + "\n\n파일: " + file.getUrl() });
                             Logger.log(`[월중] 추가: ${month}/${day} - ${summaryTitle}`);
                         }
@@ -121,12 +143,13 @@ function syncMonthlySchedule(calendar) {
 
 /**
  * 3. 기획협의회 파싱
+ * 구조: B열에 '3.10.(화) 15:50' 또는 '3/10 15:50' 또는 '2026-03-10' 형식
  */
 function syncPlanningMeeting(calendar) {
     const folder = DriveApp.getFolderById(CONFIG.DOCS.PLANNING);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
 
-    Logger.log("기획협의회 동기화 중...");
+    Logger.log("[기획] 동기화 중...");
 
     while (files.hasNext()) {
         const file = files.next();
@@ -134,19 +157,21 @@ function syncPlanningMeeting(calendar) {
         const sheets = ss.getSheets();
 
         sheets.forEach(sheet => {
-            // 시트명이 '26.3.9.' 형태인지 확인
             const name = sheet.getName();
-            if (!name.match(/^\d+\.\d+\.\d+\.?$/)) return;
+            // 날짜 구분자(.)가 포함된 시트만 읽음
+            if (!name.includes('.')) return;
 
             const data = sheet.getDataRange().getValues();
             for (let r = 1; r < data.length; r++) {
-                const dept = data[r][0];     // 부서명
-                const dateStr = data[r][1];   // 일자 (예: 3.10.(화) 15:50)
-                const eventInfo = data[r][2]; // 행사내역
+                const dept = data[r][0];
+                const dateStr = data[r][1]?.toString() || "";
+                const eventInfo = data[r][2]?.toString() || "";
 
                 if (dateStr && eventInfo) {
-                    // 시간 파싱 로직 하드코딩 (학교 포맷 특화)
-                    const timeMatch = dateStr.match(/(\d+)\.(\d+)\.?\(.\)\s*(\d+):(\d+)/);
+                    // 정규식 강화: 다양한 날짜 포맷 대응
+                    const timeMatch = dateStr.match(/(\d+)\.(\d+)\.?\(.\)\s*(\d+):(\d+)/) ||
+                        dateStr.match(/(\d+)\/(\d+)\s*(\d+):(\d+)/);
+
                     if (timeMatch) {
                         const m = parseInt(timeMatch[1]);
                         const d = parseInt(timeMatch[2]);
@@ -155,10 +180,10 @@ function syncPlanningMeeting(calendar) {
                         const y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
 
                         const start = new Date(y, m - 1, d, hh, mm);
-                        const end = new Date(start.getTime() + 60 * 60 * 1000); // 1시간 기본
-                        const title = CONFIG.PREFIX.PLANNING + " " + dept + ": " + eventInfo;
+                        const end = new Date(start.getTime() + 60 * 60 * 1000);
+                        const title = CONFIG.PREFIX.PLANNING + " " + (dept ? dept + ": " : "") + eventInfo;
 
-                        if (!isAlreadyExists(calendar, title, start, false)) {
+                        if (!isAlreadyExists(calendar, title, start)) {
                             calendar.createEvent(title, start, end, { description: "파일: " + file.getUrl() });
                             Logger.log(`[기획] 추가: ${m}/${d} ${hh}:${mm} - ${eventInfo}`);
                         }
@@ -172,7 +197,7 @@ function syncPlanningMeeting(calendar) {
 /**
  * 중복 체크 (날짜/제목 기준)
  */
-function isAlreadyExists(calendar, title, date, isAllDay) {
+function isAlreadyExists(calendar, title, date) {
     const events = calendar.getEventsForDay(date);
     return events.some(e => e.getTitle() === title);
 }
