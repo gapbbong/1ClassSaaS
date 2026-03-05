@@ -13,7 +13,11 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
     : {
         from: () => ({
             select: () => ({
-                eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }) }),
+                eq: () => ({
+                    single: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }),
+                    maybeSingle: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }),
+                    limit: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }) })
+                }),
                 order: () => Promise.resolve({ data: [], error: new Error("Missing Supabase Config") }),
                 in: () => Promise.resolve({ data: [], error: new Error("Missing Supabase Config") })
             }),

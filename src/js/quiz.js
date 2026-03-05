@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
         currentTeacherEmail = bytes.toString(CryptoJS.enc.Utf8).trim().toLowerCase();
         currentTeacherId = currentTeacherEmail.split('@')[0];
-        console.log("Teacher Authenticated:", currentTeacherEmail);
+        currentTeacherId = currentTeacherEmail.split('@')[0];
     } catch (e) {
         console.error("Auth Decrypt Error:", e);
     }
@@ -40,7 +40,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         await updateMyTotalScore();
     }
     showRanking();
+
+    // 5. Score Guide Modal
+    const hideGuide = localStorage.getItem('hideScoreGuide_v1');
+    if (!hideGuide) {
+        document.getElementById("score-guide-modal").style.display = 'flex';
+    }
 });
+
+window.closeScoreGuide = function () {
+    const isChecked = document.getElementById("hide-guide-checkbox").checked;
+    if (isChecked) {
+        localStorage.setItem('hideScoreGuide_v1', 'true');
+    }
+    document.getElementById("score-guide-modal").style.display = 'none';
+}
 
 async function updateMyTotalScore() {
     if (!currentTeacherEmail) return;
@@ -73,18 +87,45 @@ window.showRankingModal = function () {
     showRanking();
 }
 
+function showCustomConfirm(message) {
+    return new Promise((resolve) => {
+        document.getElementById('custom-confirm-message').innerText = message;
+        document.getElementById('custom-confirm-modal').style.display = 'flex';
+
+        window.closeCustomConfirm = function (result) {
+            document.getElementById('custom-confirm-modal').style.display = 'none';
+            resolve(result);
+        };
+    });
+}
+
+function showCustomAlert(message) {
+    document.getElementById('custom-alert-message').innerHTML = message;
+    document.getElementById('custom-alert-modal').style.display = 'flex';
+}
+
+window.closeCustomAlert = function () {
+    document.getElementById('custom-alert-modal').style.display = 'none';
+}
+
 // [추가] 뒤로가기 제어
-window.handleBack = function () {
+window.handleBack = async function () {
     const gameScreen = document.getElementById("game-screen");
     const resultScreen = document.getElementById("result-screen");
     const selectionScreen = document.getElementById("selection-screen");
 
     if (gameScreen.style.display === 'flex' || resultScreen.style.display === 'flex') {
-        if (!confirm("진행 중인 퀴즈가 저장되지 않을 수 있습니다. 종료할까요?")) return;
+        const confirmed = await showCustomConfirm("지금까지의 진행 상황을 저장하고 종료하시겠습니까?<br><br><span style='font-size:0.85rem; color:#64748b;'>메인 화면으로 이동 시 자동 저장됩니다.</span>");
+        if (!confirmed) return;
+
+        if (score > 0 && gameScreen.style.display === 'flex') {
+            await saveScore(score, currentIndex, quizPool.length);
+        }
+
         gameScreen.style.display = 'none';
         resultScreen.style.display = 'none';
         selectionScreen.style.display = 'flex';
-        updateMyTotalScore();
+        await updateMyTotalScore();
         return;
     }
     location.href = "index.html";
@@ -96,7 +137,7 @@ async function loadInitialData() {
             .from('students')
             .select('*')
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
-            .neq('status', 'graduated')
+            .neq('status', 'graduated')  // 다시 추가: 졸업생 필드 제거
             .order('student_id', { ascending: true });
 
         if (error) throw error;
@@ -115,11 +156,27 @@ function renderClassGrid() {
     for (let c = 1; c <= 6; c++) {
         for (let g = 1; g <= 3; g++) {
             const classTarget = `${g}-${c}`;
-            html += `<button class="option-btn" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
+            html += `<button class="option-btn btn-g${g}" onclick="startQuiz('class-${classTarget}')">${classTarget}</button>`;
         }
     }
     grid.innerHTML = html;
+
+    // Adjust button text tracking and sizes dynamically
+    document.querySelectorAll('.option-btn').forEach(btn => {
+        const textLen = btn.innerText.trim().length;
+        if (textLen >= 8) {
+            btn.style.letterSpacing = '-1.5px';
+            btn.style.fontSize = '0.9rem';
+        } else if (textLen >= 6) {
+            btn.style.letterSpacing = '-1px';
+            btn.style.fontSize = '0.95rem';
+        } else {
+            btn.style.letterSpacing = '-0.3px';
+        }
+    });
 }
+
+let currentPointsPerQuestion = 10;
 
 window.startQuiz = function (range) {
     let pool = [];
@@ -128,19 +185,19 @@ window.startQuiz = function (range) {
         pool = [...allStudents];
     } else if (range.startsWith('grade')) {
         const g = range.replace('grade', '');
-        pool = allStudents.filter(s => s.academic_year == g);
+        pool = allStudents.filter(s => s.class_info && s.class_info.startsWith(g + '-'));
     } else if (range === 'dept1-iot') {
-        pool = allStudents.filter(s => s.academic_year == 1 && ['1-1', '1-2', '1-3'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['1-1', '1-2', '1-3'].includes(s.class_info));
     } else if (range === 'dept1-game') {
-        pool = allStudents.filter(s => s.academic_year == 1 && ['1-4', '1-5', '1-6'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['1-4', '1-5', '1-6'].includes(s.class_info));
     } else if (range === 'dept2-iot') {
-        pool = allStudents.filter(s => s.academic_year == 2 && ['2-1', '2-2', '2-3'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['2-1', '2-2', '2-3'].includes(s.class_info));
     } else if (range === 'dept2-game') {
-        pool = allStudents.filter(s => s.academic_year == 2 && ['2-4', '2-5', '2-6'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['2-4', '2-5', '2-6'].includes(s.class_info));
     } else if (range === 'dept3-iot') {
-        pool = allStudents.filter(s => s.academic_year == 3 && ['3-1', '3-2', '3-3'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['3-1', '3-2', '3-3'].includes(s.class_info));
     } else if (range === 'dept3-game') {
-        pool = allStudents.filter(s => s.academic_year == 3 && ['3-4', '3-5', '3-6'].includes(s.class_info));
+        pool = allStudents.filter(s => s.class_info && ['3-4', '3-5', '3-6'].includes(s.class_info));
     } else if (range.startsWith('class-')) {
         const target = range.replace('class-', '');
         pool = allStudents.filter(s => s.class_info === target);
@@ -150,9 +207,12 @@ window.startQuiz = function (range) {
     quizPool = pool.filter(s => s.photo_url && s.photo_url.trim() !== "");
 
     if (quizPool.length < 4) {
-        alert("사진이 있는 학생이 부족하여 퀴즈를 진행할 수 없습니다. (최소 4명 필요)");
+        showCustomAlert("사진이 있는 학생이 부족하여 퀴즈를 진행할 수 없습니다.<br>(최소 4명 필요)");
         return;
     }
+
+    // 점수는 해당 범위의 사진 있는 실제 사람 수(quizPool.length)와 비례하게!
+    currentPointsPerQuestion = quizPool.length;
 
     // Shuffle
     shuffleArray(quizPool);
@@ -216,7 +276,7 @@ window.checkAnswer = function (selectedName, correctName, btn) {
 
     console.log(`Checking Answer: Selected=${selectedName}, Correct=${correctName}`);
     if (selectedName === correctName) {
-        score += 10;
+        score += currentPointsPerQuestion;
         console.log("Correct! New Session Score:", score);
         document.getElementById("quiz-score").innerText = `Score: ${score}`;
         btn.classList.add('correct');
@@ -301,7 +361,7 @@ async function saveScore(score, correctCount, totalCount) {
 
         if (existing) {
             const newScore = (existing.score || 0) + score;
-            const newCorrect = (existing.correct_count || 0) + (score / 10);
+            const newCorrect = (existing.correct_count || 0) + (score / currentPointsPerQuestion);
             const newTotal = (existing.total_count || 0) + totalCount;
 
             const { error: uError } = await supabase
@@ -320,7 +380,7 @@ async function saveScore(score, correctCount, totalCount) {
                 .insert({
                     teacher_email: currentTeacherEmail,
                     score: score,
-                    correct_count: (score / 10),
+                    correct_count: (score / currentPointsPerQuestion),
                     total_count: totalCount,
                     academic_year: String(API_CONFIG.CURRENT_ACADEMIC_YEAR)
                 });
@@ -336,32 +396,37 @@ async function showRanking() {
         const { data, error } = await supabase
             .from('quiz_scores')
             .select('*')
+            .gt('score', 0) // 점수가 1점이라도 있는 사람만
             .order('score', { ascending: false })
             .limit(50);
 
         if (error) throw error;
 
-        const list = document.getElementById("ranking-list");
-        if (!list) return;
+        const lists = document.querySelectorAll('.ranking-list');
+        if (lists.length === 0) return;
 
+        let contentHtml = '';
         if (!data || data.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:#94a3b8;">아직 기록이 없습니다.</p>';
-            return;
+            contentHtml = '<p style="text-align:center; color:#94a3b8;">아직 기록이 없습니다.</p>';
+        } else {
+            contentHtml = data.map((item, idx) => {
+                const id = item.teacher_email.split('@')[0];
+                const maskedId = maskId(id);
+                return `
+                    <div class="ranking-item">
+                        <div class="rank-info">
+                            <span class="rank-num">${idx + 1}</span>
+                            <span class="rank-id">${maskedId}</span>
+                        </div>
+                        <div style="font-weight: 800; color: var(--quiz-primary);">${item.score.toLocaleString()}점</div>
+                    </div>
+                `;
+            }).join('');
         }
 
-        list.innerHTML = data.map((item, idx) => {
-            const id = item.teacher_email.split('@')[0];
-            const maskedId = maskId(id);
-            return `
-                <div class="ranking-item">
-                    <div class="rank-info">
-                        <span class="rank-num">${idx + 1}</span>
-                        <span class="rank-id">${maskedId}</span>
-                    </div>
-                    <div style="font-weight: 800; color: var(--quiz-primary);">${item.score.toLocaleString()}점</div>
-                </div>
-            `;
-        }).join('');
+        lists.forEach(list => {
+            list.innerHTML = contentHtml;
+        });
     } catch (e) {
         console.warn("Ranking failed", e);
     }
@@ -369,7 +434,6 @@ async function showRanking() {
 
 function maskId(id) {
     if (!id) return "***";
-    // user requested "앞 2글자만 마스킹 처리" which means mask index 0, 1.
     if (id.length <= 2) return "**";
     return "**" + id.substring(2);
 }
