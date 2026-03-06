@@ -236,17 +236,15 @@
             line-height: 1.5;
             display: flex;
             align-items: flex-start;
-            gap: 2px;
+            gap: 8px;
+            /* 번호와 글자 사이 간격 */
             word-break: keep-all;
             overflow-wrap: anywhere;
         }
 
         .event-title {
             flex: 1;
-            padding-left: 8px;
-            /* 들여쓰기 너비 축소 */
-            text-indent: -7px;
-            /* 첫 줄 정렬 조정 */
+            /* 들여쓰기 속성 제거: 두 번째 줄이 첫 번째 줄 시작점과 일치하게 됨 */
         }
 
         .event-item:last-child {
