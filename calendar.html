@@ -172,7 +172,7 @@
 
         .month-separator.collapsed+.day-card,
         .month-separator.collapsed~.day-card {
-            /* JS에서 제어하기 위해 클래스 기반으로 숨김 처리 가능 */
+            display: none;
         }
 
         .month-separator::after {
@@ -583,7 +583,7 @@
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 3;
-            /* 2줄에서 3줄로 확대 */
+            line-clamp: 3;
             -webkit-box-orient: vertical;
             margin-top: 4px;
         }
