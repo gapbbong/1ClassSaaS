@@ -172,7 +172,7 @@ function renderCalendar(events, year, month, append = false) {
             separator.className = "month-separator";
             separator.innerHTML = `
                 <div class="month-title-row">
-                    <span>${m}월</span>
+                    <span>${m}월</span><span class="schedule-text">SCHEDULE</span>
                 </div>
                 <button class="month-fold-btn">접기</button>
             `;
@@ -202,7 +202,7 @@ function renderCalendar(events, year, month, append = false) {
             return parts[0] === year && parts[1] === month && parts[2] === d;
         });
 
-        const dayIdx = dateObj.getDay();
+        // const dayIdx = dateObj.getDay(); // 중복 선언 제거
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const isToday = dateObj.toDateString() === new Date().toDateString();
@@ -285,7 +285,7 @@ function renderGroupedEvents(container, events) {
             separator.className = "month-separator";
             separator.innerHTML = `
                 <div class="month-title-row">
-                    <span>${m}월</span>
+                    <span>${m}월</span><span class="schedule-text">SCHEDULE</span>
                 </div>
                 <button class="month-fold-btn">접기</button>
             `;
@@ -308,7 +308,7 @@ function renderGroupedEvents(container, events) {
             lastMonth = m;
         }
 
-        const dayIdx = dateObj.getDay();
+        // const dayIdx = dateObj.getDay(); // 중복 선언 제거
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
