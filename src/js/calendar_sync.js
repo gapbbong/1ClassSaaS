@@ -162,11 +162,17 @@ function getAcademicData() {
 }
 
 function getCreativeData() {
+    Logger.log("🔍 창체 데이터 수집 시작...");
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
     const sheets = ss.getSheets();
-    // '창체' 단어가 포함된 시트 우선, 없으면 첫 번째 시트
-    const sheet = sheets.find(s => s.getName().includes('창체')) || sheets[0];
+
+    // 2026과 창체가 모두 포함된 시트 우선, 없으면 창체 포함 시트, 그것도 없으면 첫 번째
+    const sheet = sheets.find(s => s.getName().includes('2026') && s.getName().includes('창체')) ||
+        sheets.find(s => s.getName().includes('창체')) ||
+        sheets[0];
+
+    Logger.log("📄 선택된 창체 시트: " + sheet.getName());
     const data = sheet.getDataRange().getValues();
 
     for (let r = 1; r < data.length; r++) {
@@ -219,12 +225,24 @@ function getMonthlyData(requestedMonth) {
         ss.getSheets().forEach(sheet => {
             const sheetName = sheet.getName();
             if (!sheetName.includes('월')) return;
+
+            // 학년도 필터링: 작년(2025/25) 시트는 명시적으로 제외 (올해 시트가 있는 경우)
+            if (sheetName.includes('2025') || sheetName.includes('25')) {
+                const has2026Sheet = ss.getSheets().some(s => s.getName().includes('2026') || s.getName().includes('26'));
+                if (has2026Sheet) {
+                    Logger.log(`🚫 작년 시트 제외: ${sheetName}`);
+                    return;
+                }
+            }
+
             const data = sheet.getDataRange().getValues();
             const monthMatch = sheetName.match(/(\d+)월/);
             if (!monthMatch) return;
             const month = parseInt(monthMatch[1]);
 
             if (requestedMonth && month !== requestedMonth) return;
+
+            Logger.log(`📂 월중행사 시트 분석 중: ${sheetName}`);
 
             const year = (month < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
             for (let r = 0; r < data.length; r++) {
