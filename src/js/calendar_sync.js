@@ -27,15 +27,8 @@ function doGet(e) {
     const month = e && e.parameter && e.parameter.month ? parseInt(e.parameter.month) : null;
     const isAll = e && e.parameter && e.parameter.all === 'true';
 
-    let data = getUnifiedData();
-
-    // 월별 필터링 (all 파라미터가 없거나 특정 월이 지정된 경우)
-    if (!isAll && month) {
-        data = data.filter(ev => {
-            const evMonth = parseInt(ev.date.split('-')[1]);
-            return evMonth === month;
-        });
-    }
+    // 특정 월만 요청한 경우 해당 월만 수집하여 속도 극대화
+    const data = getUnifiedData(isAll ? null : month);
 
     return ContentService.createTextOutput(JSON.stringify(data))
         .setMimeType(ContentService.MimeType.JSON);
@@ -54,37 +47,44 @@ function syncAllSchedules() {
     Logger.log("=== 모든 프로세스 종료 ===");
 }
 
-function getUnifiedData() {
+function getUnifiedData(requestedMonth = null) {
     let allEvents = [];
 
     // 1. 학사 일정 추출
     try {
-        const academicEvents = getAcademicData();
+        let academicEvents = getAcademicData();
+        if (requestedMonth) {
+            academicEvents = academicEvents.filter(ev => parseInt(ev.date.split('-')[1]) === requestedMonth);
+        }
         allEvents.push(...academicEvents);
-    } catch (e) { Logger.log("Academic data extraction error: " + e); }
+    } catch (e) { Logger.log("Academic data error: " + e); }
 
     // 2. 창체 활동 추출
     try {
-        const creativeEvents = getCreativeData();
+        let creativeEvents = getCreativeData();
+        if (requestedMonth) {
+            creativeEvents = creativeEvents.filter(ev => parseInt(ev.date.split('-')[1]) === requestedMonth);
+        }
         allEvents.push(...creativeEvents);
-    } catch (e) { Logger.log("Creative data extraction error: " + e); }
+    } catch (e) { Logger.log("Creative data error: " + e); }
 
-    // 3. 월중 일정 추출
+    // 3. 월중 일정 추출 (파일 필터링으로 속도 향상)
     try {
-        const monthlyEvents = getMonthlyData();
+        const monthlyEvents = getMonthlyData(requestedMonth);
         allEvents.push(...monthlyEvents);
-    } catch (e) { Logger.log("Monthly data extraction error: " + e); }
+    } catch (e) { Logger.log("Monthly data error: " + e); }
 
     // 4. 기획 회의 추출
     try {
-        const planningEvents = getPlanningData();
+        const planningEvents = getPlanningData(requestedMonth);
         allEvents.push(...planningEvents);
-    } catch (e) { Logger.log("Planning data extraction error: " + e); }
+    } catch (e) { Logger.log("Planning data error: " + e); }
 
-    // 중복 제거 (날짜 + 제목 + 타입이 동일한 경우 제거)
+    // 최종 중복 제거 (날짜 + 제목(공백제거) + 타입)
     const uniqueMap = new Map();
     allEvents.forEach(ev => {
-        const key = `${ev.date}|${ev.title}|${ev.type}`;
+        const normalizedTitle = ev.title.replace(/\s+/g, '');
+        const key = `${ev.date}|${normalizedTitle}|${ev.type}`;
         if (!uniqueMap.has(key)) {
             uniqueMap.set(key, ev);
         }
@@ -183,19 +183,32 @@ function getCreativeData() {
     return events;
 }
 
-function getMonthlyData() {
+function getMonthlyData(requestedMonth) {
     const events = [];
     const folder = DriveApp.getFolderById(CONFIG.DOCS.MONTHLY);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
     while (files.hasNext()) {
         const file = files.next();
+        const fileName = file.getName();
+
+        // 요청한 월이 있는 경우 파일명 필터링
+        if (requestedMonth) {
+            const mStr = requestedMonth.toString();
+            const mStrPad = mStr.padStart(2, '0');
+            if (!fileName.includes(mStr + '월') && !fileName.includes(mStrPad + '월')) continue;
+        }
+
         const ss = SpreadsheetApp.open(file);
         ss.getSheets().forEach(sheet => {
-            if (!sheet.getName().includes('월')) return;
+            const sheetName = sheet.getName();
+            if (!sheetName.includes('월')) return;
             const data = sheet.getDataRange().getValues();
-            const monthMatch = sheet.getName().match(/(\d+)월/);
+            const monthMatch = sheetName.match(/(\d+)월/);
             if (!monthMatch) return;
             const month = parseInt(monthMatch[1]);
+
+            if (requestedMonth && month !== requestedMonth) return;
+
             const year = (month < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
             for (let r = 0; r < data.length; r++) {
                 let dVal = data[r][0];
@@ -204,11 +217,13 @@ function getMonthlyData() {
                     let content = [];
                     for (let c = 2; c < data[r].length; c++) {
                         const val = data[r][c]?.toString().trim() || "";
-                        if (!isGarbageContent(val)) content.push(val);
+                        if (val && !isGarbageContent(val)) {
+                            if (!content.includes(val)) content.push(val);
+                        }
                     }
                     if (content.length > 0) {
                         events.push({
-                            date: `${year}-${month}-${day}`,
+                            date: formatDate(year, month, day),
                             title: content.join(' / '),
                             type: 'monthly',
                             typeName: '월중'
@@ -221,7 +236,7 @@ function getMonthlyData() {
     return events;
 }
 
-function getPlanningData() {
+function getPlanningData(requestedMonth = null) {
     const events = [];
     const folder = DriveApp.getFolderById(CONFIG.DOCS.PLANNING);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
@@ -234,7 +249,11 @@ function getPlanningData() {
         sheets.forEach(sheet => {
             const sheetName = sheet.getName();
             // "26.3.9" 또는 "26.3.23" 등 날짜 형식이 포함된 시트만 대상
-            if (!sheetName.match(/\d+\.\d+\.\d+/)) return;
+            const dateMatch = sheetName.match(/\d+\.(\d+)\.\d+/);
+            if (!dateMatch) return;
+
+            const month = parseInt(dateMatch[1]);
+            if (requestedMonth && month !== requestedMonth) return;
 
             const data = sheet.getDataRange().getValues();
             let lastDept = "";
