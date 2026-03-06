@@ -26,6 +26,12 @@ const CONFIG = {
 function doGet(e) {
     const month = e && e.parameter && e.parameter.month ? parseInt(e.parameter.month) : null;
     const isAll = e && e.parameter && e.parameter.all === 'true';
+    const isYearly = e && e.parameter && e.parameter.type === 'yearly';
+
+    if (isYearly) {
+        return ContentService.createTextOutput(JSON.stringify(getAcademicYearData()))
+            .setMimeType(ContentService.MimeType.JSON);
+    }
 
     // 특정 월만 요청한 경우 해당 월만 수집하여 속도 극대화
     const data = getUnifiedData(isAll ? null : month);
@@ -158,7 +164,7 @@ function getAcademicData() {
                 const year = (rowMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
                 events.push({
                     date: formatDate(year, rowMonth, day),
-                    title: eventName,
+                    title: cleanAcademicTitle(eventName),
                     type: 'academic',
                     typeName: '학사'
                 });
@@ -166,6 +172,75 @@ function getAcademicData() {
         }
     }
     return events;
+}
+
+/**
+ * 연간 학사일정 팝업용 정밀 데이터 추출
+ */
+function getAcademicYearData() {
+    Logger.log("🗓️ 연간 학사일정 정밀 파싱 시작...");
+    const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
+    const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
+    const data = sheet.getDataRange().getValues();
+    const result = {}; // { "2026-03-02": "개학식", ... }
+
+    // 1학기(5행~31행 부근), 2학기(34행~) 처리
+    const ranges = [
+        { start: 4, end: 32 }, // 1학기
+        { start: 33, end: 65 } // 2학기
+    ];
+
+    ranges.forEach(range => {
+        let currentMonth = 3;
+        for (let r = range.start; r < Math.min(data.length, range.end); r++) {
+            const row = data[r];
+            // B열(인덱스 1)에 월 정보(숫자)가 있는지 확인
+            const monthText = row[1]?.toString().trim();
+            if (monthText) {
+                const mMatch = monthText.match(/(\d+)/);
+                if (mMatch) currentMonth = parseInt(mMatch[1]);
+            }
+
+            // 월~금 (D,F,H,J,L열이 날짜 / E,G,I,K,M열이 내용)
+            // 인덱스: D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11), M(12)
+            for (let c = 3; c <= 11; c += 2) {
+                const dayVal = row[c];
+                const content = row[c + 1]?.toString().trim() || "";
+
+                if (dayVal && !isNaN(dayVal) && content) {
+                    const day = parseInt(dayVal);
+                    const year = (currentMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                    const dateStr = formatDate(year, currentMonth, day);
+                    const cleanedTitle = cleanAcademicTitle(content);
+
+                    if (cleanedTitle) {
+                        result[dateStr] = result[dateStr] ? result[dateStr] + "\n" + cleanedTitle : cleanedTitle;
+                    }
+                }
+            }
+        }
+    });
+
+    Logger.log(`✅ 연간 일정 추출 완료 (총 ${Object.keys(result).length}일분)`);
+    return result;
+}
+
+/**
+ * '월1', '화2' 등 요일+숫자 접두사 및 시수 정보 제거
+ */
+function cleanAcademicTitle(text) {
+    if (!text) return "";
+
+    return text.split('\n').map(line => {
+        // 정규식: 시작부분에서 [요일] + [숫자들] + [공백] 패턴을 찾아서 제거
+        let cleaned = line.replace(/^([월화수목금토일]\d+\s*|\s+)+/g, '').trim();
+
+        // 숫자만 남거나 너무 짧은(이름 등) 경우 제외
+        if (/^\d+$/.test(cleaned) || cleaned.length < 2) return null;
+        if (isGarbageContent(cleaned)) return null;
+
+        return cleaned;
+    }).filter(v => v).join(' / ');
 }
 
 function getCreativeData() {

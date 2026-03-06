@@ -50,16 +50,20 @@ function setupButtons() {
 
     if (btnAcademic) {
         btnAcademic.addEventListener('click', () => {
-            if (viewMode === 'academic_only') {
-                viewMode = 'month';
-                btnAcademic.innerText = '📅 연간일정';
-                btnAcademic.classList.remove('active');
-                renderCalendar(loadedEvents, currentYear, currentMonth);
-            } else {
-                viewMode = 'academic_only';
-                btnAcademic.innerText = '📋 전체 보기';
-                renderCalendarAcademic(loadedEvents);
-            }
+            showAcademicPopup();
+        });
+    }
+
+    const btnClosePopup = document.getElementById('close-academic-btn');
+    if (btnClosePopup) {
+        btnClosePopup.addEventListener('click', closeAcademicPopup);
+    }
+
+    // 오버레이 클릭 시 닫기
+    const overlay = document.getElementById('academic-popup-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeAcademicPopup();
         });
     }
 
