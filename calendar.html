@@ -231,6 +231,25 @@
             padding: 6px 0;
             border-bottom: 1px dashed #eee;
             line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            /* 상단 정렬 */
+            gap: 4px;
+            word-break: keep-all;
+            /* 단어 단위 줄바꿈 */
+        }
+
+        .event-title {
+            padding-left: 4px;
+            text-indent: -4px;
+            /* 들여쓰기 효과를 위한 미세 조정 (선택사항) */
+        }
+
+        /* 다음 줄 들여쓰기 처리 */
+        .event-item .event-title {
+            display: inline-block;
+            vertical-align: top;
+            flex: 1;
         }
 
         .event-item:last-child {
@@ -252,7 +271,9 @@
         .event-seq {
             color: #4A90E2;
             font-weight: 800;
-            margin-right: 4px;
+            margin-right: 2px;
+            flex-shrink: 0;
+            min-width: 1.2rem;
         }
 
         .event-dept {
@@ -406,8 +427,8 @@
     </div>
 
     <div class="floating-top-btns">
-        <button id="btn-back-home" class="fab-btn fab-back">🏠 뒤로</button>
-        <button id="btn-filter-academic" class="fab-btn fab-academic">📅 연간 학사</button>
+        <button id="btn-back-home" class="fab-btn fab-back" title="홈으로">🏠</button>
+        <button id="btn-filter-academic" class="fab-btn fab-academic">📅 연간일정</button>
     </div>
 
     <div class="calendar-container">

@@ -52,13 +52,13 @@ function setupButtons() {
         btnAcademic.addEventListener('click', () => {
             if (viewMode === 'academic_only') {
                 viewMode = 'month';
-                btnAcademic.innerText = '📅 연간 학사';
-                btnAcademic.classList.remove('active'); // CSS에서 필요시 사용
+                btnAcademic.innerText = '📅 연간일정';
+                btnAcademic.classList.remove('active');
                 renderCalendar(loadedEvents, currentYear, currentMonth);
             } else {
                 viewMode = 'academic_only';
                 btnAcademic.innerText = '📋 전체 보기';
-                renderCalendarAcademic(loadedEvents);
+                renderAcademicOnly(loadedEvents);
             }
         });
     }
@@ -172,7 +172,8 @@ function renderCalendar(events, year, month, append = false) {
 
         const eventsHtml = dayEvents.map((ev, idx) => `
             <div class="event-item">
-                <span class="event-title">${dayEvents.length > 1 ? `<span class="event-seq">${idx + 1}.</span> ` : ''}${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
+                <span class="event-seq">${idx + 1}.</span>
+                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('') || '<div class="no-event">일정이 없습니다.</div>';
 
