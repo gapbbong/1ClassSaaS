@@ -229,6 +229,51 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* 인증 모달 추가 스타일 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .contact-modal-content {
+            background: #fff;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bulk-submit-btn {
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        .bulk-submit-btn:active {
+            transform: scale(0.98);
+        }
     </style>
 </head>
 
@@ -255,6 +300,29 @@
 
         <div id="day-list" class="day-list">
             <!-- 요일 카드들이 동적으로 생성됩니다 -->
+        </div>
+    </div>
+
+    <!-- 이메일 인증 모달 (초기 접속 시) -->
+    <div id="auth-modal" class="modal"
+        style="display: none; z-index: 10000; align-items: center; justify-content: center; background: #f3f4f6;">
+        <div class="modal-content contact-modal-content"
+            style="padding: 24px; max-width: 380px; text-align: center; border-radius: 16px;">
+            <h3 style="margin-top: 0; color: #4A90E2; font-size: 1.5em; font-weight: 800;">선생님 인증</h3>
+            <p style="font-size: 1em; color: #444; margin-bottom: 24px;">
+                서비스를 이용하시려면<br /><strong style="color: #333;">학교에 제출하신 이메일</strong>을 입력해주세요.
+            </p>
+            <input type="email" id="auth-email-input" placeholder="example@school.com"
+                style="width: 100%; padding: 16px; border: 2px solid #ddd; border-radius: 8px; margin-bottom: 20px; font-size: 1.1em; font-weight: bold; text-align: center; box-sizing: border-box; outline: none; transition: border-color 0.2s;">
+            <button id="auth-submit-btn" class="bulk-submit-btn"
+                style="width: 100%; border-radius: 8px; padding: 20px; font-size: 1.1em; font-weight: bold; background-color: #4A90E2; color: #fff; border: none; cursor: pointer;">인증하기</button>
+            <p id="auth-error-msg"
+                style="color: #FF3B30; font-size: 0.9em; margin-top: 14px; display: none; font-weight: bold;"></p>
+            <div
+                style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #ddd; text-align: left; font-size: 0.85em; color: #555; line-height: 1.5;">
+                <p style="color: #FF3B30; font-weight: bold; margin: 0 0 8px 0;">⚠️ 주의: 본교 근무 교사 외에는 인증하지 마십시오.</p>
+                <p style="margin: 0;">이메일을 모르시거나 접속 문제가 있을 경우 <strong>전문부 이갑종 선생님</strong>에게 문의해 주세요.</p>
+            </div>
         </div>
     </div>
 
