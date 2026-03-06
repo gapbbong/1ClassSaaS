@@ -55,7 +55,7 @@ function syncAllSchedules() {
 }
 
 function getUnifiedData() {
-    const allEvents = [];
+    let allEvents = [];
 
     // 1. 학사 일정 추출
     try {
@@ -81,7 +81,16 @@ function getUnifiedData() {
         allEvents.push(...planningEvents);
     } catch (e) { Logger.log("Planning data extraction error: " + e); }
 
-    return allEvents;
+    // 중복 제거 (날짜 + 제목 + 타입이 동일한 경우 제거)
+    const uniqueMap = new Map();
+    allEvents.forEach(ev => {
+        const key = `${ev.date}|${ev.title}|${ev.type}`;
+        if (!uniqueMap.has(key)) {
+            uniqueMap.set(key, ev);
+        }
+    });
+
+    return Array.from(uniqueMap.values());
 }
 
 /**
