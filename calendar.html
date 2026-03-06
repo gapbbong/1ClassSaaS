@@ -149,6 +149,8 @@
             color: #4A90E2;
             display: flex;
             align-items: center;
+            justify-content: center;
+            /* 중앙 배치 */
             gap: 10px;
             box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
         }
@@ -233,23 +235,17 @@
             line-height: 1.5;
             display: flex;
             align-items: flex-start;
-            /* 상단 정렬 */
-            gap: 4px;
+            gap: 2px;
             word-break: keep-all;
-            /* 단어 단위 줄바꿈 */
+            overflow-wrap: anywhere;
         }
 
         .event-title {
-            padding-left: 4px;
-            text-indent: -4px;
-            /* 들여쓰기 효과를 위한 미세 조정 (선택사항) */
-        }
-
-        /* 다음 줄 들여쓰기 처리 */
-        .event-item .event-title {
-            display: inline-block;
-            vertical-align: top;
             flex: 1;
+            padding-left: 14px;
+            /* 번호 영역만큼 공간 확보 */
+            text-indent: -12px;
+            /* 번호 위치로 첫 줄 당기기 (한 칸 들여쓰기 효과) */
         }
 
         .event-item:last-child {
