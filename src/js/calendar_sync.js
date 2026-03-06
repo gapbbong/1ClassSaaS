@@ -108,6 +108,7 @@ function parseDateValue(val) {
     if (val instanceof Date) return val;
 
     const dateStr = val.toString().trim();
+    // '3.6', '3/6', '2026-03-06' 등 모든 숫자 패턴 추출
     const parts = dateStr.match(/\d+/g);
     if (!parts || parts.length < 2) return null;
 
@@ -118,10 +119,16 @@ function parseDateValue(val) {
         m = parseInt(parts[1]);
         d = parseInt(parts[2]);
     } else {
+        // 월.일 형태 (예: 3.6)
         m = parseInt(parts[0]);
         d = parseInt(parts[1]);
+        // 3월 이후는 올해, 1~2월은 내년으로 간주 (학년도 기준)
         y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
     }
+
+    // 유효한 날짜인지 검증
+    if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+
     return new Date(y, m - 1, d);
 }
 
@@ -162,47 +169,60 @@ function getAcademicData() {
 }
 
 function getCreativeData() {
-    Logger.log("🔍 창체 데이터 수집 시작...");
+    Logger.log("🔍 창체 데이터 정밀 수집 시작...");
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
     const sheets = ss.getSheets();
 
-    // 2026과 창체가 모두 포함된 시트 우선, 없으면 창체 포함 시트, 그것도 없으면 첫 번째
-    const sheet = sheets.find(s => s.getName().includes('2026') && s.getName().includes('창체')) ||
+    // 26, 2026, 창체 키워드 조합으로 올해 시트 검색
+    const sheet = sheets.find(s => (s.getName().includes('26') || s.getName().includes('2026')) && s.getName().includes('창체')) ||
         sheets.find(s => s.getName().includes('창체')) ||
         sheets[0];
 
-    Logger.log("📄 선택된 창체 시트: " + sheet.getName());
+    Logger.log("📄 대상 창체 시트: [" + sheet.getName() + "]");
     const data = sheet.getDataRange().getValues();
+    let successCount = 0;
 
-    for (let r = 1; r < data.length; r++) {
+    for (let r = 0; r < data.length; r++) {
         const row = data[r];
-        const dateVal = row[0]; // 보통 A열이 날짜
-        const parsedDate = parseDateValue(dateVal);
+        let parsedDate = null;
+        let dateColIdx = -1;
+
+        // 1. 해당 행에서 날짜(A~C열 위주 검색)를 먼저 찾음
+        for (let c = 0; c < Math.min(row.length, 3); c++) {
+            parsedDate = parseDateValue(row[c]);
+            if (parsedDate) {
+                dateColIdx = c;
+                break;
+            }
+        }
 
         if (!parsedDate) continue;
 
         const dateStr = formatDate(parsedDate.getFullYear(), parsedDate.getMonth() + 1, parsedDate.getDate());
 
-        // 창체 내용은 보통 5~7교시쯤에 있으나, 안전하게 C열 이후부터 모두 탐색
+        // 2. 날짜 이후의 모든 컬럼에서 내용을 수집
         let rowContents = [];
-        for (let c = 2; c < row.length; c++) {
+        for (let c = dateColIdx + 1; c < row.length; c++) {
             const val = row[c]?.toString().trim() || "";
-            // 불필요한 숫자(시수)나 공백 제외하고 실제 텍스트만 수집
             if (val && !isGarbageContent(val)) {
                 if (!rowContents.includes(val)) rowContents.push(val);
             }
         }
 
         if (rowContents.length > 0) {
+            const finalTitle = rowContents.join(' / ');
             events.push({
                 date: dateStr,
-                title: rowContents.join(' / '),
+                title: finalTitle,
                 type: 'creative',
                 typeName: '창체'
             });
+            successCount++;
+            if (successCount < 5) Logger.log(`✅ [${dateStr}] 샘플 데이터: ${finalTitle}`);
         }
     }
+    Logger.log(`📊 창체 수집 완료: 총 ${successCount}건 추출됨`);
     return events;
 }
 
