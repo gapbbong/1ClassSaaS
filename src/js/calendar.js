@@ -88,7 +88,7 @@ function setupButtons() {
 async function loadMonthData(year, month, append = false) {
     showLoading(true, `${month}월 일정을 불러오고 있습니다...`);
     try {
-        const response = await fetch(`${CONFIG.API_URL}?month=${month}`);
+        const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
@@ -121,7 +121,7 @@ function eventsToRender(allEvents, year, month) {
 async function loadAllData() {
     showLoading(true, "전체 일정을 불러오는 중입니다...", "데이터량이 많아 잠시만 더 기다려 주세요.");
     try {
-        const response = await fetch(`${CONFIG.API_URL}?all=true`);
+        const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         loadedEvents = data;

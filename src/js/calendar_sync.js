@@ -139,7 +139,8 @@ function getAcademicData() {
 function getCreativeData() {
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
-    const sheet = ss.getSheetByName('2026창체운영계획') || ss.getSheets()[0];
+    const sheets = ss.getSheets();
+    const sheet = sheets.find(s => s.getName().includes('창체')) || sheets[0];
     const data = sheet.getDataRange().getValues();
 
     // 데이터 추출만 수행 (원본 변경 없음)
