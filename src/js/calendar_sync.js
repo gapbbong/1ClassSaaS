@@ -21,9 +21,22 @@ const CONFIG = {
 
 /**
  * 외부(웹 앱)에서 데이터를 요청할 때 호출되는 진입점
+ * @param {Object} e - e.parameter.month (숫자) 또는 e.parameter.all (true)
  */
 function doGet(e) {
-    const data = getUnifiedData();
+    const month = e && e.parameter && e.parameter.month ? parseInt(e.parameter.month) : null;
+    const isAll = e && e.parameter && e.parameter.all === 'true';
+
+    let data = getUnifiedData();
+
+    // 월별 필터링 (all 파라미터가 없거나 특정 월이 지정된 경우)
+    if (!isAll && month) {
+        data = data.filter(ev => {
+            const evMonth = parseInt(ev.date.split('-')[1]);
+            return evMonth === month;
+        });
+    }
+
     return ContentService.createTextOutput(JSON.stringify(data))
         .setMimeType(ContentService.MimeType.JSON);
 }
@@ -203,27 +216,37 @@ function getPlanningData() {
     const events = [];
     const folder = DriveApp.getFolderById(CONFIG.DOCS.PLANNING);
     const files = folder.getFilesByType(MimeType.GOOGLE_SHEETS);
+
     while (files.hasNext()) {
         const file = files.next();
         const ss = SpreadsheetApp.open(file);
-        ss.getSheets().forEach(sheet => {
-            if (!sheet.getName().includes('.')) return;
+        const sheets = ss.getSheets();
+
+        sheets.forEach(sheet => {
+            const sheetName = sheet.getName();
+            // "26.3.9" 또는 "26.3.23" 등 날짜 형식이 포함된 시트만 대상
+            if (!sheetName.match(/\d+\.\d+\.\d+/)) return;
+
             const data = sheet.getDataRange().getValues();
             let lastDept = "";
-            for (let r = 1; r < data.length; r++) {
+
+            for (let r = 5; r < data.length; r++) { // 헤더(부서명/일자) 아래부터 시작
                 let dept = data[r][0]?.toString().trim() || "";
                 if (dept) lastDept = dept; else dept = lastDept;
-                const dateStr = data[r][1]?.toString() || "";
-                const eventInfo = data[r][2]?.toString().trim() || "";
-                if (dateStr && !isGarbageContent(eventInfo)) {
-                    const mMatch = dateStr.match(/(\d+)[.\/](\d+)/);
+
+                const dateRaw = data[r][1]?.toString().trim() || "";
+                const content = data[r][2]?.toString().trim() || "";
+
+                if (dateRaw && content && !isGarbageContent(content) && content !== "없음") {
+                    // "3.10.(화)" 또는 "3.10." 또는 "3.10" 등에서 월/일 추출
+                    const mMatch = dateRaw.match(/(\d+)\.(\d+)/);
                     if (mMatch) {
                         const m = parseInt(mMatch[1]), d = parseInt(mMatch[2]);
                         const year = (m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR);
                         events.push({
-                            date: `${year}-${m}-${d}`,
-                            title: eventInfo,
-                            dept: dept,
+                            date: formatDate(year, m, d),
+                            title: content,
+                            dept: lastDept,
                             type: 'planning',
                             typeName: '기획'
                         });

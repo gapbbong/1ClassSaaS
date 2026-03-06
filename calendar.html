@@ -37,8 +37,16 @@
 
         .calendar-header h2 {
             margin: 0;
-            font-size: 1.2rem;
-            color: #333;
+            font-size: 1.4rem;
+            color: #4A90E2;
+            font-weight: 800;
+        }
+
+        .calendar-title-sub {
+            font-size: 0.9rem;
+            color: #777;
+            margin-top: 4px;
+            font-weight: 500;
         }
 
         .nav-btn {
@@ -274,6 +282,49 @@
         .bulk-submit-btn:active {
             transform: scale(0.98);
         }
+
+        /* 하단 컨트롤러 추가 */
+        .calendar-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 25px;
+            padding: 0 5px;
+        }
+
+        .ctrl-btn {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-next {
+            background: #4A90E2;
+            color: white;
+        }
+
+        .btn-all {
+            background: #ffffff;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+
+        .ctrl-btn:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-text-detail {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
     </style>
 </head>
 
@@ -284,22 +335,18 @@
     </div>
 
     <div class="calendar-container">
-        <div class="calendar-header">
-            <button class="nav-btn" onclick="changeWeek(-1)">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-                </svg>
-            </button>
-            <h2 id="current-month-view">2026년 3월</h2>
-            <button class="nav-btn" onclick="changeWeek(1)">
-                <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
-                </svg>
-            </button>
+        <div class="calendar-header" style="flex-direction: column; align-items: flex-start; gap: 0;">
+            <h2 id="current-month-view">2026년 3월 일정</h2>
+            <div class="calendar-title-sub">한 달 단위로 로드하여 데이터와 속도를 최적화합니다.</div>
         </div>
 
         <div id="day-list" class="day-list">
             <!-- 요일 카드들이 동적으로 생성됩니다 -->
+        </div>
+
+        <div class="calendar-controls">
+            <button id="btn-next-month" class="ctrl-btn btn-next">📅 다음 달 보기</button>
+            <button id="btn-full-year" class="ctrl-btn btn-all">📅 26학년도 전체</button>
         </div>
     </div>
 
