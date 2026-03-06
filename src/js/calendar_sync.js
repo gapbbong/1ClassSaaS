@@ -182,13 +182,14 @@ function getCreativeData() {
     Logger.log("📄 대상 창체 시트: [" + sheet.getName() + "]");
     const data = sheet.getDataRange().getValues();
 
-    // 1. 헤더에서 6교시, 7교시 열 위치 찾기 (상단 10행 이내 탐색)
+    // 1. 헤더에서 '6교시 주제', '7교시 주제' 열 위치 찾기 (상단 10행 이내 탐색)
     let col6 = -1, col7 = -1;
     for (let r = 0; r < Math.min(data.length, 10); r++) {
         for (let c = 0; c < data[r].length; c++) {
             const val = data[r][c]?.toString() || "";
-            if (val.includes("6교시")) col6 = c;
-            if (val.includes("7교시")) col7 = c;
+            // '담당'이 포함되지 않고 '주제'가 포함된 '6교시/7교시' 열 찾기
+            if (val.includes("6교시") && val.includes("주제") && !val.includes("담당")) col6 = c;
+            if (val.includes("7교시") && val.includes("주제") && !val.includes("담당")) col7 = c;
         }
         if (col6 !== -1 && col7 !== -1) break;
     }
@@ -196,7 +197,7 @@ function getCreativeData() {
     // 헤더를 못 찾은 경우 안전한 기본값 사용 (경험적 인덱스 4, 5열)
     if (col6 === -1) col6 = 4;
     if (col7 === -1) col7 = 5;
-    Logger.log(`📍 추출 열 확정: 6교시(${col6}열), 7교시(${col7}열)`);
+    Logger.log(`📍 추출 열 확정: 6교시 주제(${col6}열), 7교시 주제(${col7}열)`);
 
     let successCount = 0;
     for (let r = 0; r < data.length; r++) {
