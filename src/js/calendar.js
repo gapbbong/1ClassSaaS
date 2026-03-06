@@ -90,13 +90,15 @@ function setupButtons() {
 }
 
 async function loadMonthData(year, month, append = false) {
-    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "", 10);
+    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "", 30);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
-        showLoading(true, `${month}월 일정을 처리 중입니다...`, "", 60);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        showLoading(true, `데이터 분석 중...`, "", 70);
         const data = await response.json();
-        showLoading(true, `데이터 렌더링 중...`, "", 90);
+
+        showLoading(true, `화면 구성 중...`, "", 90);
 
         if (append) {
             loadedEvents.push(...data);
@@ -473,6 +475,11 @@ async function showAcademicPopup() {
         const response = await fetch(`${CONFIG.API_URL}?type=yearly&t=${Date.now()}`);
         if (!response.ok) throw new Error("데이터를 가져오지 못했습니다.");
         const yearlyData = await response.json();
+
+        if (!yearlyData || Object.keys(yearlyData).length === 0) {
+            grid.innerHTML = '<div style="text-align:center; padding: 50px; color:#666; width:100%;">등록된 연간 일정이 없습니다.</div>';
+            return;
+        }
 
         renderAcademicGrid(yearlyData);
     } catch (error) {

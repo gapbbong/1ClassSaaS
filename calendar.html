@@ -192,10 +192,7 @@
             background: #eef6ff;
         }
 
-        .month-separator.collapsed+.day-card,
-        .month-separator.collapsed~.day-card {
-            display: none;
-        }
+        /* JS에서 display를 제어하므로 CSS 강제 숨김 제거 (다음 달 영향 방지) */
 
         .month-separator::after {
             display: none;
