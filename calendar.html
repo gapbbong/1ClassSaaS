@@ -582,60 +582,66 @@
 
         .academic-day-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            /* 7열 -> 5열 */
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            /* 7열 -> 5열, minmax(0, 1fr)로 너비 고정 */
             gap: 2px;
             width: 100%;
-            table-layout: fixed;
-            /* 격자 크기 균등 분배 강제 */
         }
 
         .academic-day-header {
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+            /* 0.7rem -> 0.65rem */
             font-weight: bold;
             color: #94a3b8;
             padding-bottom: 5px;
         }
 
         .academic-day-cell {
-            min-height: 70px;
-            /* 80px -> 70px (콤팩트하게) */
+            min-height: 64px;
+            /* 70px -> 64px */
             border-radius: 4px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 6px 4px;
-            /* 패딩 약간 확대 */
-            font-size: 0.8rem;
+            padding: 4px 2px;
+            /* 패딩 축소 */
+            font-size: 0.75rem;
+            /* 0.8rem -> 0.75rem */
             position: relative;
             background: #fafafa;
             border: 1px solid #f1f5f9;
+            overflow: hidden;
+            /* 추가 */
         }
 
         .academic-day-num {
             font-weight: bold;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
+            font-size: 0.7rem;
+            /* 추가 */
         }
 
         .academic-day-event {
-            font-size: 1rem;
-            /* 1.1rem -> 1rem (사용자 요청) */
-            font-weight: 900;
+            font-size: 0.72rem;
+            /* 1rem -> 0.72rem (대폭 축소) */
+            font-weight: 800;
+            /* 900 -> 800 */
             color: #000;
             line-height: 1.1;
-            /* 더 콤팩트하게 */
             text-align: center;
-            word-break: keep-all;
+            word-break: break-all;
+            /* keep-all -> break-all */
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             line-clamp: 3;
             -webkit-box-orient: vertical;
-            margin-top: 2px;
+            margin-top: 1px;
             text-shadow: 0 0 2px #fff;
-            /* 배경색이 있을 때를 위해 외곽선 효과 */
+            width: 100%;
+            /* 추가 */
         }
 
         .academic-day-cell.holiday .academic-day-num {
