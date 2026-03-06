@@ -100,6 +100,31 @@ function formatDate(y, m, d) {
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
+/**
+ * 날짜 데이터를 Date 객체로 파싱하는 통합 헬퍼
+ */
+function parseDateValue(val) {
+    if (!val) return null;
+    if (val instanceof Date) return val;
+
+    const dateStr = val.toString().trim();
+    const parts = dateStr.match(/\d+/g);
+    if (!parts || parts.length < 2) return null;
+
+    let y = CONFIG.YEAR, m, d;
+    if (parts.length >= 3) {
+        y = parseInt(parts[0]);
+        if (y < 100) y += 2000;
+        m = parseInt(parts[1]);
+        d = parseInt(parts[2]);
+    } else {
+        m = parseInt(parts[0]);
+        d = parseInt(parts[1]);
+        y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+    }
+    return new Date(y, m - 1, d);
+}
+
 function getAcademicData() {
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
@@ -140,45 +165,36 @@ function getCreativeData() {
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
     const sheets = ss.getSheets();
+    // '창체' 단어가 포함된 시트 우선, 없으면 첫 번째 시트
     const sheet = sheets.find(s => s.getName().includes('창체')) || sheets[0];
     const data = sheet.getDataRange().getValues();
 
-    // 데이터 추출만 수행 (원본 변경 없음)
     for (let r = 1; r < data.length; r++) {
-        const dateStr = data[r][0]?.toString().trim() || "";
-        const topic6 = data[r][4]?.toString().trim() || "";
-        const topic7 = data[r][5]?.toString().trim() || "";
+        const row = data[r];
+        const dateVal = row[0]; // 보통 A열이 날짜
+        const parsedDate = parseDateValue(dateVal);
 
-        if (dateStr && (topic6 || topic7)) {
-            const parts = dateStr.match(/\d+/g);
-            if (parts && parts.length >= 2) {
-                let y = CONFIG.YEAR, m, d;
-                if (parts.length >= 3) {
-                    y = parseInt(parts[0]);
-                    m = parseInt(parts[1]);
-                    d = parseInt(parts[2]);
-                    if (y < 100) y += 2000;
-                } else {
-                    m = parseInt(parts[0]);
-                    d = parseInt(parts[1]);
-                    y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                }
+        if (!parsedDate) continue;
 
-                const f6 = (topic6 && !/^\d+$/.test(topic6)) ? topic6 : "";
-                const f7 = (topic7 && !/^\d+$/.test(topic7)) ? topic7 : "";
+        const dateStr = formatDate(parsedDate.getFullYear(), parsedDate.getMonth() + 1, parsedDate.getDate());
 
-                if (f6 || f7) {
-                    const combined = (f6 === f7 || !f7) ? f6 : (f6 && f7) ? `${f6} / ${f7}` : (f6 || f7);
-                    if (combined) {
-                        events.push({
-                            date: formatDate(y, m, d),
-                            title: combined,
-                            type: 'creative',
-                            typeName: '창체'
-                        });
-                    }
-                }
+        // 창체 내용은 보통 5~7교시쯤에 있으나, 안전하게 C열 이후부터 모두 탐색
+        let rowContents = [];
+        for (let c = 2; c < row.length; c++) {
+            const val = row[c]?.toString().trim() || "";
+            // 불필요한 숫자(시수)나 공백 제외하고 실제 텍스트만 수집
+            if (val && !isGarbageContent(val)) {
+                if (!rowContents.includes(val)) rowContents.push(val);
             }
+        }
+
+        if (rowContents.length > 0) {
+            events.push({
+                date: dateStr,
+                title: rowContents.join(' / '),
+                type: 'creative',
+                typeName: '창체'
+            });
         }
     }
     return events;
