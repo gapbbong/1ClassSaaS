@@ -90,11 +90,13 @@ function setupButtons() {
 }
 
 async function loadMonthData(year, month, append = false) {
-    showLoading(true, `${month}월 일정을 불러오고 있습니다...`);
+    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "", 10);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
+        showLoading(true, `${month}월 일정을 처리 중입니다...`, "", 60);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
+        showLoading(true, `데이터 렌더링 중...`, "", 90);
 
         if (append) {
             loadedEvents.push(...data);
@@ -109,7 +111,6 @@ async function loadMonthData(year, month, append = false) {
         }
     } catch (e) {
         console.error("Fetch Error:", e);
-        // 사용자에게 보이지만 일정은 나올 수도 있으므로 로그만 남기거나 에러 타입 체크
     } finally {
         showLoading(false);
     }
@@ -123,11 +124,13 @@ function eventsToRender(allEvents, year, month) {
 }
 
 async function loadAllData() {
-    showLoading(true, "전체 일정을 불러오는 중입니다...", "데이터량이 많아 잠시만 더 기다려 주세요.");
+    showLoading(true, "전체 일정을 불러오는 중입니다...", "데이터량이 많아 잠시만 더 기다려 주세요.", 10);
     try {
         const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
+        showLoading(true, "전체 데이터를 분석 중입니다...", "", 50);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
+        showLoading(true, "전체 일정을 렌더링 중입니다...", "", 80);
         loadedEvents = data;
 
         if (viewMode === 'academic_only') {
@@ -140,10 +143,11 @@ async function loadAllData() {
         if (btnNext) btnNext.style.display = 'none';
         const btnFull = document.getElementById('btn-full-year');
         if (btnFull) btnFull.style.display = 'none';
+        showLoading(true, "완료!", "", 100);
     } catch (e) {
         console.error("Fetch All Error:", e);
     } finally {
-        showLoading(false);
+        setTimeout(() => showLoading(false), 500);
     }
 }
 
@@ -160,10 +164,10 @@ function renderCalendar(events, year, month, append = false) {
 
     for (let d = 1; d <= lastDay; d++) {
         const dateObj = new Date(year, month - 1, d);
-        const dayIdx = dateObj.getDay();
+        const currentDayIdx = dateObj.getDay();
 
         // 토요일(6), 일요일(0) 제외
-        if (dayIdx === 0 || dayIdx === 6) continue;
+        if (currentDayIdx === 0 || currentDayIdx === 6) continue;
 
         const m = dateObj.getMonth() + 1;
 
@@ -202,13 +206,12 @@ function renderCalendar(events, year, month, append = false) {
             return parts[0] === year && parts[1] === month && parts[2] === d;
         });
 
-        // const dayIdx = dateObj.getDay(); // 중복 선언 제거
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
         const isToday = dateObj.toDateString() === new Date().toDateString();
 
         const card = document.createElement("div");
-        card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[dayIdx]}`;
+        card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[currentDayIdx]}`;
 
         const eventsHtml = dayEvents.map((ev, idx) => {
             if (ev.typeName === '창체') {
@@ -227,7 +230,7 @@ function renderCalendar(events, year, month, append = false) {
 
         card.innerHTML = `
             <div class="day-info">
-                <span class="day-name">${m}월 ${d}일 (${days[dayIdx]})</span>
+                <span class="day-name">${m}월 ${d}일 (${days[currentDayIdx]})</span>
             </div>
             <div class="event-content">
                 ${eventsHtml}
@@ -283,10 +286,10 @@ function renderGroupedEvents(container, events) {
         const parts = dateStr.split('-').map(Number);
         const y = parts[0], m = parts[1], d = parts[2];
         const dateObj = new Date(y, m - 1, d);
-        const dayIdx = dateObj.getDay();
+        const currentDayIdx = dateObj.getDay();
 
         // 토요일(6), 일요일(0) 제외
-        if (dayIdx === 0 || dayIdx === 6) return;
+        if (currentDayIdx === 0 || currentDayIdx === 6) return;
 
         if (m !== lastMonth) {
             const separator = document.createElement("div");
@@ -316,12 +319,11 @@ function renderGroupedEvents(container, events) {
             lastMonth = m;
         }
 
-        // const dayIdx = dateObj.getDay(); // 중복 선언 제거
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
         const card = document.createElement("div");
-        card.className = `day-card ${dayClasses[dayIdx]}`;
+        card.className = `day-card ${dayClasses[currentDayIdx]}`;
 
         const dayEvents = grouped[dateStr];
         const eventsHtml = dayEvents.map((ev, idx) => {
@@ -341,7 +343,7 @@ function renderGroupedEvents(container, events) {
 
         card.innerHTML = `
             <div class="day-info">
-                <span class="day-name">${m}월 ${d}일 (${days[dayIdx]})</span>
+                <span class="day-name">${m}월 ${d}일 (${days[currentDayIdx]})</span>
             </div>
             <div class="event-content">
                 ${eventsHtml}
@@ -531,7 +533,9 @@ function generateMonthHTML(year, month, events) {
     // 날짜 채우기
     for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const eventData = events[dateStr] || null;
+        const dateStrNoZero = `${year}-${month}-${d}`; // 선행 0 없는 키도 체크
+
+        const eventData = events[dateStr] || events[dateStrNoZero] || null;
         const eventText = eventData ? eventData.text : "";
         const eventBg = eventData ? eventData.bg : "";
 
