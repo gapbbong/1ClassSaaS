@@ -54,15 +54,17 @@
     font-weight: 900;
     color: #3c4043;
     background: #ffffff;
-    padding-top: 5px;
-    line-height: 1;
+    padding-top: 2px;
+    /* 5px -> 2px (위로 올림) */
+    line-height: 1.1;
 }
 
 .cal-day {
     color: white;
     font-size: 0.65rem;
     font-weight: 900;
-    padding: 2px 0 3px;
+    padding: 1px 0 3px;
+    /* 2px 0 3px -> 1px 0 3px (위로 올림) */
     text-align: center;
     text-transform: uppercase;
     letter-spacing: 0.5px;
