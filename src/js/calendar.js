@@ -543,8 +543,15 @@ function generateMonthHTML(year, month, events) {
         const dateStrNoZero = `${year}-${month}-${d}`; // 선행 0 없는 키도 체크
 
         const eventData = events[dateStr] || events[dateStrNoZero] || null;
-        const eventText = eventData ? eventData.text : "";
-        const eventBg = eventData ? eventData.bg : "";
+
+        let eventText = "";
+        let eventBg = "";
+        if (typeof eventData === 'string') {
+            eventText = eventData;
+        } else if (eventData && typeof eventData === 'object') {
+            eventText = eventData.text || "";
+            eventBg = eventData.bg || "";
+        }
 
         const dayOfWeek = (firstDay + d - 1) % 7;
         if (dayOfWeek === 0 || dayOfWeek === 6) continue; // 주말 건너뜀
