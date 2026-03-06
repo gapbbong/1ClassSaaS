@@ -371,3 +371,103 @@ function showLoading(show, text = "불러오는 중...", subText = "") {
         if (subEl) subEl.innerText = subText;
     }
 }
+
+/**
+ * 연간 학사일정 팝업 표시
+ */
+async function showAcademicPopup() {
+    const overlay = document.getElementById('academic-popup-overlay');
+    const grid = document.getElementById('academic-grid');
+
+    // 팝업 표시 및 스크롤 방지
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // 이미 렌더링되어 있다면 재사용
+    if (grid.children.length > 0) return;
+
+    grid.innerHTML = '<div style="text-align:center; padding: 50px; color:#666; width:100%;">연간 일정을 불러오는 중...</div>';
+
+    try {
+        // GAS API로부터 연간 정밀 데이터(yearly) 요청
+        const response = await fetch(`${CONFIG.API_URL}?type=yearly&t=${Date.now()}`);
+        if (!response.ok) throw new Error("데이터를 가져오지 못했습니다.");
+        const yearlyData = await response.json();
+
+        renderAcademicGrid(yearlyData);
+    } catch (error) {
+        grid.innerHTML = `<div style="color:red; text-align:center; padding:50px;">데이터 로드 실패: ${error.message}</div>`;
+    }
+}
+
+function closeAcademicPopup() {
+    const overlay = document.getElementById('academic-popup-overlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+/**
+ * 전교생 연간 일정을 월별 달력 격자로 렌더링
+ */
+function renderAcademicGrid(data) {
+    const grid = document.getElementById('academic-grid');
+    grid.innerHTML = '';
+
+    // 2026년 3월부터 2027년 2월까지
+    const months = [
+        [2026, 3], [2026, 4], [2026, 5], [2026, 6], [2026, 7], [2026, 8],
+        [2026, 9], [2026, 10], [2026, 11], [2026, 12], [2027, 1], [2027, 2]
+    ];
+
+    months.forEach(([year, month]) => {
+        const monthBox = document.createElement('div');
+        monthBox.className = 'academic-month-box';
+        monthBox.innerHTML = `
+            <div class="academic-month-title">${month}월</div>
+            <div class="academic-day-grid">
+                <div class="academic-day-header">일</div>
+                <div class="academic-day-header">월</div>
+                <div class="academic-day-header">화</div>
+                <div class="academic-day-header">수</div>
+                <div class="academic-day-header">목</div>
+                <div class="academic-day-header">금</div>
+                <div class="academic-day-header">토</div>
+                ${generateMonthHTML(year, month, data)}
+            </div>
+        `;
+        grid.appendChild(monthBox);
+    });
+}
+
+function generateMonthHTML(year, month, events) {
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const daysInMonth = new Date(year, month, 0).getDate();
+    let html = '';
+
+    // 이전 달 공백 채우기
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div class="academic-day-cell other-month"></div>';
+    }
+
+    // 날짜 채우기
+    for (let d = 1; d <= daysInMonth; d++) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const eventText = events[dateStr] || "";
+        const isSaturday = (firstDay + d - 1) % 7 === 6;
+        const isSunday = (firstDay + d - 1) % 7 === 0;
+
+        let classes = 'academic-day-cell';
+        if (isSaturday) classes += ' saturday';
+        if (isSunday) classes += ' holiday';
+        if (eventText) classes += ' has-event';
+
+        html += `
+            <div class="${classes}">
+                <div class="academic-day-num">${d}</div>
+                ${eventText ? `<div class="academic-day-event" title="${eventText.replace(/\n/g, ', ')}">${eventText.replace(/\n/g, '<br/>')}</div>` : ''}
+            </div>
+        `;
+    }
+
+    return html;
+}
