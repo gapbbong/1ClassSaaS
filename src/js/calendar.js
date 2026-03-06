@@ -1,8 +1,6 @@
-import { API_CONFIG } from './config.js';
-
 const CONFIG = {
-    // GAS 프록시 URL (config.js에서 관리되는 SCRIPT_URL 사용)
-    API_URL: API_CONFIG.SCRIPT_URL
+    // 캘린더 전용 구글 앱스 스크립트 웹 앱 URL을 여기에 붙여넣으세요.
+    API_URL: "https://script.google.com/macros/s/AKfycbyXKTT-aXCvUB0g2Uuk-FjkxSX3_f3oDLb4865dd_APwbBzdIiWFhWPOUmTOgdl0Pty-w/exec"
 };
 
 let currentBaseDate = new Date(); // 현재 기준 날짜 (주간 이동용)
