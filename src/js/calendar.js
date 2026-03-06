@@ -210,12 +210,20 @@ function renderCalendar(events, year, month, append = false) {
         const card = document.createElement("div");
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[dayIdx]}`;
 
-        const eventsHtml = dayEvents.map((ev, idx) => `
+        const eventsHtml = dayEvents.map((ev, idx) => {
+            if (ev.typeName === '창체') {
+                return `
+                <div class="event-item">
+                    <span class="event-seq">${idx + 1}.</span>
+                    <span class="event-title"><span class="event-tag changche">[창체]</span> ${ev.title}</span>
+                </div>`;
+            }
+            return `
             <div class="event-item">
                 <span class="event-seq">${idx + 1}.</span>
                 <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
-            </div>
-        `).join('') || '<div class="no-event">일정이 없습니다.</div>';
+            </div>`;
+        }).join('') || '<div class="no-event">일정이 없습니다.</div>';
 
         card.innerHTML = `
             <div class="day-info">
@@ -316,12 +324,20 @@ function renderGroupedEvents(container, events) {
         card.className = `day-card ${dayClasses[dayIdx]}`;
 
         const dayEvents = grouped[dateStr];
-        const eventsHtml = dayEvents.map((ev, idx) => `
+        const eventsHtml = dayEvents.map((ev, idx) => {
+            if (ev.typeName === '창체') {
+                return `
+                <div class="event-item">
+                    <span class="event-seq">${idx + 1}.</span>
+                    <span class="event-title"><span class="event-tag changche">[창체]</span> ${ev.title}</span>
+                </div>`;
+            }
+            return `
             <div class="event-item">
                 <span class="event-seq">${idx + 1}.</span>
                 <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
-            </div>
-        `).join('');
+            </div>`;
+        }).join('');
 
         card.innerHTML = `
             <div class="day-info">
