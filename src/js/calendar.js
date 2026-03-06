@@ -58,7 +58,7 @@ function setupButtons() {
             } else {
                 viewMode = 'academic_only';
                 btnAcademic.innerText = '📋 전체 보기';
-                renderAcademicOnly(loadedEvents);
+                renderCalendarAcademic(loadedEvents);
             }
         });
     }
@@ -89,6 +89,7 @@ async function loadMonthData(year, month, append = false) {
     showLoading(true, `${month}월 일정을 불러오고 있습니다...`);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
         if (append) {
@@ -100,20 +101,28 @@ async function loadMonthData(year, month, append = false) {
         if (viewMode === 'academic_only') {
             renderCalendarAcademic(loadedEvents);
         } else {
-            renderCalendar(loadedEvents, year, month, append);
+            renderCalendar(eventsToRender(loadedEvents, year, month), year, month, append);
         }
     } catch (e) {
         console.error("Fetch Error:", e);
-        alert("일정 로드 중 오류가 발생했습니다.");
+        // 사용자에게 보이지만 일정은 나올 수도 있으므로 로그만 남기거나 에러 타입 체크
     } finally {
         showLoading(false);
     }
+}
+
+function eventsToRender(allEvents, year, month) {
+    return allEvents.filter(ev => {
+        const parts = ev.date.split('-').map(Number);
+        return parts[0] === year && parts[1] === month;
+    });
 }
 
 async function loadAllData() {
     showLoading(true, "전체 일정을 불러오는 중입니다...", "데이터량이 많아 잠시만 더 기다려 주세요.");
     try {
         const response = await fetch(`${CONFIG.API_URL}?all=true`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
         loadedEvents = data;
 
@@ -254,7 +263,8 @@ function renderGroupedEvents(container, events) {
         const dayEvents = grouped[dateStr];
         const eventsHtml = dayEvents.map((ev, idx) => `
             <div class="event-item">
-                <span class="event-title">${dayEvents.length > 1 ? `<span class="event-seq">${idx + 1}.</span> ` : ''}${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
+                <span class="event-seq">${idx + 1}.</span>
+                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('');
 
