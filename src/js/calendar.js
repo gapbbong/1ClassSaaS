@@ -160,6 +160,11 @@ function renderCalendar(events, year, month, append = false) {
 
     for (let d = 1; d <= lastDay; d++) {
         const dateObj = new Date(year, month - 1, d);
+        const dayIdx = dateObj.getDay();
+
+        // 토요일(6), 일요일(0) 제외
+        if (dayIdx === 0 || dayIdx === 6) continue;
+
         const m = dateObj.getMonth() + 1;
 
         if (m !== lastMonth) {
@@ -265,6 +270,10 @@ function renderGroupedEvents(container, events) {
         const parts = dateStr.split('-').map(Number);
         const y = parts[0], m = parts[1], d = parts[2];
         const dateObj = new Date(y, m - 1, d);
+        const dayIdx = dateObj.getDay();
+
+        // 토요일(6), 일요일(0) 제외
+        if (dayIdx === 0 || dayIdx === 6) return;
 
         if (m !== lastMonth) {
             const separator = document.createElement("div");
@@ -457,13 +466,11 @@ function renderAcademicGrid(data) {
         monthBox.innerHTML = `
             <div class="academic-month-title">${month}월</div>
             <div class="academic-day-grid">
-                <div class="academic-day-header">일</div>
                 <div class="academic-day-header">월</div>
                 <div class="academic-day-header">화</div>
                 <div class="academic-day-header">수</div>
                 <div class="academic-day-header">목</div>
                 <div class="academic-day-header">금</div>
-                <div class="academic-day-header">토</div>
                 ${generateMonthHTML(year, month, data)}
             </div>
         `;
@@ -472,13 +479,16 @@ function renderAcademicGrid(data) {
 }
 
 function generateMonthHTML(year, month, events) {
-    const firstDay = new Date(year, month - 1, 1).getDay();
+    const firstDay = new Date(year, month - 1, 1).getDay(); // 0:일, 1:월 ... 6:토
     const daysInMonth = new Date(year, month, 0).getDate();
     let html = '';
 
-    // 이전 달 공백 채우기
-    for (let i = 0; i < firstDay; i++) {
-        html += '<div class="academic-day-cell other-month"></div>';
+    // 평일 기준 오프셋 계산 (월요일이 0번 컬럼)
+    // 1일이 월~금 사이인 경우에만 공백 보정
+    if (firstDay >= 1 && firstDay <= 5) {
+        for (let i = 1; i < firstDay; i++) {
+            html += '<div class="academic-day-cell other-month"></div>';
+        }
     }
 
     // 날짜 채우기
@@ -488,12 +498,10 @@ function generateMonthHTML(year, month, events) {
         const eventText = eventData ? eventData.text : "";
         const eventBg = eventData ? eventData.bg : "";
 
-        const isSaturday = (firstDay + d - 1) % 7 === 6;
-        const isSunday = (firstDay + d - 1) % 7 === 0;
+        const dayOfWeek = (firstDay + d - 1) % 7;
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue; // 주말 건너뜀
 
         let classes = 'academic-day-cell';
-        if (isSaturday) classes += ' saturday';
-        if (isSunday) classes += ' holiday';
         if (eventText) classes += ' has-event';
 
         // 배경색에 따른 글자색 결정 (단순화: 밝은 색이면 검정, 어두우면 흰색)
