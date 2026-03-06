@@ -176,50 +176,62 @@ function getAcademicData() {
 
 /**
  * 연간 학사일정 팝업용 정밀 데이터 추출
+ * 시트의 배경색을 함께 가져와서 카테고리별 구분을 가능하게 함
  */
 function getAcademicYearData() {
-    Logger.log("🗓️ 연간 학사일정 정밀 파싱 시작...");
+    Logger.log("🗓️ 연간 학사일정 정밀 파싱 시작 (색상 연동 포함)...");
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
     const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
-    const data = sheet.getDataRange().getValues();
-    const result = {}; // { "2026-03-02": "개학식", ... }
+    const range = sheet.getDataRange();
+    const data = range.getValues();
+    const bgColors = range.getBackgrounds(); // 배경색 데이터
 
-    // 1학기(5행~31행 부근), 2학기(34행~) 처리
-    const ranges = [
-        { start: 4, end: 32 }, // 1학기
-        { start: 33, end: 65 } // 2학기
-    ];
+    const result = {}; // { "2026-03-02": { text: "개학식", bg: "#ffffff" }, ... }
 
-    ranges.forEach(range => {
-        let currentMonth = 3;
-        for (let r = range.start; r < Math.min(data.length, range.end); r++) {
-            const row = data[r];
-            // B열(인덱스 1)에 월 정보(숫자)가 있는지 확인
-            const monthText = row[1]?.toString().trim();
-            if (monthText) {
-                const mMatch = monthText.match(/(\d+)/);
-                if (mMatch) currentMonth = parseInt(mMatch[1]);
+    // 1학기(5행~31행 부근), 2학기(34행~) 처리이나, 
+    // 누락 방지를 위해 4행부터 끝까지 안전하게 탐색
+    let currentMonth = 3;
+
+    for (let r = 4; r < data.length; r++) {
+        const row = data[r];
+
+        // B열(인덱스 1)에 월 정보(숫자)가 있는지 확인
+        const monthText = row[1]?.toString().trim();
+        if (monthText) {
+            const mMatch = monthText.match(/(\d+)/);
+            if (mMatch) {
+                const nextMonth = parseInt(mMatch[1]);
+                if (nextMonth >= 1 && nextMonth <= 12) currentMonth = nextMonth;
             }
+        }
 
-            // 월~금 (D,F,H,J,L열이 날짜 / E,G,I,K,M열이 내용)
-            // 인덱스: D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11), M(12)
-            for (let c = 3; c <= 11; c += 2) {
-                const dayVal = row[c];
-                const content = row[c + 1]?.toString().trim() || "";
+        // 월~금 (D,F,H,J,L열이 날짜 / E,G,I,K,M열이 내용)
+        // 인덱스: D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11), M(12)
+        for (let c = 3; c <= 11; c += 2) {
+            const dayVal = row[c];
+            const content = row[c + 1]?.toString().trim() || "";
+            const bgColor = bgColors[r][c + 1]; // 내용 셀의 배경색
 
-                if (dayVal && !isNaN(dayVal) && content) {
-                    const day = parseInt(dayVal);
-                    const year = (currentMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                    const dateStr = formatDate(year, currentMonth, day);
-                    const cleanedTitle = cleanAcademicTitle(content);
+            if (dayVal && !isNaN(dayVal) && content) {
+                const day = parseInt(dayVal);
+                const year = (currentMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const dateStr = formatDate(year, currentMonth, day);
+                const cleanedTitle = cleanAcademicTitle(content);
 
-                    if (cleanedTitle) {
-                        result[dateStr] = result[dateStr] ? result[dateStr] + "\n" + cleanedTitle : cleanedTitle;
+                if (cleanedTitle) {
+                    if (!result[dateStr]) {
+                        result[dateStr] = { text: cleanedTitle, bg: bgColor };
+                    } else {
+                        result[dateStr].text += "\n" + cleanedTitle;
+                        // 여러 개가 겹칠 경우 첫 번째 색상 유지 또는 흰색이 아닌 색 우선
+                        if (result[dateStr].bg === "#ffffff" || result[dateStr].bg === "white") {
+                            result[dateStr].bg = bgColor;
+                        }
                     }
                 }
             }
         }
-    });
+    }
 
     Logger.log(`✅ 연간 일정 추출 완료 (총 ${Object.keys(result).length}일분)`);
     return result;

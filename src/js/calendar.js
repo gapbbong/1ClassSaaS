@@ -484,7 +484,10 @@ function generateMonthHTML(year, month, events) {
     // 날짜 채우기
     for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const eventText = events[dateStr] || "";
+        const eventData = events[dateStr] || null;
+        const eventText = eventData ? eventData.text : "";
+        const eventBg = eventData ? eventData.bg : "";
+
         const isSaturday = (firstDay + d - 1) % 7 === 6;
         const isSunday = (firstDay + d - 1) % 7 === 0;
 
@@ -493,8 +496,14 @@ function generateMonthHTML(year, month, events) {
         if (isSunday) classes += ' holiday';
         if (eventText) classes += ' has-event';
 
+        // 배경색에 따른 글자색 결정 (단순화: 밝은 색이면 검정, 어두우면 흰색)
+        let styleStr = "";
+        if (eventBg && eventBg !== "#ffffff" && eventBg !== "white") {
+            styleStr = `style="background-color: ${eventBg};"`;
+        }
+
         html += `
-            <div class="${classes}">
+            <div class="${classes}" ${styleStr}>
                 <div class="academic-day-num">${d}</div>
                 ${eventText ? `<div class="academic-day-event" title="${eventText.replace(/\n/g, ', ')}">${eventText.replace(/\n/g, '<br/>')}</div>` : ''}
             </div>
