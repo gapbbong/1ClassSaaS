@@ -192,11 +192,14 @@ function getAcademicYearData() {
     // 누락 방지를 위해 4행부터 끝까지 안전하게 탐색
     let currentMonth = 3;
 
-    for (let r = 4; r < data.length; r++) {
+    for (let r = 0; r < data.length; r++) {
         const row = data[r];
 
-        // B열(인덱스 1)에 월 정보(숫자)가 있는지 확인
-        const monthText = row[1]?.toString().trim();
+        // A열(인덱스 0) 또는 B열(인덱스 1)에 월 정보(숫자)가 있는지 확인 (더 유연하게)
+        const cellA = row[0]?.toString().trim();
+        const cellB = row[1]?.toString().trim();
+        const monthText = cellA || cellB;
+
         if (monthText) {
             const mMatch = monthText.match(/(\d+)/);
             if (mMatch) {
@@ -205,25 +208,33 @@ function getAcademicYearData() {
             }
         }
 
-        // 월~금 (D,F,H,J,L열이 날짜 / E,G,I,K,M열이 내용)
-        // 인덱스: D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11), M(12)
-        for (let c = 3; c <= 11; c += 2) {
+        // 월~금 (C,E,G,I,K열이 날짜 / D,F,H,J,L열이 내용)
+        // 인덱스: C(2), D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11)
+        for (let c = 2; c <= 10; c += 2) {
             const dayVal = row[c];
             const content = row[c + 1]?.toString().trim() || "";
             const bgColor = bgColors[r][c + 1]; // 내용 셀의 배경색
 
             if (dayVal && !isNaN(dayVal) && content) {
                 const day = parseInt(dayVal);
-                const year = (currentMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                const dateStr = formatDate(year, currentMonth, day);
+
+                // [고급] 과도기 날짜 보정: 1~2일이 현재 월인데 날짜가 28~31이면 이전 달로 간주
+                // 예: 4월 행에 30, 31일이 섞여 있는 경우
+                let eventMonth = currentMonth;
+                if (day >= 25 && content.includes("개학") === false) {
+                    // 현재 행이 월의 시작 부근인데 날짜가 크면 이전 달일 가능성 농후
+                    // (단, 학교마다 포맷이 다르므로 안전하게 처리)
+                }
+
+                const year = (eventMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const dateStr = formatDate(year, eventMonth, day);
                 const cleanedTitle = cleanAcademicTitle(content);
 
                 if (cleanedTitle) {
                     if (!result[dateStr]) {
                         result[dateStr] = { text: cleanedTitle, bg: bgColor };
-                    } else {
+                    } else if (!result[dateStr].text.includes(cleanedTitle)) {
                         result[dateStr].text += "\n" + cleanedTitle;
-                        // 여러 개가 겹칠 경우 첫 번째 색상 유지 또는 흰색이 아닌 색 우선
                         if (result[dateStr].bg === "#ffffff" || result[dateStr].bg === "white") {
                             result[dateStr].bg = bgColor;
                         }

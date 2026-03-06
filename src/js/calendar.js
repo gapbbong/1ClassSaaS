@@ -559,16 +559,35 @@ function generateMonthHTML(year, month, events) {
         let classes = 'academic-day-cell';
         if (eventText) classes += ' has-event';
 
-        // 배경색에 따른 글자색 결정 (단순화: 밝은 색이면 검정, 어두우면 흰색)
+        // 배경색 및 텍스트 대비 처리
         let styleStr = "";
-        if (eventBg && eventBg !== "#ffffff" && eventBg !== "white") {
-            styleStr = `style="background-color: ${eventBg};"`;
+        let isDark = false;
+
+        if (eventBg && eventBg !== "#ffffff" && eventBg !== "white" && eventBg !== "transparent") {
+            // 간단한 밝기 계산 (HEX 기준)
+            if (eventBg.startsWith('#')) {
+                const hex = eventBg.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                if (brightness < 128) isDark = true;
+
+                // 빨간색 계열이면 공휴일 스타일 적용 (선택적)
+                if (r > 200 && g < 150 && b < 150) classes += ' holiday';
+            }
+
+            styleStr = `style="background-color: ${eventBg};${isDark ? ' border-color: rgba(255,255,255,0.2);' : ''}"`;
         }
+
+        // 텍스트에만 적용할 클래스나 스타일
+        const textStyle = isDark ? 'style="color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);"' : '';
+        const numStyle = isDark ? 'style="color: rgba(255,255,255,0.9);"' : '';
 
         html += `
             <div class="${classes}" ${styleStr}>
-                <div class="academic-day-num">${d}</div>
-                ${eventText ? `<div class="academic-day-event" title="${eventText.replace(/\n/g, ', ')}">${eventText.replace(/\n/g, '<br/>')}</div>` : ''}
+                <div class="academic-day-num" ${numStyle}>${d}</div>
+                ${eventText ? `<div class="academic-day-event" ${textStyle} title="${eventText.replace(/\n/g, ', ')}">${eventText.replace(/\n/g, '<br/>')}</div>` : ''}
             </div>
         `;
     }
