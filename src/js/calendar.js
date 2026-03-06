@@ -170,8 +170,7 @@ function renderCalendar(events, year, month, append = false) {
 
         const eventsHtml = dayEvents.map(ev => `
             <div class="event-item">
-                <span class="event-title">${ev.title}</span>
-                <span class="event-tag">[${ev.typeName}] ${ev.dept ? `<span class="event-dept">(${ev.dept})</span>` : ''}</span>
+                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('') || '<div class="no-event">일정이 없습니다.</div>';
 
@@ -233,8 +232,7 @@ function renderCalendarAll(events) {
 
         const eventsHtml = grouped[dateStr].map(ev => `
             <div class="event-item">
-                <span class="event-title">${ev.title}</span>
-                <span class="event-tag">[${ev.typeName}] ${ev.dept ? `<span class="event-dept">(${ev.dept})</span>` : ''}</span>
+                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('');
 
