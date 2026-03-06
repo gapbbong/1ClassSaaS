@@ -3,7 +3,7 @@ import CryptoJS from 'crypto-js';
 
 const CONFIG = {
     // 캘린더 전용 구글 앱스 스크립트 웹 앱 URL
-    API_URL: "https://script.google.com/macros/s/AKfycbykolEP_MqkvZ7k5g2Nkub6rxwGpefS9UjuPzFC1t1fo8n6mIMEW-NOsBaUhLDV7FCTsg/exec"
+    API_URL: "https://script.google.com/macros/s/AKfycbwrvR1UoJH1Se_gDxJ1HNLkhT0a1Nh6kmJ2vbLRN2bW914XIEvv1lw17kGiIMi8mVhKsg/exec"
 };
 
 let viewMode = 'month'; // 'month' or 'all'
