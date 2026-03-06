@@ -170,7 +170,12 @@ function renderCalendar(events, year, month, append = false) {
         if (m !== lastMonth) {
             const separator = document.createElement("div");
             separator.className = "month-separator";
-            separator.innerHTML = `<span>${m}월</span><button class="month-fold-btn">접기</button>`;
+            separator.innerHTML = `
+                <div class="month-title-row">
+                    <span>${m}월</span>
+                </div>
+                <button class="month-fold-btn">접기</button>
+            `;
 
             // 접기 기능 연결
             separator.addEventListener('click', () => {
@@ -278,7 +283,12 @@ function renderGroupedEvents(container, events) {
         if (m !== lastMonth) {
             const separator = document.createElement("div");
             separator.className = "month-separator";
-            separator.innerHTML = `<span>${m}월</span><button class="month-fold-btn">접기</button>`;
+            separator.innerHTML = `
+                <div class="month-title-row">
+                    <span>${m}월</span>
+                </div>
+                <button class="month-fold-btn">접기</button>
+            `;
 
             separator.addEventListener('click', () => {
                 const btn = separator.querySelector('.month-fold-btn');
@@ -402,12 +412,23 @@ function setStoredEmail(email) {
     localStorage.setItem('teacher_auth_token', encrypted);
 }
 
-function showLoading(show, text = "불러오는 중...", subText = "") {
+function showLoading(show, text = "불러오는 중...", subText = "", percent = null) {
     const overlay = document.getElementById("loading-overlay");
     if (overlay) {
         overlay.style.display = show ? "flex" : "none";
         const p = overlay.querySelector('p');
-        if (p) p.innerText = text;
+        const percentEl = document.getElementById("loading-percent");
+
+        if (p && !percentEl) {
+            // 퍼센트 엘리먼트가 없으면 텍스트만 처리
+            p.innerText = text;
+        } else if (p && percentEl) {
+            // 텍스트와 퍼센트 분리 업데이트
+            const baseText = text.includes("...") ? text.split("...")[0] + "..." : text;
+            p.firstChild.textContent = baseText;
+            percentEl.innerText = percent !== null ? `(${percent}%)` : "";
+        }
+
         let subEl = overlay.querySelector('.loading-text-detail');
         if (subEl) subEl.innerText = subText;
     }
