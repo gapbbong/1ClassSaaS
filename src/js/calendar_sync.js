@@ -71,6 +71,13 @@ function getUnifiedData() {
     return allEvents;
 }
 
+/**
+ * 날짜 포맷 헬퍼 (YYYY-MM-DD)
+ */
+function formatDate(y, m, d) {
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 function getAcademicData() {
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
@@ -78,19 +85,25 @@ function getAcademicData() {
     const data = sheet.getDataRange().getValues();
     let rowMonth = 3;
     for (let r = 0; r < data.length; r++) {
-        if (data[r][0]) {
-            const mMatch = data[r][0].toString().match(/(\d+)/);
+        // A열에 월 정보(숫자)가 있는지 확인
+        const cellA = data[r][0]?.toString().trim();
+        if (cellA) {
+            const mMatch = cellA.match(/(\d+)/);
             if (mMatch) rowMonth = parseInt(mMatch[1]);
         }
+
+        // C(2), E(4), G(6), I(8), K(10) 열이 일자
+        // D(3), F(5), H(7), J(9), L(11) 열이 행사명
         for (let c = 2; c <= 10; c += 2) {
-            const day = data[r][c];
+            const dayValue = data[r][c];
             const eventName = data[r][c + 1]?.toString().trim() || "";
-            if (day && !isNaN(day) && !isGarbageContent(eventName)) {
-                let actualMonth = rowMonth;
-                if (day > 20 && c < 6 && rowMonth > 1) actualMonth = rowMonth - 1;
-                const year = (actualMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+
+            if (dayValue && !isNaN(dayValue) && eventName && !isGarbageContent(eventName)) {
+                const day = parseInt(dayValue);
+                // 1, 2월은 다음 학년도(학년도 개념이 아닌 실제 연도로 계산)
+                const year = (rowMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
                 events.push({
-                    date: `${year}-${actualMonth}-${day}`,
+                    date: formatDate(year, rowMonth, day),
                     title: eventName,
                     type: 'academic',
                     typeName: '학사'
@@ -104,29 +117,43 @@ function getAcademicData() {
 function getCreativeData() {
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
-    const sheet = ss.getSheets()[0];
+    const sheet = ss.getSheetByName('2026창체운영계획') || ss.getSheets()[0];
     const data = sheet.getDataRange().getValues();
+
+    // 데이터 추출만 수행 (원본 변경 없음)
     for (let r = 1; r < data.length; r++) {
         const dateStr = data[r][0]?.toString().trim() || "";
         const topic6 = data[r][4]?.toString().trim() || "";
         const topic7 = data[r][5]?.toString().trim() || "";
+
         if (dateStr && (topic6 || topic7)) {
             const parts = dateStr.match(/\d+/g);
             if (parts && parts.length >= 2) {
-                let m, d;
-                if (parts.length >= 3) { m = parseInt(parts[1]); d = parseInt(parts[2]); }
-                else { m = parseInt(parts[0]); d = parseInt(parts[1]); }
-                const year = (m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR);
+                let y = CONFIG.YEAR, m, d;
+                if (parts.length >= 3) {
+                    y = parseInt(parts[0]);
+                    m = parseInt(parts[1]);
+                    d = parseInt(parts[2]);
+                    if (y < 100) y += 2000;
+                } else {
+                    m = parseInt(parts[0]);
+                    d = parseInt(parts[1]);
+                    y = (m < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                }
+
                 const f6 = (topic6 && !/^\d+$/.test(topic6)) ? topic6 : "";
                 const f7 = (topic7 && !/^\d+$/.test(topic7)) ? topic7 : "";
+
                 if (f6 || f7) {
-                    const combined = (f6 && f7) ? `${f6} / ${f7}` : (f6 || f7);
-                    events.push({
-                        date: `${year}-${m}-${d}`,
-                        title: combined,
-                        type: 'creative',
-                        typeName: '창체'
-                    });
+                    const combined = (f6 === f7 || !f7) ? f6 : (f6 && f7) ? `${f6} / ${f7}` : (f6 || f7);
+                    if (combined) {
+                        events.push({
+                            date: formatDate(y, m, d),
+                            title: combined,
+                            type: 'creative',
+                            typeName: '창체'
+                        });
+                    }
                 }
             }
         }

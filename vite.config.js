@@ -29,6 +29,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '127.0.0.1', // 로컬 접속 전용 (외부 침입 방지)
     open: true
   }
 });

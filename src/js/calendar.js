@@ -1,6 +1,6 @@
 const CONFIG = {
     // 캘린더 전용 구글 앱스 스크립트 웹 앱 URL을 여기에 붙여넣으세요.
-    API_URL: "https://script.google.com/macros/s/AKfycbyXKTT-aXCvUB0g2Uuk-FjkxSX3_f3oDLb4865dd_APwbBzdIiWFhWPOUmTOgdl0Pty-w/exec"
+    API_URL: "https://script.google.com/macros/s/AKfycby1NY-yj8dLt357ydtR7j-5GoIXoAZndPoVLATlm_JXrRWelLNDBQN6tAR0w6Nxb3Jo1g/exec"
 };
 
 let currentBaseDate = new Date(); // 현재 기준 날짜 (주간 이동용)
@@ -41,7 +41,9 @@ async function renderWeek(baseDate) {
 
     // 이벤트 매칭
     allEvents.forEach(event => {
-        const d = new Date(event.date);
+        // 날짜 파싱 (YYYY-MM-DD 직접 분해하여 타임존 오차 방지)
+        const [y, mm, dd] = event.date.split('-').map(Number);
+        const d = new Date(y, mm - 1, dd);
         const dateKey = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
         if (dateMap[dateKey]) {
             dateMap[dateKey].events.push(event);
