@@ -168,9 +168,9 @@ function renderCalendar(events, year, month, append = false) {
         const card = document.createElement("div");
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[dayIdx]}`;
 
-        const eventsHtml = dayEvents.map(ev => `
+        const eventsHtml = dayEvents.map((ev, idx) => `
             <div class="event-item">
-                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
+                <span class="event-title">${dayEvents.length > 1 ? `<span class="event-seq">${idx + 1}.</span> ` : ''}${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('') || '<div class="no-event">일정이 없습니다.</div>';
 
@@ -230,9 +230,9 @@ function renderCalendarAll(events) {
         const card = document.createElement("div");
         card.className = `day-card ${dayClasses[dayIdx]}`;
 
-        const eventsHtml = grouped[dateStr].map(ev => `
+        const eventsHtml = grouped[dateStr].map((ev, idx) => `
             <div class="event-item">
-                <span class="event-title">${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
+                <span class="event-title">${grouped[dateStr].length > 1 ? `<span class="event-seq">${idx + 1}.</span> ` : ''}${ev.title} <span class="event-tag">[${ev.typeName}]${ev.dept ? ` <span class="event-dept">(${ev.dept})</span>` : ''}</span></span>
             </div>
         `).join('');
 
