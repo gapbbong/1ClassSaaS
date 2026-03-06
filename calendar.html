@@ -153,6 +153,26 @@
             /* 중앙 배치 */
             gap: 10px;
             box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+            cursor: pointer;
+            /* 클릭 가능 표시 */
+            position: relative;
+        }
+
+        .month-fold-btn {
+            font-size: 0.7rem;
+            background: #eef6ff;
+            color: #4A90E2;
+            border: 1px solid #4A90E2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 800;
+            margin-left: 8px;
+            pointer-events: auto;
+        }
+
+        .month-separator.collapsed+.day-card,
+        .month-separator.collapsed~.day-card {
+            /* JS에서 제어하기 위해 클래스 기반으로 숨김 처리 가능 */
         }
 
         .month-separator::after {
@@ -228,7 +248,8 @@
         }
 
         .event-item {
-            font-size: 0.95rem;
+            font-size: 1.05rem;
+            /* 0.95rem -> 1.05rem (약 1px+ 키움) */
             color: #000;
             /* 완전 검정 */
             padding: 6px 0;

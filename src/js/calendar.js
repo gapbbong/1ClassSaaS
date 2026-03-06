@@ -165,7 +165,24 @@ function renderCalendar(events, year, month, append = false) {
         if (m !== lastMonth) {
             const separator = document.createElement("div");
             separator.className = "month-separator";
-            separator.innerText = `${m}월`;
+            separator.innerHTML = `<span>${m}월</span><button class="month-fold-btn">접기</button>`;
+
+            // 접기 기능 연결
+            separator.addEventListener('click', () => {
+                const btn = separator.querySelector('.month-fold-btn');
+                const isCollapsed = separator.classList.toggle('collapsed');
+                btn.innerText = isCollapsed ? '펼치기' : '접기';
+
+                // 다음 separator를 만날 때까지의 모든 day-card 토글
+                let next = separator.nextElementSibling;
+                while (next && !next.classList.contains('month-separator')) {
+                    if (next.classList.contains('day-card')) {
+                        next.style.display = isCollapsed ? 'none' : 'block';
+                    }
+                    next = next.nextElementSibling;
+                }
+            });
+
             listContainer.appendChild(separator);
             lastMonth = m;
         }
@@ -252,7 +269,22 @@ function renderGroupedEvents(container, events) {
         if (m !== lastMonth) {
             const separator = document.createElement("div");
             separator.className = "month-separator";
-            separator.innerText = `${m}월`;
+            separator.innerHTML = `<span>${m}월</span><button class="month-fold-btn">접기</button>`;
+
+            separator.addEventListener('click', () => {
+                const btn = separator.querySelector('.month-fold-btn');
+                const isCollapsed = separator.classList.toggle('collapsed');
+                btn.innerText = isCollapsed ? '펼치기' : '접기';
+
+                let next = separator.nextElementSibling;
+                while (next && !next.classList.contains('month-separator')) {
+                    if (next.classList.contains('day-card')) {
+                        next.style.display = isCollapsed ? 'none' : 'block';
+                    }
+                    next = next.nextElementSibling;
+                }
+            });
+
             container.appendChild(separator);
             lastMonth = m;
         }
