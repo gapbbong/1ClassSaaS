@@ -551,16 +551,19 @@
         }
 
         .academic-day-cell {
-            aspect-ratio: 1;
+            min-height: 80px;
+            /* 고정 종횡비 대신 최소 높이 설정 */
             border-radius: 6px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 4px;
-            font-size: 0.75rem;
+            padding: 6px 4px;
+            /* 패딩 약간 확대 */
+            font-size: 0.8rem;
             position: relative;
             background: #fafafa;
+            border: 1px solid #f1f5f9;
         }
 
         .academic-day-num {
@@ -569,15 +572,20 @@
         }
 
         .academic-day-event {
-            font-size: 0.55rem;
-            line-height: 1.1;
+            font-size: 1.1rem;
+            /* 0.55rem -> 1.1rem (정확히 2배) */
+            font-weight: 900;
+            color: #000;
+            /* 원색 느낌의 진한 검정 */
+            line-height: 1.2;
             text-align: center;
-            color: #4A90E2;
             word-break: keep-all;
             overflow: hidden;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 3;
+            /* 2줄에서 3줄로 확대 */
             -webkit-box-orient: vertical;
+            margin-top: 4px;
         }
 
         .academic-day-cell.holiday .academic-day-num {
