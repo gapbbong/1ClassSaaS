@@ -169,7 +169,7 @@ function getAcademicData() {
 }
 
 function getCreativeData() {
-    Logger.log("🔍 창체 데이터 정밀 수집 시작...");
+    Logger.log("🔍 창체 데이터 정밀 수집 시작 (6/7교시 주제 전용)...");
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.CREATIVE);
     const sheets = ss.getSheets();
@@ -181,14 +181,30 @@ function getCreativeData() {
 
     Logger.log("📄 대상 창체 시트: [" + sheet.getName() + "]");
     const data = sheet.getDataRange().getValues();
-    let successCount = 0;
 
+    // 1. 헤더에서 6교시, 7교시 열 위치 찾기 (상단 10행 이내 탐색)
+    let col6 = -1, col7 = -1;
+    for (let r = 0; r < Math.min(data.length, 10); r++) {
+        for (let c = 0; c < data[r].length; c++) {
+            const val = data[r][c]?.toString() || "";
+            if (val.includes("6교시")) col6 = c;
+            if (val.includes("7교시")) col7 = c;
+        }
+        if (col6 !== -1 && col7 !== -1) break;
+    }
+
+    // 헤더를 못 찾은 경우 안전한 기본값 사용 (경험적 인덱스 4, 5열)
+    if (col6 === -1) col6 = 4;
+    if (col7 === -1) col7 = 5;
+    Logger.log(`📍 추출 열 확정: 6교시(${col6}열), 7교시(${col7}열)`);
+
+    let successCount = 0;
     for (let r = 0; r < data.length; r++) {
         const row = data[r];
         let parsedDate = null;
         let dateColIdx = -1;
 
-        // 1. 해당 행에서 날짜(A~C열 위주 검색)를 먼저 찾음
+        // 날짜 찾기 (A~C열 위주)
         for (let c = 0; c < Math.min(row.length, 3); c++) {
             parsedDate = parseDateValue(row[c]);
             if (parsedDate) {
@@ -201,28 +217,29 @@ function getCreativeData() {
 
         const dateStr = formatDate(parsedDate.getFullYear(), parsedDate.getMonth() + 1, parsedDate.getDate());
 
-        // 2. 날짜 이후의 모든 컬럼에서 내용을 수집
+        // 2. 지정된 6, 7교시 열에서만 주제 추출
         let rowContents = [];
-        for (let c = dateColIdx + 1; c < row.length; c++) {
-            const val = row[c]?.toString().trim() || "";
-            if (val && !isGarbageContent(val)) {
-                if (!rowContents.includes(val)) rowContents.push(val);
+        [col6, col7].forEach(c => {
+            if (c < row.length) {
+                const val = row[c]?.toString().trim() || "";
+                // 시수(숫자만 있는 경우) 제외, 글자수가 2자 이상인 주제만 채택
+                if (val && !/^\d+$/.test(val) && val.length >= 2 && !isGarbageContent(val)) {
+                    if (!rowContents.includes(val)) rowContents.push(val);
+                }
             }
-        }
+        });
 
         if (rowContents.length > 0) {
-            const finalTitle = rowContents.join(' / ');
             events.push({
                 date: dateStr,
-                title: finalTitle,
+                title: rowContents.join(' / '),
                 type: 'creative',
                 typeName: '창체'
             });
             successCount++;
-            if (successCount < 5) Logger.log(`✅ [${dateStr}] 샘플 데이터: ${finalTitle}`);
         }
     }
-    Logger.log(`📊 창체 수집 완료: 총 ${successCount}건 추출됨`);
+    Logger.log(`📊 창체 수집 완료: 총 ${successCount}건 (6/7교시 필터링 적용)`);
     return events;
 }
 
