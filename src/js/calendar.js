@@ -64,8 +64,9 @@ async function renderWeek(baseDate) {
 
         const eventsHtml = item.events.map(ev => `
             <div class="event-item">
-                <span class="event-tag tag-${ev.type}">${ev.typeName}</span>
                 <span class="event-title">${ev.title}</span>
+                <span class="event-tag">[${ev.typeName}]</span>
+                ${ev.dept ? `<span class="event-dept">(${ev.dept})</span>` : ''}
             </div>
         `).join('') || '<div class="no-event">일정이 없습니다.</div>';
 

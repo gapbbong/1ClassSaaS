@@ -195,7 +195,8 @@ function getPlanningData() {
                         const year = (m < 3 ? CONFIG.YEAR + 1 : CONFIG.YEAR);
                         events.push({
                             date: `${year}-${m}-${d}`,
-                            title: eventInfo + (dept ? ` (${dept})` : ""),
+                            title: eventInfo,
+                            dept: dept,
                             type: 'planning',
                             typeName: '기획'
                         });
