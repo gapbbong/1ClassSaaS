@@ -24,7 +24,8 @@ export default defineConfig({
         random_photo: resolve(__dirname, 'random-photo.html'),
         show_one_photo: resolve(__dirname, 'show-one-photo.html'),
         select_range: resolve(__dirname, 'select-range.html'),
-        admin: resolve(__dirname, 'admin.html')
+        admin: resolve(__dirname, 'admin.html'),
+        calendar: resolve(__dirname, 'calendar.html')
       }
     }
   },
