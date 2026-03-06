@@ -137,7 +137,21 @@ function renderCalendar(events, year, month, append = false) {
 
     const lastDay = new Date(year, month, 0).getDate();
 
+    let lastMonth = -1;
+
     for (let d = 1; d <= lastDay; d++) {
+        const dateObj = new Date(year, month - 1, d);
+        const m = dateObj.getMonth() + 1;
+
+        // 월이 바뀌면 구분자 추가
+        if (m !== lastMonth) {
+            const separator = document.createElement("div");
+            separator.className = "month-separator";
+            separator.innerText = `${m}월`;
+            listContainer.appendChild(separator);
+            lastMonth = m;
+        }
+
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         // API에서 오는 포맷이 M-D 일 수 있으므로 보정 (분해해서 비교)
         const dayEvents = events.filter(ev => {
@@ -145,7 +159,6 @@ function renderCalendar(events, year, month, append = false) {
             return parts[0] === year && parts[1] === month && parts[2] === d;
         });
 
-        const dateObj = new Date(year, month - 1, d);
         const dayIdx = dateObj.getDay();
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -164,8 +177,7 @@ function renderCalendar(events, year, month, append = false) {
 
         card.innerHTML = `
             <div class="day-info">
-                <span class="date-num">${d}</span>
-                <span class="day-name">${month}월 ${d}일 (${days[dayIdx]})</span>
+                <span class="day-name">${m}월 ${d}일 (${days[dayIdx]})</span>
             </div>
             <div class="event-content">
                 ${eventsHtml}
@@ -196,10 +208,22 @@ function renderCalendarAll(events) {
         return new Date(da[0], da[1] - 1, da[2]) - new Date(db[0], db[1] - 1, db[2]);
     });
 
+    let lastMonth = -1;
+
     sortedDates.forEach(dateStr => {
         const parts = dateStr.split('-').map(Number);
         const y = parts[0], m = parts[1], d = parts[2];
         const dateObj = new Date(y, m - 1, d);
+
+        // 월이 바뀌면 구분자 추가
+        if (m !== lastMonth) {
+            const separator = document.createElement("div");
+            separator.className = "month-separator";
+            separator.innerText = `${m}월`;
+            listContainer.appendChild(separator);
+            lastMonth = m;
+        }
+
         const dayIdx = dateObj.getDay();
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -216,7 +240,6 @@ function renderCalendarAll(events) {
 
         card.innerHTML = `
             <div class="day-info">
-                <span class="date-num">${d}</span>
                 <span class="day-name">${m}월 ${d}일 (${days[dayIdx]})</span>
             </div>
             <div class="event-content">
