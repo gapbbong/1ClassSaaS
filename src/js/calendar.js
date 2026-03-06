@@ -7,15 +7,16 @@ const CONFIG = {
 };
 
 let viewMode = 'month'; // 'month' or 'all'
-let currentMonth = new Date().getMonth() + 1; // 1-indexed
-if (new Date().getFullYear() > 2026 || (new Date().getFullYear() === 2026 && currentMonth < 3)) {
-    // 2026학년도 시작인 3월로 기본 설정 (이미 지난 경우 제외 등 로직 가능하나 단순화)
-}
-// 현재 날짜가 2026년 3월 이전일 경우 3월로 초기화
-if (new Date().getFullYear() < 2026 || (new Date().getFullYear() === 2026 && new Date().getMonth() < 2)) {
-    currentMonth = 3;
-} else if (new Date().getFullYear() === 2026) {
-    currentMonth = new Date().getMonth() + 1;
+let currentYear = 2026;
+let currentMonth = 3; // 기본 3월 시작
+
+// 실제 현재 날짜가 2026년 3월 이후라면 해당 월로 설정
+const today = new Date();
+if (today.getFullYear() === 2026 && today.getMonth() + 1 >= 3) {
+    currentMonth = today.getMonth() + 1;
+} else if (today.getFullYear() > 2026) {
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth() + 1;
 }
 
 let loadedEvents = [];
@@ -33,7 +34,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 async function initCalendar() {
     setupButtons();
-    await loadMonthData(currentMonth);
+    await loadMonthData(currentYear, currentMonth);
 }
 
 function setupButtons() {
@@ -43,8 +44,11 @@ function setupButtons() {
     if (btnNext) {
         btnNext.addEventListener('click', async () => {
             currentMonth++;
-            if (currentMonth > 12) currentMonth = 1; // 연도 전환 로직은 학년도 기준이므로 복잡하나 일단 월만 증가
-            await loadMonthData(currentMonth, true); // append mode
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            await loadMonthData(currentYear, currentMonth, true); // append mode
         });
     }
 
@@ -59,8 +63,8 @@ function setupButtons() {
     }
 }
 
-async function loadMonthData(month, append = false) {
-    showLoading(true, "일정을 불러오고 있습니다...");
+async function loadMonthData(year, month, append = false) {
+    showLoading(true, `${year}년 ${month}월 일정을 불러오고 있습니다...`);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}`);
         const data = await response.json();
@@ -71,7 +75,7 @@ async function loadMonthData(month, append = false) {
             loadedEvents = data;
         }
 
-        renderCalendar(loadedEvents);
+        renderCalendar(loadedEvents, year, month, append);
         updateTitle();
     } catch (e) {
         console.error("Fetch Error:", e);
@@ -87,13 +91,15 @@ async function loadAllData() {
         const response = await fetch(`${CONFIG.API_URL}?all=true`);
         const data = await response.json();
         loadedEvents = data;
-        renderCalendar(loadedEvents);
+
+        viewMode = 'all';
+        renderCalendarAll(loadedEvents);
 
         const titleEl = document.getElementById('current-month-view');
         if (titleEl) titleEl.innerText = "2026학년도 전체 일정";
 
         const btnNext = document.getElementById('btn-next-month');
-        if (btnNext) btnNext.style.display = 'none'; // 전체 모드에서는 다음달 버튼 숨김
+        if (btnNext) btnNext.style.display = 'none';
     } catch (e) {
         console.error("Fetch All Error:", e);
         alert("전체 일정 로드 중 오류가 발생했습니다.");
@@ -105,33 +111,41 @@ async function loadAllData() {
 function updateTitle() {
     const titleEl = document.getElementById('current-month-view');
     if (titleEl) {
-        titleEl.innerText = `2026년 ${currentMonth}월 일정`;
+        if (viewMode === 'all') {
+            titleEl.innerText = "2026학년도 전체 일정";
+        } else {
+            titleEl.innerText = `${currentYear}년 ${currentMonth}월 일정`;
+        }
     }
 }
 
-function renderCalendar(events) {
+/**
+ * 특정 월의 1일부터 말일까지 보두 렌더링
+ */
+function renderCalendar(events, year, month, append = false) {
     const listContainer = document.getElementById("day-list");
     if (!listContainer) return;
-    listContainer.innerHTML = "";
 
-    if (!events || events.length === 0) {
-        listContainer.innerHTML = '<div class="no-event" style="padding:40px; text-align:center;">표시할 일정이 없습니다.</div>';
-        return;
-    }
+    if (!append) listContainer.innerHTML = "";
 
-    // 날짜별로 그룹화
+    // 날짜별 그룹화
     const grouped = {};
     events.forEach(ev => {
         if (!grouped[ev.date]) grouped[ev.date] = [];
         grouped[ev.date].push(ev);
     });
 
-    // 정렬된 날짜 배열
-    const sortedDates = Object.keys(grouped).sort();
+    const lastDay = new Date(year, month, 0).getDate();
 
-    sortedDates.forEach(dateStr => {
-        const [y, m, d] = dateStr.split('-').map(Number);
-        const dateObj = new Date(y, m - 1, d);
+    for (let d = 1; d <= lastDay; d++) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        // API에서 오는 포맷이 M-D 일 수 있으므로 보정 (분해해서 비교)
+        const dayEvents = events.filter(ev => {
+            const parts = ev.date.split('-').map(Number);
+            return parts[0] === year && parts[1] === month && parts[2] === d;
+        });
+
+        const dateObj = new Date(year, month - 1, d);
         const dayIdx = dateObj.getDay();
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -141,12 +155,64 @@ function renderCalendar(events) {
         const card = document.createElement("div");
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[dayIdx]}`;
 
-        const eventsHtml = grouped[dateStr].map(ev => `
+        const eventsHtml = dayEvents.map(ev => `
             <div class="event-item">
                 <span class="event-title">${ev.title}</span>
                 <span class="event-tag">[${ev.typeName}] ${ev.dept ? `<span class="event-dept">(${ev.dept})</span>` : ''}</span>
             </div>
         `).join('') || '<div class="no-event">일정이 없습니다.</div>';
+
+        card.innerHTML = `
+            <div class="day-info">
+                <span class="date-num">${d}</span>
+                <span class="day-name">${month}월 ${d}일 (${days[dayIdx]})</span>
+            </div>
+            <div class="event-content">
+                ${eventsHtml}
+            </div>
+        `;
+        listContainer.appendChild(card);
+    }
+}
+
+/**
+ * 전체 모드 렌더링 (이벤트가 있는 날짜만 또는 전체? 전체면 너무 많으므로 이벤트 있는 날 위주로)
+ * 사용자 요청: "전체 버튼 누르면 모든 버튼 나오는데" -> 일단 이벤트 있는 날짜 위주 정렬
+ */
+function renderCalendarAll(events) {
+    const listContainer = document.getElementById("day-list");
+    if (!listContainer) return;
+    listContainer.innerHTML = "";
+
+    const grouped = {};
+    events.forEach(ev => {
+        if (!grouped[ev.date]) grouped[ev.date] = [];
+        grouped[ev.date].push(ev);
+    });
+
+    const sortedDates = Object.keys(grouped).sort((a, b) => {
+        const da = a.split('-').map(Number);
+        const db = b.split('-').map(Number);
+        return new Date(da[0], da[1] - 1, da[2]) - new Date(db[0], db[1] - 1, db[2]);
+    });
+
+    sortedDates.forEach(dateStr => {
+        const parts = dateStr.split('-').map(Number);
+        const y = parts[0], m = parts[1], d = parts[2];
+        const dateObj = new Date(y, m - 1, d);
+        const dayIdx = dateObj.getDay();
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+        const card = document.createElement("div");
+        card.className = `day-card ${dayClasses[dayIdx]}`;
+
+        const eventsHtml = grouped[dateStr].map(ev => `
+            <div class="event-item">
+                <span class="event-title">${ev.title}</span>
+                <span class="event-tag">[${ev.typeName}] ${ev.dept ? `<span class="event-dept">(${ev.dept})</span>` : ''}</span>
+            </div>
+        `).join('');
 
         card.innerHTML = `
             <div class="day-info">
