@@ -261,8 +261,8 @@ body {
     /* flex 자식의 최소 높이 초기화 */
     padding: 2px 25px 25px 25px;
     /* 좌우, 하단 여백 대폭 확대 */
-    gap: 40px;
-    /* 좌우 간격을 소폭 줄여 여백 공간 확보 */
+    gap: clamp(10px, 2vw, 40px);
+    /* 좌우 간격 최적화 (v3.1.9) */
     box-sizing: border-box;
     overflow: hidden;
     /* 스크롤 절대 방지 */
@@ -282,8 +282,8 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(1px, 0.4dvh, 5px);
-    /* v3.1.8 최종 간격 최적화 */
+    gap: clamp(1px, 0.2dvh, 4px);
+    /* 세로 간격 최소화하여 밀착 (v3.1.9) */
 }
 
 /* 각 반(카드) */
@@ -312,8 +312,8 @@ body {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    max-height: 12dvh;
-    /* PC 기준도 하향 (v3.1.8) */
+    max-height: 14dvh;
+    /* 높이 제한 완화하여 자동 조절 허용 (v3.1.9) */
 }
 
 .class-section:hover {
@@ -464,9 +464,9 @@ body {
     }
 
     .class-grid {
-        gap: 1.2px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 20px 5px;
-        /* 상단 여백 극한 압축 및 하단 높이 확보 (v3.1.8) */
+        gap: 1px;
+        padding: clamp(2px, 0.5dvh, 5px) 5px 60px 5px;
+        /* 하단 작업표시줄 대응을 위해 하단 패딩 대폭 확대 (20px -> 60px) */
     }
 
     .grade-column {
@@ -478,8 +478,8 @@ body {
 
     .class-section {
         padding: clamp(1px, 0.3dvh, 4px) 5px;
-        max-height: 11.2dvh;
-        /* 모바일 주소창 완벽 대응 (v3.1.8) */
+        max-height: none;
+        /* 모바일에서는 높이 제한 해제하여 자동 높이 맞춤 (v3.1.9) */
     }
 }
 
