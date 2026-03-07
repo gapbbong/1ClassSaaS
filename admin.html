@@ -62,20 +62,16 @@
         .stats-grid {
             display: flex;
             flex-direction: row;
-            justify-content: space-around;
+            justify-content: center;
             align-items: center;
             gap: 10px;
         }
 
         .stat-box {
             flex: 1;
+            max-width: 300px;
             text-align: center;
             padding: 10px;
-            border-right: 1px solid #f1f5f9;
-        }
-
-        .stat-box:last-child {
-            border-right: none;
         }
 
         .stat-val {
@@ -91,6 +87,16 @@
             font-size: 0.85rem;
             margin-top: 5px;
             display: block;
+        }
+
+        .count-active {
+            font-size: 0.9rem;
+            color: #2563eb;
+            font-weight: 600;
+            margin-left: 8px;
+            background: #eff6ff;
+            padding: 2px 10px;
+            border-radius: 20px;
         }
 
         table {
@@ -130,6 +136,14 @@
             font-weight: 800;
             margin-left: 2px;
         }
+
+        .stay-info {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            font-weight: 500;
+            display: block;
+            margin-top: 2px;
+        }
     </style>
 </head>
 
@@ -142,22 +156,15 @@
     <main>
         <div class="admin-card stats-grid">
             <div class="stat-box">
-                <span id="total-views" class="stat-val">-</span>
-                <span class="stat-label">페이지뷰</span>
-            </div>
-            <div class="stat-box">
-                <span id="active-teachers" class="stat-val">-</span>
-                <span class="stat-label">활동교사</span>
-            </div>
-            <div class="stat-box">
                 <span id="avg-stay" class="stat-val">-</span>
-                <span class="stat-label">체류시간</span>
+                <span class="stat-label">전체 평균 체류 시간 (추정)</span>
             </div>
         </div>
 
         <div class="admin-card">
-            <div style="margin-bottom: 20px;">
-                <h2 style="font-size: 1.1rem; margin: 0;">선생님별 활동 분석 (연속 방문 합산)</h2>
+            <div style="margin-bottom: 20px; display: flex; align-items: center;">
+                <h2 style="font-size: 1.1rem; margin: 0;">선생님별 활동 분석</h2>
+                <span id="active-teachers-count" class="count-active">- 명 활동 중</span>
             </div>
             <div id="log-list">
                 데이터를 분석하는 중입니다...
@@ -170,7 +177,7 @@
 
         async function loadStats() {
             try {
-                // 1. 교사 정보 로드 (이름 매핑용)
+                // 1. 교사 정보 로드
                 const { data: teachers, error: tError } = await supabase
                     .from('teachers')
                     .select('email, name');
@@ -194,50 +201,63 @@
                 }
 
                 // 3. 통계 처리
-                document.getElementById('total-views').textContent = data.length;
                 const uniqueEmails = new Set(data.map(l => l.teacher_email)).size;
-                document.getElementById('active-teachers').textContent = uniqueEmails;
+                document.getElementById('active-teachers-count').textContent = `${uniqueEmails}명 활동 중`;
 
                 const sortedLogs = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 const teacherAnalysis = {};
-                let totalStay = 0;
-                let stayCount = 0;
+                let globalTotalStay = 0;
+                let globalStayCount = 0;
 
                 sortedLogs.forEach((log, i) => {
                     const email = log.teacher_email;
                     const name = teacherMap[email] || email.split('@')[0];
-                    const page = log.page_path.split('/').pop() || '홈';
+                    let page = log.page_path.split('/').pop() || '홈';
+                    if (page === 'index.html' || page === '') page = '홈';
+
                     const time = new Date(log.created_at);
 
                     if (!teacherAnalysis[email]) {
-                        teacherAnalysis[email] = { name, compactLogs: [], total: 0 };
+                        teacherAnalysis[email] = { name, compactLogs: [], total: 0, teacherTotalStay: 0, teacherStayCount: 0 };
                     }
 
-                    const userLogs = teacherAnalysis[email].compactLogs;
-                    const lastLog = userLogs[userLogs.length - 1];
+                    const tData = teacherAnalysis[email];
+                    const lastLog = tData.compactLogs[tData.compactLogs.length - 1];
 
-                    // 동일 사용자가 같은 페이지를 연속해서 방문한 경우 합산
+                    // 동일 페이지 연속 방문 합산
                     if (lastLog && lastLog.page === page) {
                         lastLog.count++;
                     } else {
-                        userLogs.push({ page, count: 1 });
+                        tData.compactLogs.push({ page, count: 1 });
                     }
-                    teacherAnalysis[email].total++;
+                    tData.total++;
 
-                    // 체류 시간 계산
+                    // 체류 시간 계산 (시차 30분 미만 세션만 누적)
                     const next = sortedLogs.find((l, idx) => idx > i && l.teacher_email === email);
                     if (next) {
                         const diff = (new Date(next.created_at) - time) / 1000;
-                        if (diff < 1800) { totalStay += diff; stayCount++; }
+                        if (diff < 1800) {
+                            globalTotalStay += diff;
+                            globalStayCount++;
+                            tData.teacherTotalStay += diff;
+                            tData.teacherStayCount++;
+                        }
                     }
                 });
 
-                const avg = stayCount > 0 ? Math.round(totalStay / stayCount) : 0;
-                document.getElementById('avg-stay').textContent = avg > 60 ? `${Math.floor(avg / 60)}분 ${avg % 60}초` : `${avg}초`;
+                function formatStayTime(sec) {
+                    if (sec <= 0) return '없음';
+                    const m = Math.floor(sec / 60);
+                    const s = Math.round(sec % 60);
+                    return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+                }
+
+                const avg = globalStayCount > 0 ? Math.round(globalTotalStay / globalStayCount) : 0;
+                document.getElementById('avg-stay').textContent = formatStayTime(avg);
 
                 // 4. 렌더링
                 let html = '<table>';
-                html += '<tr><th>선생님</th><th>방문 경로 (연속 중복 합산)</th><th style="text-align:right;">활동수</th></tr>';
+                html += '<tr><th>선생님</th><th>방문 경로 (중복 합산)</th><th style="text-align:right; width:120px;">활동 / 누적시간</th></tr>';
 
                 Object.values(teacherAnalysis)
                     .sort((a, b) => b.total - a.total)
@@ -246,10 +266,15 @@
                             `<span class="badge">${cl.page}${cl.count > 1 ? `<span class="count-tag">(${cl.count})</span>` : ''}</span>`
                         ).join('');
 
+                        const stayText = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : '-';
+
                         html += `<tr>
-                            <td style="font-weight:700; vertical-align:top; white-space:nowrap;">${t.name}</td>
+                            <td style="font-weight:700; white-space:nowrap; vertical-align:top;">${t.name}</td>
                             <td>${logsHtml}</td>
-                            <td style="text-align:right; font-weight:800; color:#64748b;">${t.total}</td>
+                            <td style="text-align:right; vertical-align:top;">
+                                <div style="font-weight:800; color:#1e293b;">${t.total}회</div>
+                                <div class="stay-info">${stayText}</div>
+                            </td>
                         </tr>`;
                     });
                 html += '</table>';
@@ -257,7 +282,7 @@
 
             } catch (err) {
                 console.error(err);
-                document.getElementById('log-list').innerHTML = "분석 중 오류 발생: " + err.message;
+                document.getElementById('log-list').innerHTML = "오류 발생: " + err.message;
             }
         }
 
