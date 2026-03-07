@@ -294,8 +294,8 @@ body {
     /* flex 자식의 최소 높이 초기화 */
     padding: 2px 25px 25px 25px;
     /* 좌우, 하단 여백 대폭 확대 */
-    gap: clamp(20px, 4vw, 80px);
-    /* 가로 간격 2배 확대 (v3.5.0) */
+    gap: clamp(20px, 5vw, 100px);
+    /* 가로 간격 대폭 확대 (v3.5.1) */
     box-sizing: border-box;
     overflow: hidden;
     /* 스크롤 절대 방지 */
@@ -504,9 +504,9 @@ body {
     }
 
     .class-grid {
-        gap: 2px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 100px 5px;
-        /* 하단 여백 최종 최적화 (75px -> 100px) */
+        gap: 12px;
+        padding: clamp(2px, 0.5dvh, 5px) 8px 100px 8px;
+        /* 하단 여백 및 좌우 여백 최적화 (v3.5.1) */
     }
 
     .class-box {
@@ -516,9 +516,9 @@ body {
     }
 
     .grade-column {
-        width: clamp(140px, 30vw, 180px);
+        width: clamp(100px, 30vw, 180px);
+        /* 최소 너비를 낮춰 여백 공간 확보 (v3.5.1) */
         min-height: 0;
-        /* gap과 justify-content는 전역 설정을 따름 (v3.2.6) */
     }
 
     .class-section {
@@ -530,8 +530,8 @@ body {
 
 @media (max-width: 400px) {
     .class-grid {
-        padding: 2px 2px 0px 2px;
-        gap: 2px;
+        padding: 2px 5px 0px 5px;
+        gap: 10px;
     }
 
     .grade-column {
