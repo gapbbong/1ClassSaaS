@@ -114,18 +114,18 @@
 
         th {
             text-align: left;
-            padding: 10px 8px;
+            padding: 10px 4px;
             background: #f8fafc;
             color: #64748b;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             border-bottom: 2px solid #f1f5f9;
             white-space: nowrap;
         }
 
         td {
-            padding: 10px 8px;
+            padding: 8px 4px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -146,9 +146,9 @@
         }
 
         .stay-info {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: #64748b;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .teacher-info {
@@ -156,12 +156,12 @@
             align-items: center;
             gap: 4px;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .teacher-name {
-            font-weight: 700;
+            font-weight: 800;
             flex-shrink: 0;
+            font-size: 0.8rem;
         }
 
         .teacher-class {
@@ -195,7 +195,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.05</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.06</span></h1>
     </header>
 
     <main>
@@ -223,13 +223,13 @@
         </div>
 
         <!-- 선생님별 분석 (요약) -->
-        <div class="admin-card" style="padding: 15px 10px;">
-            <div style="margin-bottom: 15px; display: flex; align-items: center; padding-left: 10px;">
-                <h2 style="font-size: 1.1rem; margin: 0;">선생님별 요약</h2>
-                <span id="active-teachers-count" class="count-active">- 명 활동 중</span>
+        <div class="admin-card" style="padding: 15px 5px;">
+            <div style="margin-bottom: 12px; display: flex; align-items: center; padding-left: 5px;">
+                <h2 style="font-size: 1rem; margin: 0;">선생님별 요약</h2>
+                <span id="active-teachers-count" class="count-active">- 명 활동</span>
             </div>
             <div id="log-list">
-                데이터를 분석하는 중입니다...
+                데이터 분석 중...
             </div>
         </div>
 
@@ -247,7 +247,7 @@
 
         async function loadStats() {
             try {
-                // 1. 전체 교사 정보 로드
+                // 1. 전체 교사 로드
                 const { data: teachers, error: tError } = await supabase
                     .from('teachers')
                     .select('email, name, assigned_class');
@@ -271,9 +271,9 @@
 
                 if (error) throw error;
 
-                // 3. 데이터 분석 준비
+                // 3. 분석 수행
                 const activeEmails = new Set(data.map(l => l.teacher_email));
-                document.getElementById('active-teachers-count').textContent = `${activeEmails.size}명 활동 중`;
+                document.getElementById('active-teachers-count').textContent = `${activeEmails.size}명 활동`;
 
                 const sortedLogsAsc = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
@@ -281,7 +281,7 @@
                 const sessions = [];
                 const teacherAnalysis = {};
 
-                // 모든 교사를 초기화
+                // 초기화
                 teachers.forEach(t => {
                     teacherAnalysis[t.email] = {
                         name: t.name,
@@ -290,12 +290,15 @@
                     };
                 });
 
-                // 로그 기반 분석 수행
                 sortedLogsAsc.forEach((log, i) => {
                     const email = log.teacher_email;
                     const tMapInfo = teacherMap[email] || { name: email.split('@')[0], classInfo: '' };
-                    let page = log.page_path.split('/').pop() || '홈';
-                    if (page === 'index.html' || page === '') page = '홈';
+
+                    // 핵심 페이지 이름만 추출 (파일명 제외)
+                    let pageRaw = log.page_path.split('/').pop() || '홈';
+                    let page = pageRaw;
+                    if (page === 'index.html' || page === '') page = '메인 홈';
+                    else if (page.includes('.html')) page = page.replace('.html', '');
 
                     const time = new Date(log.created_at);
                     const hour = time.getHours();
@@ -305,38 +308,36 @@
                     else if (hour < 18) timeSlots.afternoon++;
                     else timeSlots.evening++;
 
-                    if (!teacherAnalysis[email]) {
-                        teacherAnalysis[email] = {
-                            name: tMapInfo.name,
-                            classInfo: tMapInfo.classInfo,
-                            lastPage: page, total: 0, teacherTotalStay: 0
-                        };
-                    }
                     const tData = teacherAnalysis[email];
-                    tData.lastPage = page;
-                    tData.total++;
-
-                    const prevSession = sessions[sessions.length - 1];
-                    let currentStay = 0;
-                    const next = sortedLogsAsc.find((l, idx) => idx > i && l.teacher_email === email);
-                    if (next) {
-                        const diff = (new Date(next.created_at) - time) / 1000;
-                        if (diff < 1800) {
-                            currentStay = diff;
-                            tData.teacherTotalStay += diff;
+                    if (tData) {
+                        // '메인 홈'이 아닌 유의미한 활동을 우선적으로 기록
+                        if (page !== '메인 홈' || tData.lastPage === '-') {
+                            tData.lastPage = page;
                         }
-                    }
+                        tData.total++;
 
-                    if (prevSession && prevSession.email === email && (time - prevSession.endTime) < 300000) {
-                        prevSession.count++;
-                        prevSession.endTime = time;
-                        prevSession.totalStay += currentStay;
-                        if (!prevSession.pages.includes(page)) prevSession.pages.push(page);
-                    } else {
-                        sessions.push({
-                            email, name: tMapInfo.name, classInfo: tMapInfo.classInfo, startTime: time, endTime: time,
-                            pages: [page], count: 1, totalStay: currentStay
-                        });
+                        const prevSession = sessions[sessions.length - 1];
+                        let currentStay = 0;
+                        const next = sortedLogsAsc.find((l, idx) => idx > i && l.teacher_email === email);
+                        if (next) {
+                            const diff = (new Date(next.created_at) - time) / 1000;
+                            if (diff < 1800) {
+                                currentStay = diff;
+                                tData.teacherTotalStay += diff;
+                            }
+                        }
+
+                        if (prevSession && prevSession.email === email && (time - prevSession.endTime) < 300000) {
+                            prevSession.count++;
+                            prevSession.endTime = time;
+                            prevSession.totalStay += currentStay;
+                            if (!prevSession.pages.includes(page)) prevSession.pages.push(page);
+                        } else {
+                            sessions.push({
+                                email, name: tMapInfo.name, classInfo: tMapInfo.classInfo, startTime: time, endTime: time,
+                                pages: [page], count: 1, totalStay: currentStay
+                            });
+                        }
                     }
                 });
 
@@ -346,16 +347,21 @@
                 document.getElementById('slot-evening').textContent = timeSlots.evening;
 
                 function formatStayTime(sec) {
-                    if (sec <= 0) return '없음';
+                    if (sec <= 0) return '-';
                     const m = Math.floor(sec / 60);
                     const s = Math.round(sec % 60);
-                    return m > 0 ? `${m}분 ${s}초` : `${s}초`;
+                    if (m >= 60) {
+                        const h = Math.floor(m / 60);
+                        const rm = m % 60;
+                        return `${h}h ${rm}m`;
+                    }
+                    return m > 0 ? `${m}m ${s}s` : `${s}s`;
                 }
 
-                // 요약 리스트
-                let tHtml = '<table><colgroup><col style="width:75px;"><col><col style="width:45px;"><col style="width:75px;"></colgroup><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
+                // 요약 리스트 (초밀착 너비 설정)
+                let tHtml = '<table><colgroup><col style="width:105px;"><col><col style="width:32px;"><col style="width:62px;"></colgroup><tr><th>선생님</th><th>주요 활동</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
-                    const stay = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : (t.total > 0 ? '-' : '없음');
+                    const stay = formatStayTime(t.teacherTotalStay);
                     tHtml += `<tr>
                         <td>
                             <div class="teacher-info">
