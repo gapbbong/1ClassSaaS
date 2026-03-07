@@ -77,8 +77,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         setupGuidance();
     }
 
-    // 5. 서비스 워커 등록
-    registerServiceWorker();
+    // 5. 서비스 워커 등록 (v3.0.0 캐시 이슈로 일시 중단)
+    // registerServiceWorker();
 });
 
 function setupGuidance() {

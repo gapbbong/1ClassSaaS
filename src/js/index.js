@@ -479,7 +479,7 @@ function attachLongPressEvents() {
           lastLongPressTime = Date.now();
           openContactModal(info);
         }
-      }, 600); // 0.6초 길게 누르면 발동
+      }, 400); // 0.4초 길게 누르면 발동 (전작 600ms에서 단축)
     };
 
     // 터치/마우스 업 및 취소

@@ -2,8 +2,8 @@ import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
 
 const CONFIG = {
-    // 캘린더 전용 구글 앱스 스크립트 웹 앱 URL
-    API_URL: "https://script.google.com/macros/s/AKfycbwxLJwfP5HqBCvg-44HUlYbok3HdjJjZY1ZJzA6Zz-8NVglsd5cJB4utQJK-z8P7SH18Q/exec"
+    // API_CONFIG.SCRIPT_URL 사용 (config.js 연동)
+    API_URL: API_CONFIG.SCRIPT_URL
 };
 
 let viewMode = 'month'; // 'month', 'all', 'academic_only'
@@ -34,6 +34,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function initCalendar() {
     setupButtons();
     await loadMonthData(currentYear, currentMonth);
+
+    // [v2.34] 지능형 자동 스크롤
+    setTimeout(() => {
+        const today = new Date();
+        const day = today.getDay(); // 0:일, 1:월, ... 6:토
+        let targetId = null;
+
+        if (day === 1 || day === 0 || day === 6) {
+            // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
+            const lastFri = new Date(today);
+            const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
+            lastFri.setDate(today.getDate() - diff);
+
+            const m = lastFri.getMonth() + 1;
+            const d = lastFri.getDate();
+            // 해당 금요일 카드를 찾아 스크롤
+            const cards = document.querySelectorAll('.day-card');
+            for (let card of cards) {
+                if (card.innerText.includes(`${m}월 ${d}일`)) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    window.scrollBy(0, -100); // 상단 여백 확보
+                    break;
+                }
+            }
+        } else {
+            // 그 외 요일은 오늘로 스크롤
+            const todayCard = document.querySelector('.day-card.today');
+            if (todayCard) {
+                todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.scrollBy(0, -100);
+            }
+        }
+    }, 800);
 }
 
 function setupButtons() {
@@ -90,15 +123,15 @@ function setupButtons() {
 }
 
 async function loadMonthData(year, month, append = false) {
-    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "", 30);
+    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버 응답 대기 중", 30);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        showLoading(true, `데이터 분석 중...`, "", 70);
+        showLoading(true, `데이터 분석 중...`, "거의 다 되었습니다", 60);
         const data = await response.json();
 
-        showLoading(true, `화면 구성 중...`, "", 90);
+        showLoading(true, `화면 구성 중...`, "데이터 렌더링", 85);
 
         if (append) {
             loadedEvents.push(...data);
@@ -126,13 +159,13 @@ function eventsToRender(allEvents, year, month) {
 }
 
 async function loadAllData() {
-    showLoading(true, "전체 일정을 불러오는 중입니다...", "데이터량이 많아 잠시만 더 기다려 주세요.", 10);
+    showLoading(true, "전체 일정을 불러오는 중입니다...", "서버 응답 대기 중", 20);
     try {
         const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
-        showLoading(true, "전체 데이터를 분석 중입니다...", "", 50);
+        showLoading(true, "대용량 데이터를 수신했습니다.", "분석 시작", 50);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        showLoading(true, "전체 일정을 렌더링 중입니다...", "", 80);
+        showLoading(true, "화면을 구성하고 있습니다.", "잠시만 더 기다려 주세요", 80);
         loadedEvents = data;
 
         if (viewMode === 'academic_only') {
@@ -145,7 +178,7 @@ async function loadAllData() {
         if (btnNext) btnNext.style.display = 'none';
         const btnFull = document.getElementById('btn-full-year');
         if (btnFull) btnFull.style.display = 'none';
-        showLoading(true, "완료!", "", 100);
+        showLoading(true, "로딩 완료!", "", 100);
     } catch (e) {
         console.error("Fetch All Error:", e);
     } finally {
@@ -468,23 +501,70 @@ async function showAcademicPopup() {
     // 이미 렌더링되어 있다면 재사용
     if (grid.children.length > 0) return;
 
-    grid.innerHTML = '<div style="text-align:center; padding: 50px; color:#666; width:100%;">연간 일정을 불러오는 중...</div>';
+    async function fetchYearlyAcademicData() {
+        const grid = document.getElementById('academic-grid');
+        if (!grid) return;
 
-    try {
-        // GAS API로부터 연간 정밀 데이터(yearly) 요청
-        const response = await fetch(`${CONFIG.API_URL}?type=yearly&t=${Date.now()}`);
-        if (!response.ok) throw new Error("데이터를 가져오지 못했습니다.");
-        const yearlyData = await response.json();
+        try {
+            console.log("📡 연간 학사 일정 데이터 요청 중...", CONFIG.API_URL);
 
-        if (!yearlyData || Object.keys(yearlyData).length === 0) {
-            grid.innerHTML = '<div style="text-align:center; padding: 50px; color:#666; width:100%;">등록된 연간 일정이 없습니다.</div>';
-            return;
+            // 초기 로딩 상태 (0%)
+            grid.innerHTML = `
+            <div style="text-align:center; padding: 60px; width:100%; display:flex; flex-direction:column; align-items:center; gap:15px;">
+                <div class="loader-spinner"></div>
+                <div style="font-size: 1.1rem; font-weight: 600; color: #333;">학사 일정을 가져오고 있습니다...</div>
+                <div id="loading-progress" style="font-size: 0.9rem; color: #666;">연결 중 (0%)</div>
+                <div style="width: 200px; height: 6px; background: #eee; border-radius: 3px; overflow: hidden;">
+                    <div id="loading-bar" style="width: 0%; height: 100%; background: var(--primary-color, #4A90E2); transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+        `;
+
+            const progressText = document.getElementById('loading-progress');
+            const progressBar = document.getElementById('loading-bar');
+
+            // 진행률 업데이트 함수
+            const updateProgress = (pct, msg) => {
+                if (progressText) progressText.innerText = `${msg} (${pct}%)`;
+                if (progressBar) progressBar.style.width = `${pct}%`;
+            };
+
+            // 1단계: 서버 연결 (25%)
+            updateProgress(25, "서버 연결 중");
+
+            const response = await fetch(`${CONFIG.API_URL}?type=yearly&t=${Date.now()}`);
+            if (!response.ok) throw new Error(`HTTP 오류! 상태: ${response.status}`);
+
+            // 2단계: 데이터 수신 (55%)
+            updateProgress(55, "데이터 수신 중");
+            const yearlyData = await response.json();
+
+            // 3단계: 파싱 및 렌더링 준비 (85%)
+            updateProgress(85, "일정 분석 및 구성 중");
+
+            const dataVersion = yearlyData._version || "v2.29 이하 (Stale)";
+            console.log(`📦 수신 데이터 버전: [${dataVersion}]`, yearlyData);
+
+            if (!yearlyData || Object.keys(yearlyData).length <= 1) {
+                grid.innerHTML = `<div style="text-align:center; padding: 50px; color:#666; width:100%;">
+                등록된 연간 일정이 없습니다.<br>
+                <small style="color:#999;">서버 버전: ${dataVersion} / 클라이언트 버전: v2.34</small>
+            </div>`;
+                return;
+            }
+
+            // 4단계: 완료 (100%)
+            updateProgress(100, "로딩 완료");
+            setTimeout(() => {
+                renderAcademicGrid(yearlyData);
+            }, 200);
+
+        } catch (error) {
+            console.error("❌ 데이터 로드 중 치명적 오류:", error);
+            grid.innerHTML = `<div style="color:red; text-align:center; padding:50px;">데이터 로드 실패: ${error.message}</div>`;
         }
-
-        renderAcademicGrid(yearlyData);
-    } catch (error) {
-        grid.innerHTML = `<div style="color:red; text-align:center; padding:50px;">데이터 로드 실패: ${error.message}</div>`;
     }
+    fetchYearlyAcademicData();
 }
 
 function closeAcademicPopup() {
@@ -506,9 +586,19 @@ function renderAcademicGrid(data) {
         [2026, 9], [2026, 10], [2026, 11], [2026, 12], [2027, 1], [2027, 2]
     ];
 
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const currentDay = now.getDate();
+
     months.forEach(([year, month]) => {
         const monthBox = document.createElement('div');
         monthBox.className = 'academic-month-box';
+        // 당월 식별을 위해 ID 또는 데이터 속성 부여
+        if (year === currentYear && month === currentMonth) {
+            monthBox.id = 'current-month-section';
+        }
+
         monthBox.innerHTML = `
             <div class="academic-month-title">${month}월</div>
             <div class="academic-day-grid">
@@ -522,35 +612,52 @@ function renderAcademicGrid(data) {
         `;
         grid.appendChild(monthBox);
     });
+
+    // 당월 섹션으로 자동 스크롤 (v2.34 개선)
+    setTimeout(() => {
+        const currentSection = document.getElementById('current-month-section');
+        const popupBody = document.querySelector('.academic-popup-body');
+
+        if (currentSection && popupBody) {
+            // scrollIntoView 대신 scrollTop 직접 제어로 정확도 향상
+            const targetY = currentSection.offsetTop - 10;
+            popupBody.scrollTo({
+                top: targetY,
+                behavior: 'smooth'
+            });
+        }
+    }, 600); // 팝업 애니메이션 완료 기다림
 }
 
 function generateMonthHTML(year, month, events) {
-    const firstDay = new Date(year, month - 1, 1).getDay(); // 0:일, 1:월 ... 6:토
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const firstDay = new Date(year, month - 1, 1).getDay();
     const daysInMonth = new Date(year, month, 0).getDate();
     let html = '';
 
-    // 평일 기준 오프셋 계산 (월요일이 0번 컬럼)
-    // 1일이 월~금 사이인 경우에만 공백 보정
     if (firstDay >= 1 && firstDay <= 5) {
         for (let i = 1; i < firstDay; i++) {
             html += '<div class="academic-day-cell other-month"></div>';
         }
     }
 
-    // 날짜 채우기
     for (let d = 1; d <= daysInMonth; d++) {
         const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dateStrNoZero = `${year}-${month}-${d}`; // 선행 0 없는 키도 체크
-
+        const dateStrNoZero = `${year}-${month}-${d}`;
         const eventData = events[dateStr] || events[dateStrNoZero] || null;
+        const isToday = (dateStr === todayStr); // 오늘 여부 확인
 
         let eventText = "";
         let eventBg = "";
+        let eventFontColor = "";
+
         if (typeof eventData === 'string') {
             eventText = eventData;
         } else if (eventData && typeof eventData === 'object') {
             eventText = eventData.text || "";
             eventBg = eventData.bg || "";
+            eventFontColor = eventData.fc || ""; // 추가된 필드
         }
 
         const dayOfWeek = (firstDay + d - 1) % 7;
@@ -558,31 +665,44 @@ function generateMonthHTML(year, month, events) {
 
         let classes = 'academic-day-cell';
         if (eventText) classes += ' has-event';
+        if (isToday) classes += ' is-today'; // [v2.33] 오늘 강조
 
         // 배경색 및 텍스트 대비 처리
         let styleStr = "";
+        let textColor = eventFontColor || "#000000"; // 시트 글자색 우선, 없으면 검정
         let isDark = false;
 
+        // 배경색 적용
         if (eventBg && eventBg !== "#ffffff" && eventBg !== "white" && eventBg !== "transparent") {
-            // 간단한 밝기 계산 (HEX 기준)
-            if (eventBg.startsWith('#')) {
+            styleStr = `style="background-color: ${eventBg};"`;
+
+            // 만약 글자색이 명시되지 않았을 때만 자동 대비 계산
+            if (!eventFontColor && eventBg.startsWith('#')) {
                 const hex = eventBg.replace('#', '');
                 const r = parseInt(hex.substr(0, 2), 16);
                 const g = parseInt(hex.substr(2, 2), 16);
                 const b = parseInt(hex.substr(4, 2), 16);
                 const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                if (brightness < 128) isDark = true;
-
-                // 빨간색 계열이면 공휴일 스타일 적용 (선택적)
-                if (r > 200 && g < 150 && b < 150) classes += ' holiday';
+                if (brightness < 140) {
+                    isDark = true;
+                    textColor = "#ffffff";
+                }
             }
 
-            styleStr = `style="background-color: ${eventBg};${isDark ? ' border-color: rgba(255,255,255,0.2);' : ''}"`;
+            // 빨간색 계열이면 공휴일 스타일 적용 (선택적)
+            if (eventBg.startsWith('#')) { // Check again for hex format
+                const hex = eventBg.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                if (r > 200 && g < 150 && b < 150) classes += ' holiday';
+            }
         }
 
-        // 텍스트에만 적용할 클래스나 스타일
-        const textStyle = isDark ? 'style="color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5);"' : '';
-        const numStyle = isDark ? 'style="color: rgba(255,255,255,0.9);"' : '';
+        // 글자색이 흰색 계열이면 shadow 추가 (가독성)
+        const isWhiteText = textColor.toLowerCase() === "#ffffff" || textColor.toLowerCase() === "white";
+        const textStyle = `style="color: ${textColor}; ${isWhiteText ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.5);' : 'text-shadow: 0 0 1px #fff;'}"`;
+        const numStyle = `style="color: ${isWhiteText ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)'};"`;
 
         html += `
             <div class="${classes}" ${styleStr}>

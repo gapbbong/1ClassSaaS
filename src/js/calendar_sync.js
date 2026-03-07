@@ -139,34 +139,96 @@ function parseDateValue(val) {
 }
 
 function getAcademicData() {
+    Logger.log("🗓️ 학사 일정 수집 시작 (v2.27 - 글자색 동기화)...");
     const events = [];
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
     const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
-    const data = sheet.getDataRange().getValues();
+    const range = sheet.getDataRange();
+    const data = range.getValues();
+    const bgColors = range.getBackgrounds();
+    const fontColors = range.getFontColors();
+
     let rowMonth = 3;
+
     for (let r = 0; r < data.length; r++) {
-        // A열에 월 정보(숫자)가 있는지 확인
-        const cellA = data[r][0]?.toString().trim();
-        if (cellA) {
-            const mMatch = cellA.match(/(\d+)/);
-            if (mMatch) rowMonth = parseInt(mMatch[1]);
+        const row = data[r];
+        if (!row || row.length < 5) continue;
+
+        // 1. 월 정보 업데이트 (B열: index 1 또는 A열: index 0)
+        const cellA = row[0];
+        const cellB = row[1];
+        const potentialMonth = (cellB !== "" && cellB !== null) ? cellB : cellA;
+
+        if (potentialMonth instanceof Date) {
+            rowMonth = potentialMonth.getMonth() + 1;
+        } else if (potentialMonth !== "" && potentialMonth !== null) {
+            const mMatch = potentialMonth.toString().match(/(\d+)/);
+            if (mMatch) {
+                const m = parseInt(mMatch[0]);
+                if (m >= 1 && m <= 12) rowMonth = m;
+            }
         }
 
-        // C(2), E(4), G(6), I(8), K(10) 열이 일자
-        // D(3), F(5), H(7), J(9), L(11) 열이 행사명
-        for (let c = 2; c <= 10; c += 2) {
-            const dayValue = data[r][c];
-            const eventName = data[r][c + 1]?.toString().trim() || "";
+        // 2. 평일 수집 (월~금: D, F, H, J, L열) -> index 3, 5, 7, 9, 11
+        for (let c = 3; c <= 11; c += 2) {
+            const rawDay = row[c];
+            const eventName = (row[c + 1] || "").toString().trim();
+            const bgColorRaw = bgColors[r][c + 1];
+            const fontColorRaw = fontColors[r][c + 1];
 
-            if (dayValue && !isNaN(dayValue) && eventName && !isGarbageContent(eventName)) {
-                const day = parseInt(dayValue);
-                // 1, 2월은 다음 학년도(학년도 개념이 아닌 실제 연도로 계산)
-                const year = (rowMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+            const bgColor = (bgColorRaw === "#000000" || !bgColorRaw) ? "#ffffff" : bgColorRaw;
+            const fontColor = (fontColorRaw === "#000000" || !fontColorRaw) ? "#000000" : fontColorRaw;
+
+            let dayValue = NaN;
+            if (rawDay instanceof Date) {
+                dayValue = rawDay.getDate();
+            } else if (rawDay !== "" && rawDay !== null) {
+                const dMatch = rawDay.toString().match(/\d+/);
+                if (dMatch) dayValue = parseInt(dMatch[0]);
+            }
+
+            if (!isNaN(dayValue) && dayValue >= 1 && dayValue <= 31 && eventName && !isGarbageContent(eventName)) {
+                let eventMonth = rowMonth;
+                if (dayValue >= 25 && c < 7) eventMonth = (rowMonth === 1) ? 12 : rowMonth - 1;
+                else if (dayValue <= 7 && c > 9) eventMonth = (rowMonth === 12) ? 1 : rowMonth + 1;
+
+                const year = (eventMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
                 events.push({
-                    date: formatDate(year, rowMonth, day),
+                    date: formatDate(year, eventMonth, dayValue),
                     title: cleanAcademicTitle(eventName),
                     type: 'academic',
-                    typeName: '학사'
+                    typeName: '학사',
+                    color: bgColor,
+                    fontColor: fontColor
+                });
+            }
+        }
+
+        // 3. 토요일 수집 (N열: index 13)
+        const satContent = (row[13] || "").toString().trim();
+        const satBgRaw = bgColors[r][13];
+        const satFontRaw = fontColors[r][13];
+        const satBg = (satBgRaw === "#000000" || !satBgRaw) ? "#ffffff" : satBgRaw;
+        const satFont = (satFontRaw === "#000000" || !satFontRaw) ? "#000000" : satFontRaw;
+
+        if (satContent && !isGarbageContent(satContent)) {
+            const friDayRaw = row[11];
+            let friDay = NaN;
+            if (friDayRaw instanceof Date) friDay = friDayRaw.getDate();
+            else if (friDayRaw) friDay = parseInt(friDayRaw.toString().match(/\d+/)?.[0]);
+
+            if (!isNaN(friDay)) {
+                const satDay = friDay + 1;
+                let eventMonth = rowMonth;
+                const year = (eventMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const finalDay = (satDay > 31) ? 1 : satDay;
+                events.push({
+                    date: formatDate(year, eventMonth, finalDay),
+                    title: cleanAcademicTitle(satContent),
+                    type: 'academic',
+                    typeName: '학사',
+                    color: satBg,
+                    fontColor: satFont
                 });
             }
         }
@@ -174,96 +236,141 @@ function getAcademicData() {
     return events;
 }
 
-/**
- * 연간 학사일정 팝업용 정밀 데이터 추출
- * 시트의 배경색을 함께 가져와서 카테고리별 구분을 가능하게 함
- */
 function getAcademicYearData() {
-    Logger.log("🗓️ 연간 학사일정 정밀 파싱 시작 (색상 연동 포함)...");
+    Logger.log("🎨 연간 학사일정 정밀 파싱 시작 (v2.27 - 글자색 동기화)...");
     const ss = SpreadsheetApp.openById(CONFIG.DOCS.ACADEMIC);
     const sheet = ss.getSheetByName('확정') || ss.getSheets()[0];
     const range = sheet.getDataRange();
     const data = range.getValues();
-    const bgColors = range.getBackgrounds(); // 배경색 데이터
+    const bgColors = range.getBackgrounds();
+    const fontColors = range.getFontColors();
 
-    const result = {}; // { "2026-03-02": { text: "개학식", bg: "#ffffff" }, ... }
-
-    // 1학기(5행~31행 부근), 2학기(34행~) 처리이나, 
-    // 누락 방지를 위해 4행부터 끝까지 안전하게 탐색
-    let currentMonth = 3;
+    const result = { _version: "v2.27_SYNC" };
+    let rowMonth = 3;
 
     for (let r = 0; r < data.length; r++) {
         const row = data[r];
+        if (!row || row.length < 5) continue;
 
-        // A열(인덱스 0) 또는 B열(인덱스 1)에 월 정보(숫자)가 있는지 확인 (더 유연하게)
-        const cellA = row[0]?.toString().trim();
-        const cellB = row[1]?.toString().trim();
-        const monthText = cellA || cellB;
+        const cellA = row[0];
+        const cellB = row[1];
+        const potentialMonth = (cellB !== "" && cellB !== null) ? cellB : cellA;
 
-        if (monthText) {
-            const mMatch = monthText.match(/(\d+)/);
+        if (potentialMonth instanceof Date) {
+            rowMonth = potentialMonth.getMonth() + 1;
+        } else if (potentialMonth !== "" && potentialMonth !== null) {
+            const mMatch = potentialMonth.toString().match(/(\d+)/);
             if (mMatch) {
-                const nextMonth = parseInt(mMatch[1]);
-                if (nextMonth >= 1 && nextMonth <= 12) currentMonth = nextMonth;
+                const m = parseInt(mMatch[0]);
+                if (m >= 1 && m <= 12) rowMonth = m;
             }
         }
 
-        // 월~금 (C,E,G,I,K열이 날짜 / D,F,H,J,L열이 내용)
-        // 인덱스: C(2), D(3), E(4), F(5), G(6), H(7), I(8), J(9), K(10), L(11)
-        for (let c = 2; c <= 10; c += 2) {
-            const dayVal = row[c];
-            const content = row[c + 1]?.toString().trim() || "";
-            const bgColor = bgColors[r][c + 1]; // 내용 셀의 배경색
+        for (let c = 3; c <= 11; c += 2) {
+            const rawDay = row[c];
+            const content = (row[c + 1] || "").toString().trim();
+            const bgColorRaw = bgColors[r][c + 1];
+            const fontColorRaw = fontColors[r][c + 1];
+            const bgColor = (bgColorRaw === "#000000" || !bgColorRaw) ? "#ffffff" : bgColorRaw;
+            const fontColor = (fontColorRaw === "#000000" || !fontColorRaw) ? "#000000" : fontColorRaw;
 
-            if (dayVal && !isNaN(dayVal) && content) {
-                const day = parseInt(dayVal);
+            let dayValue = NaN;
+            if (rawDay instanceof Date) dayValue = rawDay.getDate();
+            else if (rawDay) dayValue = parseInt(rawDay.toString().match(/\d+/)?.[0]);
 
-                // [고급] 과도기 날짜 보정: 1~2일이 현재 월인데 날짜가 28~31이면 이전 달로 간주
-                // 예: 4월 행에 30, 31일이 섞여 있는 경우
-                let eventMonth = currentMonth;
-                if (day >= 25 && content.includes("개학") === false) {
-                    // 현재 행이 월의 시작 부근인데 날짜가 크면 이전 달일 가능성 농후
-                    // (단, 학교마다 포맷이 다르므로 안전하게 처리)
-                }
+            if (!isNaN(dayValue) && dayValue >= 1 && dayValue <= 31 && content) {
+                let eventMonth = rowMonth;
+                if (dayValue >= 25 && c < 7) eventMonth = (rowMonth === 1) ? 12 : rowMonth - 1;
+                else if (dayValue <= 7 && c > 9) eventMonth = (rowMonth === 12) ? 1 : rowMonth + 1;
 
                 const year = (eventMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
-                const dateStr = formatDate(year, eventMonth, day);
+                const dateStr = formatDate(year, eventMonth, dayValue);
                 const cleanedTitle = cleanAcademicTitle(content);
 
-                if (cleanedTitle) {
-                    if (!result[dateStr]) {
-                        result[dateStr] = { text: cleanedTitle, bg: bgColor };
-                    } else if (!result[dateStr].text.includes(cleanedTitle)) {
-                        result[dateStr].text += "\n" + cleanedTitle;
-                        if (result[dateStr].bg === "#ffffff" || result[dateStr].bg === "white") {
-                            result[dateStr].bg = bgColor;
-                        }
+                // [v2.30] 필터링된 결과가 비어 있으면 스킵 (원본 fallback 제거)
+                if (!cleanedTitle) continue;
+
+                if (!result[dateStr]) {
+                    result[dateStr] = { text: cleanedTitle, bg: bgColor, fc: fontColor };
+                } else if (!result[dateStr].text.includes(cleanedTitle)) {
+                    result[dateStr].text += "\n" + cleanedTitle;
+                    // 배경색이 비어있으면 업데이트
+                    if (result[dateStr].bg === "#ffffff" || result[dateStr].bg === "white" || !result[dateStr].bg) {
+                        result[dateStr].bg = bgColor;
+                        result[dateStr].fc = fontColor;
+                    }
+                }
+            }
+        }
+
+        const satContent = (row[13] || "").toString().trim();
+        const satBgRaw = bgColors[r][13];
+        const satFontRaw = fontColors[r][13];
+        const satBg = (satBgRaw === "#000000" || !satBgRaw) ? "#ffffff" : satBgRaw;
+        const satFont = (satFontRaw === "#000000" || !satFontRaw) ? "#000000" : satFontRaw;
+
+        if (satContent && !isGarbageContent(satContent)) {
+            const friDayRaw = row[11];
+            let friDay = NaN;
+            if (friDayRaw instanceof Date) friDay = friDayRaw.getDate();
+            else if (friDayRaw) friDay = parseInt(friDayRaw.toString().match(/\d+/)?.[0]);
+            if (!isNaN(friDay)) {
+                const satDay = friDay + 1;
+                let eventMonth = rowMonth;
+                const year = (eventMonth < 3) ? CONFIG.YEAR + 1 : CONFIG.YEAR;
+                const dateStr = formatDate(year, eventMonth, satDay);
+                const cleanedSat = cleanAcademicTitle(satContent);
+
+                // [v2.30] 필터링된 결과가 비어 있으면 스킵 (원본 fallback 제거)
+                if (!cleanedSat) continue;
+
+                if (!result[dateStr]) result[dateStr] = { text: cleanedSat, bg: satBg, fc: satFont };
+                else if (!result[dateStr].text.includes(cleanedSat)) {
+                    result[dateStr].text += "\n" + cleanedSat;
+                    if (result[dateStr].bg === "#ffffff" || result[dateStr].bg === "white") {
+                        result[dateStr].bg = satBg;
+                        result[dateStr].fc = satFont;
                     }
                 }
             }
         }
     }
-
-    Logger.log(`✅ 연간 일정 추출 완료 (총 ${Object.keys(result).length}일분)`);
     return result;
 }
 
 /**
- * '월1', '화2' 등 요일+숫자 접두사 및 시수 정보 제거
+ * '월1', '화2', '토1' 등 요일+숫자 접두사 제거
  */
 function cleanAcademicTitle(text) {
     if (!text) return "";
 
-    return text.split('\n').map(line => {
-        // 정규식: 시작부분에서 [요일] + [숫자들] + [공백] 패턴을 찾아서 제거
-        let cleaned = line.replace(/^([월화수목금토일]\d+\s*|\s+)+/g, '').trim();
+    const lines = text.split('\n').map(line => {
+        // 1. 요일+숫자+공백 패턴 제거 (예: "월1 ", "화 2")
+        let cleaned = line.replace(/^([월화수목금토일]\s*\d+\s*)+/g, '').trim();
 
-        // 숫자만 남거나 너무 짧은(이름 등) 경우 제외
-        if (/^\d+$/.test(cleaned) || cleaned.length < 2) return null;
+        // 2. 가비지 데이터 최종 확인
         if (isGarbageContent(cleaned)) return null;
-
         return cleaned;
-    }).filter(v => v).join(' / ');
+    }).filter(v => v);
+
+    if (lines.length === 0) return "";
+    return lines.join(' / ');
+}
+
+function isGarbageContent(text) {
+    if (!text) return true;
+    const t = text.toString().trim();
+
+    // 1. 순수 숫자만 있는 경우 (날짜 오인식 방지)
+    if (/^\d+$/.test(t)) return true;
+
+    // 2. 요일(+공백)+숫자만 있는 경우 (예: "월1", "토 2")
+    if (/^[월화수목금토일]\s*\d+$/.test(t)) return true;
+
+    // 3. 너무 짧은 텍스트 (창/체 제외)
+    if (t.length < 2 && t !== "창" && t !== "체") return true;
+
+    return false;
 }
 
 function getCreativeData() {
@@ -486,7 +593,7 @@ function cleanupGarbageEvents(calendar) {
 function isGarbageContent(text) {
     if (!text) return true;
     const t = text.toString().trim();
-    return /^\d+$/.test(t) || /^[월화수목금]\d+$/.test(t) || (t.length < 2 && t !== "창" && t !== "체");
+    return /^\d+$/.test(t) || /^[월화수목금토일]\d+$/.test(t) || (t.length < 2 && t !== "창" && t !== "체");
 }
 
 function syncAcademicSchedule(calendar) {
@@ -495,8 +602,45 @@ function syncAcademicSchedule(calendar) {
         const [y, m, d] = ev.date.split('-').map(Number);
         const date = new Date(y, m - 1, d);
         const title = ev.title + " " + CONFIG.PREFIX.ACADEMIC;
-        if (!isAlreadyExists(calendar, title, date)) calendar.createAllDayEvent(title, date);
+
+        if (!isAlreadyExists(calendar, title, date)) {
+            const event = calendar.createAllDayEvent(title, date);
+            // 시트의 배경색을 기반으로 캘린더 이벤트 색상 설정 (매핑 필요)
+            applyCalendarColor(event, ev.color);
+        }
     });
+}
+
+/**
+ * 시트 배경색(HEX)을 구글 캘린더 이벤트 컬러 인덱스로 매핑
+ */
+function applyCalendarColor(event, hex) {
+    if (!hex || hex === "#ffffff" || hex === "white") return;
+
+    // 구글 캘린더 컬러 인덱스 매핑 (대략적인 근사치)
+    // 1: Lavender, 2: Sage, 3: Grape, 4: Flamingo, 5: Banana, 6: Tangerine, 7: Peacock, 8: Graphite, 9: Blueberry, 10: Basil, 11: Tomato
+    const colorMap = {
+        "#ff0000": "11", // Red -> Tomato
+        "#ff9900": "6",  // Orange -> Tangerine
+        "#ffff00": "5",  // Yellow -> Banana
+        "#00ff00": "10", // Green -> Basil
+        "#00ffff": "7",  // Cyan -> Peacock
+        "#0000ff": "9",  // Blue -> Blueberry
+        "#ff00ff": "3",  // Magenta -> Grape
+        "#e06666": "11", // Light Red
+        "#f6b26b": "6",  // Light Orange
+        "#ffd966": "5",  // Light Yellow
+        "#93c47d": "10", // Light Green
+        "#76a5af": "7",  // Light Cyan
+        "#6fa8dc": "9",  // Light Blue
+        "#8e7cc3": "3",  // Light Purple
+        "#c27ba0": "4"   // Light Pink -> Flamingo
+    };
+
+    const colorId = colorMap[hex.toLowerCase()];
+    if (colorId) {
+        event.setColor(colorId);
+    }
 }
 
 function syncMonthlySchedule(calendar) {

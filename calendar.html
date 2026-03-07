@@ -486,7 +486,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: #fff;
+            /* 검정 여백 방지를 위해 배경을 흰색으로 변경 */
             backdrop-filter: blur(8px);
             z-index: 2000;
             display: none;
@@ -503,30 +504,34 @@
         }
 
         .academic-popup-content {
-            width: 95%;
-            max-width: 1000px;
-            height: 85vh;
+            width: 100%;
+            max-width: none;
+            height: 100%;
+            /* vh 대신 100% 사용하여 브라우저 바 가림 최소화 */
             background: #fff;
-            border-radius: 20px;
+            border-radius: 0;
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            transform: scale(0.9);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: none;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            padding: 0;
+            margin: 0;
         }
 
         .academic-popup-overlay.active .academic-popup-content {
-            transform: scale(1);
+            transform: translateY(0);
         }
 
         .academic-popup-header {
-            padding: 20px;
+            padding: 8px 15px;
             background: #4A90E2;
             color: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 44px;
         }
 
         .academic-popup-header h2 {
@@ -597,6 +602,32 @@
             padding-bottom: 5px;
         }
 
+        /* 오늘 날짜 강조 및 2회 깜빡임 효과 (v2.33) */
+        .academic-day-cell.is-today {
+            border: 2.5px solid #4A90E2 !important;
+            box-shadow: 0 0 12px rgba(74, 144, 226, 0.4);
+            z-index: 10;
+            position: relative;
+            animation: today-blink 0.8s ease-in-out 2;
+        }
+
+        @keyframes today-blink {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: scale(1.03);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         .academic-day-cell {
             min-height: 64px;
             /* 70px -> 64px */
@@ -624,24 +655,18 @@
         }
 
         .academic-day-event {
-            font-size: 0.72rem;
-            /* 1rem -> 0.72rem (대폭 축소) */
+            font-size: 0.7rem;
             font-weight: 800;
-            /* 900 -> 800 */
-            color: #000;
             line-height: 1.1;
             text-align: center;
             word-break: break-all;
-            /* keep-all -> break-all */
             overflow: hidden;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             line-clamp: 3;
             -webkit-box-orient: vertical;
             margin-top: 1px;
-            text-shadow: 0 0 2px #fff;
             width: 100%;
-            /* 추가 */
         }
 
         .academic-day-cell.holiday .academic-day-num {
@@ -736,7 +761,7 @@
         </div>
     </div>
 
-    <div class="version-tag">V2.14</div>
+    <div class="version-tag">V3.0.0</div>
     <script src="src/js/calendar.js" type="module"></script>
 </body>
 
