@@ -136,9 +136,9 @@
         .badge {
             background: #eff6ff;
             color: #1d4ed8;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             font-weight: 800;
             display: inline-block;
             max-width: 100%;
@@ -199,7 +199,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.09</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.10</span></h1>
     </header>
 
     <main>
@@ -270,17 +270,13 @@
                 const { data, error } = await supabase
                     .from('user_logs')
                     .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(1000);
+                    .order('created_at', { ascending: true }); // 과거부터 현재순으로 분석
 
                 if (error) throw error;
 
                 // 3. 분석 수행
                 const activeEmails = new Set(data.map(l => l.teacher_email));
                 document.getElementById('active-teachers-count').textContent = `${activeEmails.size}명 활동`;
-
-                // 시간순 분석을 위해 복사본 정렬
-                const sortedLogsAsc = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
                 const timeSlots = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
                 const sessions = [];
@@ -291,11 +287,11 @@
                     teacherAnalysis[t.email] = {
                         name: t.name,
                         classInfo: t.assigned_class ? `(${t.assigned_class})` : '',
-                        lastPage: '-', total: 0, teacherTotalStay: 0, lastActivityAt: null
+                        lastPage: '-', total: 0, teacherTotalStay: 0
                     };
                 });
 
-                sortedLogsAsc.forEach((log, i) => {
+                data.forEach((log, i) => {
                     const email = log.teacher_email;
                     const tMapInfo = teacherMap[email] || { name: email.split('@')[0], classInfo: '' };
 
@@ -314,20 +310,20 @@
 
                     const tData = teacherAnalysis[email];
                     if (tData) {
-                        // 로직 보정: 무조건 최신 활동 시각 기록
-                        if (!tData.lastActivityAt || time > tData.lastActivityAt) {
-                            tData.lastActivityAt = time;
-                            // 메인 홈이 아니면 무조건 업데이트, 메인 홈이어도 첫 기록이거나 아주 최신이면 업데이트
-                            if (page !== '메인 홈' || tData.lastPage === '-' || tData.lastPage === '메인 홈') {
-                                tData.lastPage = page;
-                            }
+                        // 로직: 홈에서 바로 나가면 홈, 아니면 그 다음 이동지나 최종지
+                        // 즉, '메인 홈'이 아닌 기록이 한 번이라도 생기면 그것을 업데이트하고, 이후 최신 기록들을 계속 반영
+                        if (tData.lastPage === '-' || tData.lastPage === '메인 홈') {
+                            tData.lastPage = page;
+                        } else {
+                            // 이미 홈이 아닌 유의미한 페이지가 기록된 경우, 다음 페이지들로 업데이트
+                            tData.lastPage = page;
                         }
 
                         tData.total++;
 
                         const prevSession = sessions[sessions.length - 1];
                         let currentStay = 0;
-                        const next = sortedLogsAsc.find((l, idx) => idx > i && l.teacher_email === email);
+                        const next = data.find((l, idx) => idx > i && l.teacher_email === email);
                         if (next) {
                             const diff = (new Date(next.created_at) - time) / 1000;
                             if (diff < 1800) {
@@ -367,7 +363,6 @@
                     return m > 0 ? `${m}m ${s}s` : `${s}s`;
                 }
 
-                // 요약 리스트 (폰트 크기 통일 및 블루 테마 복구)
                 let tHtml = '<table><colgroup><col style="width:105px;"><col style="width:115px;"><col style="width:30px;"><col style="width:55px;"></colgroup><tr><th>선생님</th><th>주요 활동</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
                     const stay = formatStayTime(t.teacherTotalStay);
@@ -386,7 +381,6 @@
                 tHtml += '</table>';
                 document.getElementById('log-list').innerHTML = tHtml;
 
-                // 타임라인
                 let sHtml = '';
                 const today = new Date().toDateString();
                 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
