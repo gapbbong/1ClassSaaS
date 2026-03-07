@@ -558,12 +558,28 @@ function scrollToRelevantDate() {
             }
         }
     } else {
-        // [V3.6.7] 무결점 스크롤 최종본: 재귀적 시도 + requestAnimationFrame 레이아웃 대기
+        // [V3.6.8] 어제(Yesterday)를 맨 위로 보내는 스크롤 로직
         const tryScroll = (retryCount = 0) => {
-            let targetCard = document.querySelector('.day-card.today');
+            let todayCard = document.querySelector('.day-card.today');
+            let targetCard = null;
+
+            if (todayCard) {
+                // 오늘 카드의 바로 위 요소(어제)를 찾음
+                targetCard = todayCard.previousElementSibling;
+                // 만약 오늘이 월요일이라서 어제가 월 분리선(month-separator)이라면 하나 더 위를 찾음
+                if (targetCard && targetCard.classList.contains('month-separator')) {
+                    targetCard = targetCard.previousElementSibling;
+                }
+            }
+
+            // [V3.6.8] 주말이거나 오늘 카드가 없는 경우, 리스트의 끝에서 두 번째(금요일쯤) 시도
             if (!targetCard) {
                 const allCards = document.querySelectorAll('.day-card');
-                if (allCards.length > 0) targetCard = allCards[allCards.length - 1];
+                if (allCards.length >= 2) {
+                    targetCard = allCards[allCards.length - 2];
+                } else if (allCards.length === 1) {
+                    targetCard = allCards[0];
+                }
             }
 
             if (targetCard) {
@@ -571,17 +587,14 @@ function scrollToRelevantDate() {
                 const targetY = targetCard.getBoundingClientRect().top + window.pageYOffset - headerHeight;
                 window.scrollTo({ top: targetY, behavior: retryCount > 0 ? 'smooth' : 'auto' });
 
-                // 한 번 더 확인하여 보정
                 if (retryCount < 3) {
                     setTimeout(() => tryScroll(retryCount + 1), 200);
                 }
             } else if (retryCount < 10) {
-                // 아직 카드가 없으면 더 기다림
                 setTimeout(() => tryScroll(retryCount + 1), 100);
             }
         };
 
-        // 즉시 실행 및 지연 실행 병행
         requestAnimationFrame(() => tryScroll());
     }
 }
@@ -698,15 +711,18 @@ function renderAcademicGrid(data) {
             monthBox.id = 'current-month-section';
         }
 
+        // [V3.6.8] 상단 타이틀 영역 (접기 버튼 제거, 폰트 축소)
         monthBox.innerHTML = `
-            <div class="academic-month-title">${month}월</div>
-            <div class="academic-day-grid">
-                <div class="academic-day-header">월</div>
-                <div class="academic-day-header">화</div>
-                <div class="academic-day-header">수</div>
-                <div class="academic-day-header">목</div>
-                <div class="academic-day-header">금</div>
-                ${generateMonthHTML(year, month, data)}
+            <div class="academic-month-row" data-month="${month}">
+                <div class="academic-month-title">${month}월</div>
+                <div class="academic-grid-container">
+                    <div class="academic-day-header">월</div>
+                    <div class="academic-day-header">화</div>
+                    <div class="academic-day-header">수</div>
+                    <div class="academic-day-header">목</div>
+                    <div class="academic-day-header">금</div>
+                    ${generateMonthHTML(year, month, data)}
+                </div>
             </div>
         `;
         grid.appendChild(monthBox);
