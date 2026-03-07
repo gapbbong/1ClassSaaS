@@ -199,7 +199,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.11</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.12</span></h1>
     </header>
 
     <main>
@@ -389,14 +389,18 @@
                     const datePart = isToday ? '' : `${s.startTime.getMonth() + 1}.${s.startTime.getDate()}(${weekDays[s.startTime.getDay()]}) `;
                     const timeStr = s.startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-                    const pages = s.pages.join(', ');
+                    // 타임라인 리스트에서도 정교화 적용: 다른 유의미한 페이지가 있다면 '메인 홈'은 생략
+                    const displayPages = s.pages.length > 1
+                        ? s.pages.filter(p => p !== '메인 홈').join(', ')
+                        : s.pages[0];
+
                     const stay = s.totalStay > 0 ? ` / ${formatStayTime(s.totalStay)}` : '';
                     const classLabel = s.classInfo ? ` ${s.classInfo}` : '';
                     sHtml += `
                     <div class="timeline-item">
                         <div style="font-weight:800; font-size:0.95rem;">${s.name}${classLabel} <span style="color:#2563eb;">${s.count > 1 ? `[${s.count}회 활동]` : ''}</span></div>
                         <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">
-                            ${datePart}${timeStr} | ${pages}${stay}
+                            ${datePart}${timeStr} | ${displayPages}${stay}
                         </div>
                     </div>`;
                 });
