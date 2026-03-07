@@ -494,8 +494,13 @@ body {
         /* 0.8px -> 0.5px (거의 밀착) */
     }
 
+    .class-section {
+        max-height: 11.8dvh;
+        /* 초소형 모바일 대응 (v3.1.6) */
+    }
+
     .class-section .class-title {
-        font-size: clamp(0.7rem, 2.2vh, 1.1rem);
+        font-size: clamp(0.7rem, 2.1vh, 1.05rem);
     }
 
     .teacher-line div {
