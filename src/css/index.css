@@ -282,8 +282,8 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(1px, 0.6dvh, 10px);
-    /* 세로 간격 미세 확대 (v3.2.0) */
+    gap: clamp(2px, 1.2dvh, 20px);
+    /* 세로 간격 추가 확대 (v3.2.1) */
 }
 
 /* 각 반(카드) */
