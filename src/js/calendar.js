@@ -551,34 +551,39 @@ function scrollToRelevantDate() {
             }
         }
     } else {
-        // 그 외 요일은 오늘로 스크롤
-        const todayCard = document.querySelector('.day-card.today');
-        if (todayCard) {
-            // [V3.6.4] 수동 Offset 기반 정밀 스크롤 (가장 확실한 방식)
-            const executeScroll = () => {
-                const headerHeight = 110; // 상단 헤더 높이 여유분
-                const targetY = todayCard.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-                window.scrollTo({ top: targetY, behavior: 'smooth' });
-            };
-
-            // 렌더링 완료 후 2단계 실행
-            requestAnimationFrame(() => setTimeout(executeScroll, 100));
-        } else {
-            // 카드가 아직 안 그려졌을 경우를 대비한 Observer (V3.6.1)
-            const listContainer = document.getElementById('day-list');
-            if (listContainer) {
-                const observer = new MutationObserver(() => {
-                    const found = document.querySelector('.day-card.today');
-                    if (found) {
-                        const headerHeight = 110;
-                        const targetY = found.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-                        window.scrollTo({ top: targetY, behavior: 'smooth' });
-                        observer.disconnect();
-                    }
-                });
-                observer.observe(listContainer, { childList: true, subtree: true });
-                setTimeout(() => observer.disconnect(), 3000);
+        // [V3.6.5] 스크롤 무결성 최적화: 가상 좌표 대신 직관적인 scrollIntoView + 안정적 타이밍
+        const scrollToToday = () => {
+            const todayCard = document.querySelector('.day-card.today');
+            if (todayCard) {
+                // 상단 헤더 공간을 확보하며 스크롤
+                todayCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // 잠시 후 'start'로 재조정하여 상단에 완벽 정착 (헤더 고려)
+                setTimeout(() => {
+                    const headerOffset = 110;
+                    const elementPosition = todayCard.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }, 500);
             }
+        };
+
+        // 데이터 렌더링 후 초기 시도
+        setTimeout(scrollToToday, 300);
+
+        // 카드가 뒤늦게 그려질 경우를 대비한 2초간의 감시
+        const listContainer = document.getElementById('day-list');
+        if (listContainer) {
+            const observer = new MutationObserver(() => {
+                if (document.querySelector('.day-card.today')) {
+                    scrollToToday();
+                    observer.disconnect();
+                }
+            });
+            observer.observe(listContainer, { childList: true, subtree: true });
+            setTimeout(() => observer.disconnect(), 2000);
         }
     }
 }
