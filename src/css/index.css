@@ -5,11 +5,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* 양 끝 정렬 */
     width: 100%;
     max-width: 1200px;
-    margin: 5px auto 5px auto;
-    padding: 5px 20px;
+    margin: 2px auto 2px auto;
+    /* 5px -> 2px 마진 압축 (v3.1.8) */
+    padding: 2px 20px;
+    /* 5px -> 2px 패딩 압축 (v3.1.8) */
     box-sizing: border-box;
     z-index: 100;
     position: relative;
@@ -276,14 +277,13 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
-    /* 다시 고르게 분산 (v3.1.4) */
     align-items: center;
     flex: 1;
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(2px, 0.8dvh, 8px);
-    /* 가변 간격 적용 (v3.1.4) */
+    gap: clamp(1px, 0.4dvh, 5px);
+    /* v3.1.8 최종 간격 최적화 */
 }
 
 /* 각 반(카드) */
@@ -312,8 +312,8 @@ body {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    max-height: 14.5dvh;
-    /* 카드 높이 상향 (v3.1.4) */
+    max-height: 12dvh;
+    /* PC 기준도 하향 (v3.1.8) */
 }
 
 .class-section:hover {
@@ -464,21 +464,22 @@ body {
     }
 
     .class-grid {
-        gap: 2px;
-        padding: clamp(5px, 2vh, 15px) 5px 35px 5px;
-        /* 하단 패딩 확보하여 작업표시줄 대비 (v3.1.4) */
+        gap: 1.2px;
+        padding: clamp(2px, 0.5dvh, 5px) 5px 20px 5px;
+        /* 상단 여백 극한 압축 및 하단 높이 확보 (v3.1.8) */
     }
 
     .grade-column {
         width: clamp(140px, 30vw, 180px);
-        gap: 2px;
+        gap: 1.2px;
         min-height: 0;
         justify-content: space-evenly;
     }
 
     .class-section {
-        padding: clamp(1px, 0.6dvh, 8px) 5px;
-        max-height: 14.8dvh;
+        padding: clamp(1px, 0.3dvh, 4px) 5px;
+        max-height: 11.2dvh;
+        /* 모바일 주소창 완벽 대응 (v3.1.8) */
     }
 }
 
