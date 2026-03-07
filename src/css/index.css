@@ -274,21 +274,21 @@ body {
 .grade-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    /* space-between 대신 center로 모아서 gap이 작동하게 함 */
     align-items: center;
     flex: 1;
     height: 100%;
     min-height: 0;
     padding: 0;
     gap: 4px;
-    /* 기존 clamp 로직 대신 고정값이나 더 좁은 범위로 강제 축소 (v3.0.9) */
 }
 
 /* 각 반(카드) */
 .class-box {
     width: 100%;
-    flex: 1;
-    /* 6개 카드가 가용 높이를 1/6씩 정확히 배분 */
+    flex: 0 1 auto;
+    /* flex: 1 대신 필요한 만큼만 점유하도록 변경 */
     min-height: 0;
     display: flex;
 }
