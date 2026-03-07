@@ -28,10 +28,48 @@
     align-items: center;
     text-decoration: none;
     transition: transform 0.2s;
+    position: relative;
+    /* 클릭 유도 배지를 위한 위치 기준 */
 }
 
 .calendar-link:hover {
     transform: scale(1.1);
+}
+
+/* 캘린더 클릭 유도 배지 (v3.4.0) */
+.calendar-link::after {
+    content: 'VIEW';
+    position: absolute;
+    bottom: -6px;
+    right: -10px;
+    background: #4A90E2;
+    color: white;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 5px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid white;
+    z-index: 10;
+    pointer-events: none;
+    animation: click-pulse 3s infinite ease-in-out;
+}
+
+@keyframes click-pulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(74, 144, 226, 0.4);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
 }
 
 .dynamic-calendar-icon {
