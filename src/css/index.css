@@ -283,8 +283,8 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(5px, 1.2dvh, 20px);
-    /* 세로 간격 최적화 축소 (v3.2.5) */
+    gap: clamp(4px, 1dvh, 15px);
+    /* 세로 간격 최적화 축소 (v3.2.6) */
 }
 
 /* 각 반(카드) */
@@ -486,9 +486,8 @@ body {
 
     .grade-column {
         width: clamp(140px, 30vw, 180px);
-        gap: 1.2px;
         min-height: 0;
-        justify-content: space-evenly;
+        /* gap과 justify-content는 전역 설정을 따름 (v3.2.6) */
     }
 
     .class-section {
@@ -506,8 +505,7 @@ body {
 
     .grade-column {
         width: clamp(100px, 33vw, 150px);
-        gap: 0.5px;
-        /* 0.8px -> 0.5px (거의 밀착) */
+        /* gap은 전역 설정을 따름 (v3.2.6) */
     }
 
     .class-section {
