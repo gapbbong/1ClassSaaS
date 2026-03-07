@@ -199,7 +199,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.10</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.11</span></h1>
     </header>
 
     <main>
@@ -310,12 +310,11 @@
 
                     const tData = teacherAnalysis[email];
                     if (tData) {
-                        // 로직: 홈에서 바로 나가면 홈, 아니면 그 다음 이동지나 최종지
-                        // 즉, '메인 홈'이 아닌 기록이 한 번이라도 생기면 그것을 업데이트하고, 이후 최신 기록들을 계속 반영
-                        if (tData.lastPage === '-' || tData.lastPage === '메인 홈') {
-                            tData.lastPage = page;
-                        } else {
-                            // 이미 홈이 아닌 유의미한 페이지가 기록된 경우, 다음 페이지들로 업데이트
+                        // 로직 고도화: '메인 홈'은 다른 유의미한 활동이 없을 때만 기본값으로 표시
+                        // 1. 아직 아무 기록이 없으면 현재 페이지 기록
+                        // 2. 현재 페이지가 '메인 홈'이 아니면 무조건 최신 활동으로 업데이트
+                        // 3. 현재 페이지가 '메인 홈'인데 이미 '메인 홈'이 아닌 유의미한 페이지가 기록되어 있다면 업데이트 무시
+                        if (tData.lastPage === '-' || page !== '메인 홈') {
                             tData.lastPage = page;
                         }
 
