@@ -278,9 +278,11 @@ body {
     align-items: center;
     flex: 1;
     height: 100%;
+    min-height: 0;
+    /* 강제 유연성 부여 */
     padding: 0;
-    gap: clamp(2px, 1.2vh, 14px);
-    /* 고정 14px에서 지능형 간격으로 변경 */
+    gap: clamp(1px, 1vh, 10px);
+    /* 간격 소폭 축소 */
 }
 
 /* 각 반(카드) */
@@ -299,8 +301,8 @@ body {
     background: #fff;
     border: 2px solid #ddd;
     border-radius: 12px;
-    padding: clamp(2px, 0.8vh, 8px) 10px;
-    /* 높이에 따른 지능형 패딩 */
+    padding: 1px 10px;
+    /* 수직 패딩 최소화 */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     text-align: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -309,7 +311,8 @@ body {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    /* 높이 압축 허용 */
+    max-height: 11.5vh;
+    /* 카드 높이 강제 제한 (v3.0.7) */
 }
 
 .class-section:hover {
