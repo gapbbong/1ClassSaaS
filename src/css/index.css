@@ -283,15 +283,14 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(4px, 1dvh, 15px);
-    /* 세로 간격 최적화 축소 (v3.2.6) */
+    gap: clamp(4px, 0.8dvh, 12px);
+    /* 세로 간격 최적화 축소 (v3.2.7) */
 }
 
 /* 각 반(카드) */
 .class-box {
-    width: 100%;
-    flex: 1;
-    /* 다시 공간을 채우도록 허용 (v3.1.4) */
+    flex: 0 1 auto;
+    /* 무조건 늘어나지 않고 정해진 크기 내에서 배치 (v3.2.7) */
     min-height: 0;
     display: flex;
 }
@@ -418,8 +417,8 @@ body {
 .teacher-line {
     display: flex;
     flex-direction: column;
-    gap: clamp(2px, 0.8dvh, 10px);
-    /* 담임-부담임 사이 간격 추가 확대 (v3.2.3) */
+    gap: clamp(4px, 1dvh, 12px);
+    /* 담임-부담임 사이 간격 추가 확대 (v3.2.7) */
 }
 
 .teacher-line div {
@@ -473,8 +472,8 @@ body {
 
     .class-grid {
         gap: 1px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 65px 5px;
-        /* 하단 여백 추가 최적화 (85px -> 65px) */
+        padding: clamp(2px, 0.5dvh, 5px) 5px 55px 5px;
+        /* 하단 여백 최종 최적화 (65px -> 55px) */
     }
 
     .class-box {
