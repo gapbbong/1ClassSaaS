@@ -430,8 +430,8 @@ body {
     /* 10px -> 8px */
     margin: 0;
     /* 강제 제거 */
-    font-size: clamp(0.75rem, 2.0vh, 1.0rem);
-    /* 가독성을 위해 폰트 크기 상향 (v3.2.8) */
+    font-size: clamp(0.7rem, 1.8vh, 0.95rem);
+    /* 교사 성함 크기 약간 축소 (v3.3.2) */
     font-weight: 700;
     flex-wrap: nowrap;
     line-height: 1.1;
