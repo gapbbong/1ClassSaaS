@@ -389,7 +389,7 @@ function renderInitialGrid(container) {
                             <span class="class-label">${grade}-${classNum}반</span>
                             <span id="badge-${grade}-${classNum}" class="badge-placeholder"></span>
                         </h3>
-                        <div class="teacher-line" style="pointer-events: none; ${light < 55 ? 'color: #fff; -webkit-text-stroke: 0.3px #000;' : 'color: #333; -webkit-text-stroke: 0.3px #fff;'}; text-shadow: ${light < 55 ? '0 1px 2px rgba(0,0,0,0.8)' : '0 1px 2px rgba(255,255,255,0.5)'};">
+                        <div class="teacher-line" style="pointer-events: none; ${light < 55 ? 'color: #fff; -webkit-text-stroke: 0.3px #000; text-shadow: 0 1px 2px rgba(0,0,0,0.8);' : 'color: #000; -webkit-text-stroke: 0; text-shadow: none;'}">
                             <div>        
                                 <strong>${info.homeroom}</strong>
                             </div>
