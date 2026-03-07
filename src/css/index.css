@@ -319,14 +319,16 @@ body {
 
 /* 반 제목 */
 .class-section .class-title {
-    font-size: clamp(0.9rem, 2.8vh, 1.3rem);
-    /* 지능형 폰트 크기 */
+    font-size: clamp(0.85rem, 2.5vh, 1.2rem);
+    /* 0.9rem -> 0.85rem, 2.8vh -> 2.5vh */
     font-weight: 800;
     color: #333;
     margin: 0;
-    margin-bottom: clamp(1px, 0.2vh, 4px);
+    margin-bottom: 0;
+    /* 0으로 고정 */
     white-space: nowrap;
-    line-height: 1.1;
+    line-height: 1.0;
+    /* 1.1 -> 1.0 */
 }
 
 .count-badge {
@@ -412,13 +414,16 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    margin: clamp(0px, 0.1vh, 2px) 0;
-    font-size: clamp(0.7rem, 2vh, 0.93rem);
-    /* 지능형 폰트 크기 */
+    gap: 8px;
+    /* 10px -> 8px */
+    margin: 0;
+    /* 강제 제거 */
+    font-size: clamp(0.65rem, 1.8vh, 0.9rem);
+    /* 하한선과 비율 축소 */
     font-weight: 700;
     flex-wrap: nowrap;
-    line-height: 1.2;
+    line-height: 1.0;
+    /* 1.2 -> 1.0 */
 }
 
 /* 반응형 여백 조정 */
@@ -474,22 +479,21 @@ body {
 
 @media (max-width: 400px) {
     .class-grid {
-        padding: 1px 3px 1px 3px;
-        gap: 1.5px;
+        padding: 2px 2px 0px 2px;
+        gap: 1px;
     }
 
     .grade-column {
-        width: clamp(120px, 32vw, 160px);
-        gap: 1.5px;
+        width: clamp(100px, 33vw, 150px);
+        gap: 1px;
     }
 
     .class-section .class-title {
-        font-size: clamp(0.75rem, 2.2vh, 1.1rem);
+        font-size: clamp(0.7rem, 2.2vh, 1.1rem);
     }
 
     .teacher-line div {
-        white-space: nowrap;
-        font-size: clamp(0.6rem, 1.6vh, 0.8rem);
+        font-size: clamp(0.55rem, 1.6vh, 0.8rem);
     }
 }
 
