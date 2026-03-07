@@ -203,13 +203,14 @@ function renderCalendar(events, year, month, append = false) {
         const m = dateObj.getMonth() + 1;
 
         if (m !== lastMonth) {
+            const isPreviousMonth = (year === 2026 && m < currentMonth);
             const separator = document.createElement("div");
-            separator.className = "month-separator";
+            separator.className = `month-separator ${isPreviousMonth ? 'collapsed' : ''}`;
             separator.innerHTML = `
                 <div class="month-title-row">
                     <span>${m}월</span><span class="schedule-text">SCHEDULE</span>
                 </div>
-                <button class="month-fold-btn">접기</button>
+                <button class="month-fold-btn">${isPreviousMonth ? '펼치기' : '접기'}</button>
             `;
 
             // 접기 기능 연결
@@ -232,6 +233,9 @@ function renderCalendar(events, year, month, append = false) {
             lastMonth = m;
         }
 
+        // 이전 월인 경우 카드 초기 숨김 처리
+        const isPreviousMonthCard = (year === 2026 && m < currentMonth);
+
         const dayEvents = events.filter(ev => {
             const parts = ev.date.split('-').map(Number);
             return parts[0] === year && parts[1] === month && parts[2] === d;
@@ -244,6 +248,11 @@ function renderCalendar(events, year, month, append = false) {
         const card = document.createElement("div");
         card.id = `day-${year}-${m}-${d}`; // [v3.0.2] 고유 ID 부여
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[currentDayIdx]}`;
+
+        // 이전 월이면 숨김 (V3.6.0)
+        if (isPreviousMonthCard) {
+            card.style.display = 'none';
+        }
 
         const eventsHtml = dayEvents.map((ev, idx) => {
             if (ev.typeName === '창체') {
@@ -324,13 +333,14 @@ function renderGroupedEvents(container, events) {
         if (currentDayIdx === 0 || currentDayIdx === 6) return;
 
         if (m !== lastMonth) {
+            const isPreviousMonth = (y === 2026 && m < currentMonth);
             const separator = document.createElement("div");
-            separator.className = "month-separator";
+            separator.className = `month-separator ${isPreviousMonth ? 'collapsed' : ''}`;
             separator.innerHTML = `
                 <div class="month-title-row">
                     <span>${m}월</span><span class="schedule-text">SCHEDULE</span>
                 </div>
-                <button class="month-fold-btn">접기</button>
+                <button class="month-fold-btn">${isPreviousMonth ? '펼치기' : '접기'}</button>
             `;
 
             separator.addEventListener('click', () => {
@@ -351,12 +361,18 @@ function renderGroupedEvents(container, events) {
             lastMonth = m;
         }
 
+        const isPreviousMonthCard = (y === 2026 && m < currentMonth);
+
         const days = ['일', '월', '화', '수', '목', '금', '토'];
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
         const card = document.createElement("div");
         card.id = `day-${y}-${m}-${d}`; // [v3.0.2] 고유 ID 부여
         card.className = `day-card ${dayClasses[currentDayIdx]}`;
+
+        if (isPreviousMonthCard) {
+            card.style.display = 'none';
+        }
 
         const dayEvents = grouped[dateStr];
         const eventsHtml = dayEvents.map((ev, idx) => {
@@ -528,8 +544,14 @@ function scrollToRelevantDate() {
         // 그 외 요일은 오늘로 스크롤
         const todayCard = document.querySelector('.day-card.today');
         if (todayCard) {
-            todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            window.scrollBy(0, -90);
+            // 레이아웃 안정화를 위한 2단계 페인트 (V3.6.0)
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // 헤더 두께를 고려한 최종 보정
+                    setTimeout(() => window.scrollBy(0, -100), 500);
+                }, 50);
+            });
         }
     }
 }
