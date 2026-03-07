@@ -36,34 +36,32 @@
     transform: scale(1.1);
 }
 
-/* 캘린더 클릭 유도 화살표 (v3.4.1) */
+/* 캘린더 클릭 유도 펄스 테두리 (v3.4.2) */
 .calendar-link::after {
-    content: '◀';
+    content: '';
     position: absolute;
-    right: -25px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #4A90E2;
-    font-size: 1.2rem;
-    font-weight: 900;
-    z-index: 10;
+    inset: -1px;
+    border: 2px solid #000;
+    border-radius: 10px;
+    z-index: -1;
+    /* 아이콘 뒤 또는 테두리에 겹치게 */
     pointer-events: none;
-    animation: arrow-bounce 1s infinite alternate ease-in-out;
+    animation: hint-border-pulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 .calendar-link.hide-hint::after {
     display: none;
 }
 
-@keyframes arrow-bounce {
-    from {
-        right: -25px;
+@keyframes hint-border-pulse {
+    0% {
+        transform: scale(0.95);
         opacity: 0.8;
     }
 
-    to {
-        right: -15px;
-        opacity: 1;
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
     }
 }
 
