@@ -551,16 +551,23 @@ function scrollToRelevantDate() {
             }
         }
     } else {
-        // [V3.6.5] 스크롤 무결성 최적화: 가상 좌표 대신 직관적인 scrollIntoView + 안정적 타이밍
-        const scrollToToday = () => {
-            const todayCard = document.querySelector('.day-card.today');
-            if (todayCard) {
-                // 상단 헤더 공간을 확보하며 스크롤
-                todayCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // 잠시 후 'start'로 재조정하여 상단에 완벽 정착 (헤더 고려)
+        // [V3.6.5] 스크롤 무결성 최적화
+        const scrollToTarget = () => {
+            let targetCard = document.querySelector('.day-card.today');
+
+            // [V3.6.6] 주말(토/일)이라 오늘 카드가 없을 경우, 가장 마지막에 그려진 카드(금요일)로 스크롤
+            if (!targetCard) {
+                const allCards = document.querySelectorAll('.day-card');
+                if (allCards.length > 0) {
+                    targetCard = allCards[allCards.length - 1]; // 현재 리스트 중 최신 평일
+                }
+            }
+
+            if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 setTimeout(() => {
                     const headerOffset = 110;
-                    const elementPosition = todayCard.getBoundingClientRect().top;
+                    const elementPosition = targetCard.getBoundingClientRect().top;
                     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
                     window.scrollTo({
                         top: offsetPosition,
@@ -570,15 +577,13 @@ function scrollToRelevantDate() {
             }
         };
 
-        // 데이터 렌더링 후 초기 시도
-        setTimeout(scrollToToday, 300);
+        setTimeout(scrollToTarget, 300);
 
-        // 카드가 뒤늦게 그려질 경우를 대비한 2초간의 감시
         const listContainer = document.getElementById('day-list');
         if (listContainer) {
             const observer = new MutationObserver(() => {
-                if (document.querySelector('.day-card.today')) {
-                    scrollToToday();
+                if (document.querySelectorAll('.day-card').length > 0) {
+                    scrollToTarget();
                     observer.disconnect();
                 }
             });
@@ -805,7 +810,8 @@ function generateMonthHTML(year, month, events) {
         // 글자색이 흰색 계열이면 shadow 추가 (가독성)
         const isWhiteText = textColor.toLowerCase() === "#ffffff" || textColor.toLowerCase() === "white";
         const textStyle = `style="color: ${textColor}; ${isWhiteText ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.5);' : 'text-shadow: 0 0 1px #fff;'}"`;
-        const numStyle = `style="color: ${isWhiteText ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.6)'};"`;
+        // [V3.6.6] 투명도 제거: rgba(0,0,0,0.6) -> #000000
+        const numStyle = `style="color: ${isWhiteText ? 'rgba(255,255,255,0.9)' : '#000000'};"`;
 
         html += `
             <div class="${classes}" ${styleStr}>
