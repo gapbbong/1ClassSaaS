@@ -488,7 +488,8 @@ body {
 
     .grade-column {
         width: clamp(100px, 33vw, 150px);
-        gap: 1px;
+        gap: 0.8px;
+        /* 1.5px -> 0.8px (약 절반) */
     }
 
     .class-section .class-title {
