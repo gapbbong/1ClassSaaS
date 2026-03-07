@@ -34,39 +34,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function initCalendar() {
     setupButtons();
     await loadMonthData(currentYear, currentMonth);
-
-    // [v2.34] 지능형 자동 스크롤
-    setTimeout(() => {
-        const today = new Date();
-        const day = today.getDay(); // 0:일, 1:월, ... 6:토
-        let targetId = null;
-
-        if (day === 1 || day === 0 || day === 6) {
-            // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
-            const lastFri = new Date(today);
-            const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
-            lastFri.setDate(today.getDate() - diff);
-
-            const m = lastFri.getMonth() + 1;
-            const d = lastFri.getDate();
-            // 해당 금요일 카드를 찾아 스크롤
-            const cards = document.querySelectorAll('.day-card');
-            for (let card of cards) {
-                if (card.innerText.includes(`${m}월 ${d}일`)) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    window.scrollBy(0, -100); // 상단 여백 확보
-                    break;
-                }
-            }
-        } else {
-            // 그 외 요일은 오늘로 스크롤
-            const todayCard = document.querySelector('.day-card.today');
-            if (todayCard) {
-                todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                window.scrollBy(0, -100);
-            }
-        }
-    }, 800);
 }
 
 function setupButtons() {
@@ -123,15 +90,25 @@ function setupButtons() {
 }
 
 async function loadMonthData(year, month, append = false) {
+    let progress = 30;
+    const interval = setInterval(() => {
+        if (progress < 55) {
+            progress += Math.random() * 2;
+            showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버로부터 데이터를 받고 있습니다.", Math.floor(progress));
+        }
+    }, 400);
+
     showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버 응답 대기 중", 30);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
+        clearInterval(interval);
+
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        showLoading(true, `데이터 분석 중...`, "거의 다 되었습니다", 60);
+        showLoading(true, `데이터 분석 중...`, "거의 다 되었습니다", 70);
         const data = await response.json();
 
-        showLoading(true, `화면 구성 중...`, "데이터 렌더링", 85);
+        showLoading(true, `화면 구성 중...`, "데이터 렌더링", 90);
 
         if (append) {
             loadedEvents.push(...data);
@@ -144,10 +121,17 @@ async function loadMonthData(year, month, append = false) {
         } else {
             renderCalendar(eventsToRender(loadedEvents, year, month), year, month, append);
         }
+
+        showLoading(true, `완료!`, "일정이 표시됩니다.", 100);
     } catch (e) {
+        clearInterval(interval);
         console.error("Fetch Error:", e);
     } finally {
-        showLoading(false);
+        setTimeout(() => {
+            showLoading(false);
+            // 로딩 종료 후 스크롤 실행 (v3.0.1)
+            scrollToRelevantDate();
+        }, 300);
     }
 }
 
@@ -159,13 +143,24 @@ function eventsToRender(allEvents, year, month) {
 }
 
 async function loadAllData() {
+    let progress = 20;
+    const interval = setInterval(() => {
+        if (progress < 50) {
+            progress += Math.random() * 3;
+            showLoading(true, "전체 일정을 불러오는 중입니다...", "대용량 데이터를 수신 중입니다.", Math.floor(progress));
+        }
+    }, 500);
+
     showLoading(true, "전체 일정을 불러오는 중입니다...", "서버 응답 대기 중", 20);
     try {
         const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
-        showLoading(true, "대용량 데이터를 수신했습니다.", "분석 시작", 50);
+        clearInterval(interval);
+
+        showLoading(true, "대용량 데이터를 수신했습니다.", "분석 시작", 65);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        showLoading(true, "화면을 구성하고 있습니다.", "잠시만 더 기다려 주세요", 80);
+
+        showLoading(true, "화면을 구성하고 있습니다.", "잠시만 더 기다려 주세요", 85);
         loadedEvents = data;
 
         if (viewMode === 'academic_only') {
@@ -178,11 +173,16 @@ async function loadAllData() {
         if (btnNext) btnNext.style.display = 'none';
         const btnFull = document.getElementById('btn-full-year');
         if (btnFull) btnFull.style.display = 'none';
-        showLoading(true, "로딩 완료!", "", 100);
+
+        showLoading(true, "로딩 완료!", "화면으로 이동합니다.", 100);
     } catch (e) {
+        clearInterval(interval);
         console.error("Fetch All Error:", e);
     } finally {
-        setTimeout(() => showLoading(false), 500);
+        setTimeout(() => {
+            showLoading(false);
+            scrollToRelevantDate();
+        }, 500);
     }
 }
 
@@ -471,19 +471,62 @@ function showLoading(show, text = "불러오는 중...", subText = "", percent =
         overlay.style.display = show ? "flex" : "none";
         const p = overlay.querySelector('p');
         const percentEl = document.getElementById("loading-percent");
+        const gaugeBar = document.getElementById("loading-gauge-bar");
 
-        if (p && !percentEl) {
-            // 퍼센트 엘리먼트가 없으면 텍스트만 처리
-            p.innerText = text;
-        } else if (p && percentEl) {
-            // 텍스트와 퍼센트 분리 업데이트
+        if (p) {
             const baseText = text.includes("...") ? text.split("...")[0] + "..." : text;
-            p.firstChild.textContent = baseText;
-            percentEl.innerText = percent !== null ? `(${percent}%)` : "";
+            p.childNodes[0].textContent = baseText + " ";
+        }
+
+        if (percentEl) {
+            percentEl.innerText = percent !== null ? `(${Math.floor(percent)}%)` : "";
+        }
+
+        if (gaugeBar && percent !== null) {
+            gaugeBar.style.width = `${percent}%`;
         }
 
         let subEl = overlay.querySelector('.loading-text-detail');
         if (subEl) subEl.innerText = subText;
+    }
+}
+
+/**
+ * [v3.0.1] 현재 날짜 또는 가장 최근 금요일로 똑똑하게 스크롤
+ */
+function scrollToRelevantDate() {
+    const today = new Date();
+    const day = today.getDay(); // 0:일, 1:월, ... 6:토
+    let targetId = null;
+
+    if (day === 1 || day === 0 || day === 6) {
+        // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
+        const lastFri = new Date(today);
+        const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
+        lastFri.setDate(today.getDate() - diff);
+
+        const m = lastFri.getMonth() + 1;
+        const d = lastFri.getDate();
+
+        // 해당 금요일 카드를 찾아 스크롤
+        const cards = document.querySelectorAll('.day-card');
+        let found = false;
+        for (let card of cards) {
+            const dayName = card.querySelector('.day-name');
+            if (dayName && dayName.innerText.includes(`${m}월 ${d}일`)) {
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                window.scrollBy(0, -90); // 상단 여백 확보
+                found = true;
+                break;
+            }
+        }
+    } else {
+        // 그 외 요일은 오늘로 스크롤
+        const todayCard = document.querySelector('.day-card.today');
+        if (todayCard) {
+            todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.scrollBy(0, -90);
+        }
     }
 }
 
