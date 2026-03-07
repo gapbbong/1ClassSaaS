@@ -282,8 +282,8 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(2px, 1.2dvh, 20px);
-    /* 세로 간격 추가 확대 (v3.2.1) */
+    gap: clamp(5px, 2.2dvh, 40px);
+    /* 세로 간격 2차 추가 확대 (v3.2.2) */
 }
 
 /* 각 반(카드) */
@@ -414,6 +414,13 @@ body {
 }
 
 /* 교사 정보 */
+.teacher-line {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1px, 0.4dvh, 5px);
+    /* 담임-부담임 사이 간격 (v3.2.2) */
+}
+
 .teacher-line div {
     display: flex;
     justify-content: center;
