@@ -602,7 +602,6 @@ async function showAcademicPopup() {
         try {
             console.log("📡 연간 학사 일정 데이터 요청 중...", CONFIG.API_URL);
 
-            // 초기 로딩 상태 (0%)
             grid.innerHTML = `
             <div style="text-align:center; padding: 60px; width:100%; display:flex; flex-direction:column; align-items:center; gap:15px;">
                 <div class="loader-spinner"></div>
@@ -617,24 +616,27 @@ async function showAcademicPopup() {
             const progressText = document.getElementById('loading-progress');
             const progressBar = document.getElementById('loading-bar');
 
-            // 진행률 업데이트 함수
-            const updateProgress = (pct, msg) => {
-                if (progressText) progressText.innerText = `${msg} (${pct}%)`;
-                if (progressBar) progressBar.style.width = `${pct}%`;
-            };
-
-            // 1단계: 서버 연결 (25%)
-            updateProgress(25, "서버 연결 중");
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                if (progress < 96) {
+                    const diff = (98 - progress) / 10;
+                    progress += Math.max(0.1, Math.random() * diff);
+                    if (progressText) progressText.innerText = `일정을 분석 중입니다 (${Math.floor(progress)}%)`;
+                    if (progressBar) progressBar.style.width = `${progress}%`;
+                }
+            }, 200);
 
             const response = await fetch(`${CONFIG.API_URL}?type=yearly&t=${Date.now()}`);
-            if (!response.ok) throw new Error(`HTTP 오류! 상태: ${response.status}`);
+            if (!response.ok) {
+                clearInterval(progressInterval);
+                throw new Error(`HTTP 오류! 상태: ${response.status}`);
+            }
 
-            // 2단계: 데이터 수신 (55%)
-            updateProgress(55, "데이터 수신 중");
             const yearlyData = await response.json();
+            clearInterval(progressInterval);
 
-            // 3단계: 파싱 및 렌더링 준비 (85%)
-            updateProgress(85, "일정 분석 및 구성 중");
+            if (progressBar) progressBar.style.width = "100%";
+            if (progressText) progressText.innerText = "로딩 완료! (100%)";
 
             const dataVersion = yearlyData._version || "v2.29 이하 (Stale)";
             console.log(`📦 수신 데이터 버전: [${dataVersion}]`, yearlyData);
@@ -647,8 +649,6 @@ async function showAcademicPopup() {
                 return;
             }
 
-            // 4단계: 완료 (100%)
-            updateProgress(100, "로딩 완료");
             setTimeout(() => {
                 renderAcademicGrid(yearlyData);
             }, 200);
