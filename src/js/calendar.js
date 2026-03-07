@@ -69,6 +69,13 @@ function setupButtons() {
 
     if (btnNext) {
         btnNext.addEventListener('click', async () => {
+            // [V3.6.1] 새로운 달을 보기 위해 현재 떠 있는 달들을 모두 접음
+            const currentSeparators = document.querySelectorAll('.month-separator:not(.collapsed)');
+            currentSeparators.forEach(sep => {
+                const foldBtn = sep.querySelector('.month-fold-btn');
+                if (foldBtn) sep.click(); // 강제 클릭으로 접기 트리거
+            });
+
             currentMonth++;
             if (currentMonth > 12) {
                 currentMonth = 1;
@@ -90,15 +97,17 @@ function setupButtons() {
 }
 
 async function loadMonthData(year, month, append = false) {
-    let progress = 30;
+    let progress = 10;
     const interval = setInterval(() => {
-        if (progress < 55) {
-            progress += Math.random() * 2;
-            showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버로부터 데이터를 받고 있습니다.", Math.floor(progress));
+        if (progress < 95) {
+            // [V3.6.1] 지수 감쇄형 게이지: 목표치(98%)에 가까워질수록 느려짐
+            const diff = (98 - progress) / 12;
+            progress += Math.max(0.1, Math.random() * diff);
+            showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버로부터 데이터를 실시간으로 수신 중입니다.", Math.floor(progress));
         }
-    }, 400);
+    }, 200);
 
-    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버 응답 대기 중", 30);
+    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버 응답 대기 중", 10);
     try {
         const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
         clearInterval(interval);
@@ -141,15 +150,16 @@ function eventsToRender(allEvents, year, month) {
 }
 
 async function loadAllData() {
-    let progress = 20;
+    let progress = 5;
     const interval = setInterval(() => {
-        if (progress < 50) {
-            progress += Math.random() * 3;
-            showLoading(true, "전체 일정을 불러오는 중입니다...", "대용량 데이터를 수신 중입니다.", Math.floor(progress));
+        if (progress < 95) {
+            const diff = (98 - progress) / 15;
+            progress += Math.max(0.1, Math.random() * diff);
+            showLoading(true, "전체 일정을 불러오는 중입니다...", "대용량 학사 데이터를 분석 중입니다.", Math.floor(progress));
         }
-    }, 500);
+    }, 250);
 
-    showLoading(true, "전체 일정을 불러오는 중입니다...", "서버 응답 대기 중", 20);
+    showLoading(true, "전체 일정을 불러오는 중입니다...", "서버 응답 대기 중", 5);
     try {
         const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
         clearInterval(interval);
@@ -544,14 +554,29 @@ function scrollToRelevantDate() {
         // 그 외 요일은 오늘로 스크롤
         const todayCard = document.querySelector('.day-card.today');
         if (todayCard) {
-            // 레이아웃 안정화를 위한 2단계 페인트 (V3.6.0)
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    // 헤더 두께를 고려한 최종 보정
-                    setTimeout(() => window.scrollBy(0, -100), 500);
-                }, 50);
-            });
+            // [V3.6.1] 더 정교한 스크롤: 뷰포트에 안착할 때까지 확인
+            const scrollAction = () => {
+                todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                // 고정 버튼 높이(약 80-90px)를 고려한 보정
+                setTimeout(() => window.scrollBy(0, -100), 500);
+            };
+
+            scrollAction();
+        } else {
+            // 카드가 아직 안 그려졌을 경우를 대비한 Observer (V3.6.1)
+            const listContainer = document.getElementById('day-list');
+            if (listContainer) {
+                const observer = new MutationObserver(() => {
+                    const found = document.querySelector('.day-card.today');
+                    if (found) {
+                        found.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        setTimeout(() => window.scrollBy(0, -100), 500);
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(listContainer, { childList: true, subtree: true });
+                setTimeout(() => observer.disconnect(), 3000); // 3초 후 포기
+            }
         }
     }
 }
