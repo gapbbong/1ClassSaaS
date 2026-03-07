@@ -134,15 +134,16 @@
         .badge {
             background: #eff6ff;
             color: #1d4ed8;
-            padding: 2px 6px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 800;
             display: inline-block;
             max-width: 100%;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            letter-spacing: -0.02em;
         }
 
         .stay-info {
@@ -161,7 +162,7 @@
         .teacher-name {
             font-weight: 800;
             flex-shrink: 0;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
 
         .teacher-class {
@@ -195,7 +196,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.06</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.07</span></h1>
     </header>
 
     <main>
@@ -294,7 +295,7 @@
                     const email = log.teacher_email;
                     const tMapInfo = teacherMap[email] || { name: email.split('@')[0], classInfo: '' };
 
-                    // 핵심 페이지 이름만 추출 (파일명 제외)
+                    // 핵심 페이지 이름만 추출
                     let pageRaw = log.page_path.split('/').pop() || '홈';
                     let page = pageRaw;
                     if (page === 'index.html' || page === '') page = '메인 홈';
@@ -310,7 +311,6 @@
 
                     const tData = teacherAnalysis[email];
                     if (tData) {
-                        // '메인 홈'이 아닌 유의미한 활동을 우선적으로 기록
                         if (page !== '메인 홈' || tData.lastPage === '-') {
                             tData.lastPage = page;
                         }
@@ -358,8 +358,8 @@
                     return m > 0 ? `${m}m ${s}s` : `${s}s`;
                 }
 
-                // 요약 리스트 (초밀착 너비 설정)
-                let tHtml = '<table><colgroup><col style="width:105px;"><col><col style="width:32px;"><col style="width:62px;"></colgroup><tr><th>선생님</th><th>주요 활동</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
+                // 요약 리스트 (초밀착 너비 극대화 및 뱃지 강조)
+                let tHtml = '<table><colgroup><col style="width:105px;"><col style="width:115px;"><col style="width:30px;"><col style="width:55px;"></colgroup><tr><th>선생님</th><th>주요 활동</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
                     const stay = formatStayTime(t.teacherTotalStay);
                     tHtml += `<tr>
@@ -370,7 +370,7 @@
                             </div>
                         </td>
                         <td><span class="badge" style="${t.total === 0 ? 'background:#f1f5f9; color:#94a3b8;' : ''}">${t.lastPage}</span></td>
-                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'};">${t.total}</td>
+                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'}; font-size:0.75rem;">${t.total}</td>
                         <td style="text-align:right;"><span class="stay-info" style="${t.total === 0 ? 'color:#cbd5e1;' : ''}">${stay}</span></td>
                     </tr>`;
                 });
