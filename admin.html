@@ -144,8 +144,8 @@
 
         .teacher-info {
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            align-items: center;
+            gap: 6px;
         }
 
         .teacher-class {
@@ -178,7 +178,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.02</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.04</span></h1>
     </header>
 
     <main>
@@ -230,10 +230,10 @@
 
         async function loadStats() {
             try {
-                // 1. 전체 교사 정보 로드 (학반 정보 포함)
+                // 1. 전체 교사 정보 로드
                 const { data: teachers, error: tError } = await supabase
                     .from('teachers')
-                    .select('email, name, grade, class_num');
+                    .select('email, name, assigned_class');
 
                 if (tError) throw tError;
 
@@ -241,7 +241,7 @@
                 teachers.forEach(t => {
                     teacherMap[t.email] = {
                         name: t.name,
-                        classInfo: (t.grade && t.class_num) ? `${t.grade}-${t.class_num}반` : ''
+                        classInfo: t.assigned_class ? `(${t.assigned_class}반)` : ''
                     };
                 });
 
@@ -264,11 +264,11 @@
                 const sessions = [];
                 const teacherAnalysis = {};
 
-                // 모든 교사를 초기화 (학반 정보 포함)
+                // 모든 교사를 초기화
                 teachers.forEach(t => {
                     teacherAnalysis[t.email] = {
                         name: t.name,
-                        classInfo: (t.grade && t.class_num) ? `${t.grade}-${t.class_num}반` : '',
+                        classInfo: t.assigned_class ? `(${t.assigned_class}반)` : '',
                         lastPage: '-', total: 0, teacherTotalStay: 0
                     };
                 });
@@ -335,7 +335,7 @@
                     return m > 0 ? `${m}분 ${s}초` : `${s}초`;
                 }
 
-                // 요약 리스트 (담임 정보 포함)
+                // 요약 리스트
                 let tHtml = '<table><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:center; width:80px;">활동수</th><th style="text-align:right; width:100px;">체류 시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
                     const stay = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : (t.total > 0 ? '-' : '없음');
@@ -354,7 +354,7 @@
                 tHtml += '</table>';
                 document.getElementById('log-list').innerHTML = tHtml;
 
-                // 타임라인 (요일 및 담임 정보 추가)
+                // 타임라인
                 let sHtml = '';
                 const today = new Date().toDateString();
                 const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -366,7 +366,7 @@
 
                     const pages = s.pages.join(', ');
                     const stay = s.totalStay > 0 ? ` / ${formatStayTime(s.totalStay)}` : '';
-                    const classLabel = s.classInfo ? ` (${s.classInfo})` : '';
+                    const classLabel = s.classInfo ? ` ${s.classInfo}` : '';
                     sHtml += `
                     <div class="timeline-item">
                         <div style="font-weight:800; font-size:0.95rem;">${s.name}${classLabel} <span style="color:#2563eb;">${s.count > 1 ? `[${s.count}회 활동]` : ''}</span></div>
