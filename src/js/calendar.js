@@ -100,45 +100,103 @@ async function loadMonthData(year, month, append = false) {
     let progress = 10;
     const interval = setInterval(() => {
         if (progress < 95) {
-            // [V3.6.1] 지수 감쇄형 게이지: 목표치(98%)에 가까워질수록 느려짐
             const diff = (98 - progress) / 12;
             progress += Math.max(0.1, Math.random() * diff);
-            showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버로부터 데이터를 실시간으로 수신 중입니다.", Math.floor(progress));
+            showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "데이터 로딩 속도를 위해 우선 로딩을 수행합니다.", Math.floor(progress));
         }
     }, 200);
 
-    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "서버 응답 대기 중", 10);
+    showLoading(true, `${month}월 일정을 불러오고 있습니다...`, "현재와 다음 달 일정을 먼저 가져옵니다.", 10);
     try {
-        const response = await fetch(`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`);
+        // [V3.6.9] 2개월 우선 로딩: 현재 월과 다음 월을 동시에 요청
+        const nextMonth = (month % 12) + 1;
+        const nextYear = month === 12 ? year + 1 : year;
+
+        const urls = [`${CONFIG.API_URL}?month=${month}&t=${Date.now()}`];
+        if (!append) {
+            urls.push(`${CONFIG.API_URL}?month=${nextMonth}&t=${Date.now()}`);
+        }
+
+        const responses = await Promise.all(urls.map(url => fetch(url)));
         clearInterval(interval);
 
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const dataArrays = await Promise.all(responses.map(res => {
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return res.json();
+        }));
 
-        showLoading(true, `데이터 수신 완료!`, "화면을 준비합니다", 100);
-        const data = await response.json();
+        showLoading(true, `우선 로딩 완료!`, "화면 정렬을 시작합니다.", 100);
 
         if (append) {
-            loadedEvents.push(...data);
+            loadedEvents.push(...dataArrays[0]);
         } else {
-            loadedEvents = data;
+            loadedEvents = dataArrays.flat();
         }
 
         if (viewMode === 'academic_only') {
             renderCalendarAcademic(loadedEvents);
         } else {
-            renderCalendar(eventsToRender(loadedEvents, year, month), year, month, append);
+            // [V3.7.7] 상단 헤더 타이틀 제거됨 (스티키 헤더로 대체)
+
+            // 현재 월과 다음 달만 먼저 렌더링
+            const monthsToRender = append ? [month] : [month, nextMonth];
+            monthsToRender.forEach(m => {
+                const y = (m === 1 && month === 12) ? year + 1 : year;
+                renderCalendar(eventsToRender(loadedEvents, y, m), y, m, append || (m !== monthsToRender[0]));
+            });
         }
 
         showLoading(true, `완료!`, "일정이 표시됩니다.", 100);
+
+        // [V3.6.9] 2개월 로딩 후 즉시 스크롤 실행
+        setTimeout(() => scrollToRelevantDate(), 300);
+
+        // [V3.6.9] 나머지 월 데이터 백그라운드 로딩 시작
+        if (!append) {
+            loadRemainingMonthsInBackground(year, month);
+        }
+
     } catch (e) {
         clearInterval(interval);
         console.error("Fetch Error:", e);
     } finally {
-        setTimeout(() => {
-            showLoading(false);
-            // 로딩 종료 후 스크롤 실행 (v3.0.1)
-            scrollToRelevantDate();
-        }, 300);
+        setTimeout(() => showLoading(false), 500);
+    }
+}
+
+/**
+ * [V3.7.0] 백그라운드에서 학년도 순서(3월~익년 2월)에 맞춰 조용히 수집
+ */
+async function loadRemainingMonthsInBackground(year, month) {
+    const academicOrder = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2];
+    const startIndex = academicOrder.indexOf(month);
+
+    // 현재 월(startIndex)과 다음 월(startIndex + 1)은 이미 로드됨
+    // 그 다음 월부터 순서대로 수집
+    const remainingMonths = [];
+    for (let i = 2; i < academicOrder.length; i++) {
+        const idx = (startIndex + i) % academicOrder.length;
+        remainingMonths.push(academicOrder[idx]);
+    }
+
+    for (const m of remainingMonths) {
+        try {
+            await new Promise(r => setTimeout(r, 800)); // 1.0s -> 0.8s
+            // 1, 2월은 2027년, 그 외는 2026년 (학년도 기준)
+            const y = (m < 3) ? 2027 : 2026;
+
+            const response = await fetch(`${CONFIG.API_URL}?month=${m}&t=${Date.now()}`);
+            if (!response.ok) continue;
+            const data = await response.json();
+
+            loadedEvents.push(...data);
+
+            if (viewMode !== 'academic_only') {
+                renderCalendar(eventsToRender(data, y, m), y, m, true);
+            }
+        } catch (e) {
+            console.warn(`Background Load Error for Month ${m}:`, e);
+        }
     }
 }
 
@@ -220,31 +278,14 @@ function renderCalendar(events, year, month, append = false) {
         const m = dateObj.getMonth() + 1;
 
         if (m !== lastMonth) {
-            const isPreviousMonth = (year === 2026 && m < currentMonth);
+            // [V3.7.8] 스티키 헤더 수평 정렬 및 스타일 최적화 (인라인 제거)
             const separator = document.createElement("div");
-            separator.className = `month-separator ${isPreviousMonth ? 'collapsed' : ''}`;
+            separator.className = `month-separator`;
+
             separator.innerHTML = `
-                <div class="month-title-row">
-                    <span>${m}월</span><span class="schedule-text">SCHEDULE</span>
-                </div>
-                <button class="month-fold-btn">${isPreviousMonth ? '펼치기' : '접기'}</button>
+                <span class="m-text">${m}월</span>
+                <span class="s-text">SCHEDULE</span>
             `;
-
-            // 접기 기능 연결
-            separator.addEventListener('click', () => {
-                const btn = separator.querySelector('.month-fold-btn');
-                const isCollapsed = separator.classList.toggle('collapsed');
-                btn.innerText = isCollapsed ? '펼치기' : '접기';
-
-                // 다음 separator를 만날 때까지의 모든 day-card 토글
-                let next = separator.nextElementSibling;
-                while (next && !next.classList.contains('month-separator')) {
-                    if (next.classList.contains('day-card')) {
-                        next.style.display = isCollapsed ? 'none' : 'block';
-                    }
-                    next = next.nextElementSibling;
-                }
-            });
 
             listContainer.appendChild(separator);
             lastMonth = m;
@@ -264,7 +305,22 @@ function renderCalendar(events, year, month, append = false) {
 
         const card = document.createElement("div");
         card.id = `day-${year}-${m}-${d}`; // [v3.0.2] 고유 ID 부여
+        const dateStr = `${year}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        card.dataset.date = dateStr;
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[currentDayIdx]}`;
+
+        // [V3.8.1] 주말(토/일)이면 다음 주 월요일 강조
+        const today = new Date();
+        const tDay = today.getDay();
+        if (tDay === 0 || tDay === 6) {
+            const nextMon = new Date(today);
+            nextMon.setDate(today.getDate() + (tDay === 0 ? 1 : 2));
+            if (dateObj.getFullYear() === nextMon.getFullYear() &&
+                dateObj.getMonth() === nextMon.getMonth() &&
+                dateObj.getDate() === nextMon.getDate()) {
+                card.classList.add('next-monday-pulse');
+            }
+        }
 
         // 이전 월이면 숨김 (V3.6.0)
         if (isPreviousMonthCard) {
@@ -523,80 +579,68 @@ function showLoading(show, text = "불러오는 중...", subText = "", percent =
 }
 
 /**
- * [v3.0.1] 현재 날짜 또는 가장 최근 금요일로 똑똑하게 스크롤
+ * [V3.8.1] 현재 상황에 맞는 최적의 위치로 스크롤 (안정성 강화)
  */
 function scrollToRelevantDate() {
-    const today = new Date();
-    const day = today.getDay(); // 0:일, 1:월, ... 6:토
-    let targetId = null;
+    const tryScroll = (retryCount = 0) => {
+        const today = new Date();
+        const day = today.getDay(); // 0:일, 1:월, ... 6:토
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    if (day === 1 || day === 0 || day === 6) {
-        // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
-        const lastFri = new Date(today);
-        const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
-        lastFri.setDate(today.getDate() - diff);
+        let targetCard = null;
 
-        const m = lastFri.getMonth() + 1;
-        const d = lastFri.getDate();
-        const y = lastFri.getFullYear();
-
-        // [v3.0.2] ID 기반 직접 탐색
-        const targetCard = document.getElementById(`day-${y}-${m}-${d}`);
-        if (targetCard) {
-            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            window.scrollBy(0, -90);
+        if (day === 1 || day === 0 || day === 6) {
+            // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
+            const lastFri = new Date(today);
+            const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
+            lastFri.setDate(today.getDate() - diff);
+            const lY = lastFri.getFullYear();
+            const lM = String(lastFri.getMonth() + 1).padStart(2, '0');
+            const lD = String(lastFri.getDate()).padStart(2, '0');
+            const friStr = `${lY}-${lM}-${lD}`;
+            targetCard = document.querySelector(`.day-card[data-date="${friStr}"]`);
         } else {
-            // ID로 못 찾을 경우 텍스트 검색 (Fallback)
-            const cards = document.querySelectorAll('.day-card');
-            for (let card of cards) {
-                const dayName = card.querySelector('.day-name');
-                if (dayName && dayName.innerText.includes(`${m}월 ${d}일`)) {
-                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    window.scrollBy(0, -90);
-                    break;
-                }
-            }
-        }
-    } else {
-        // [V3.6.8] 어제(Yesterday)를 맨 위로 보내는 스크롤 로직
-        const tryScroll = (retryCount = 0) => {
-            let todayCard = document.querySelector('.day-card.today');
-            let targetCard = null;
-
+            // 화~금이면 어제(Yesterday)를 찾음 (데이터가 있다면)
+            let todayCard = document.querySelector(`.day-card[data-date="${todayStr}"]`);
             if (todayCard) {
-                // 오늘 카드의 바로 위 요소(어제)를 찾음
                 targetCard = todayCard.previousElementSibling;
-                // 만약 오늘이 월요일이라서 어제가 월 분리선(month-separator)이라면 하나 더 위를 찾음
-                if (targetCard && targetCard.classList.contains('month-separator')) {
+                while (targetCard && !targetCard.classList.contains('day-card')) {
                     targetCard = targetCard.previousElementSibling;
                 }
             }
+        }
 
-            // [V3.6.8] 주말이거나 오늘 카드가 없는 경우, 리스트의 끝에서 두 번째(금요일쯤) 시도
-            if (!targetCard) {
-                const allCards = document.querySelectorAll('.day-card');
-                if (allCards.length >= 2) {
-                    targetCard = allCards[allCards.length - 2];
-                } else if (allCards.length === 1) {
-                    targetCard = allCards[0];
+        // 위 조건으로 못 찾은 경우 Fallback: 오늘보다 이전인 가장 최근의 카드를 찾음
+        if (!targetCard) {
+            const allCards = Array.from(document.querySelectorAll('.day-card:not([style*="display: none"])'));
+            targetCard = allCards.reverse().find(card => card.dataset.date <= todayStr);
+
+            // 그 카드가 오늘이라면 하나 더 위를 선택 (어제)
+            if (targetCard && targetCard.dataset.date === todayStr) {
+                const idx = Array.from(document.querySelectorAll('.day-card:not([style*="display: none"])')).indexOf(targetCard);
+                if (idx > 0) {
+                    targetCard = document.querySelectorAll('.day-card:not([style*="display: none"])')[idx - 1];
                 }
             }
+        }
 
-            if (targetCard) {
-                const headerHeight = 110;
-                const targetY = targetCard.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-                window.scrollTo({ top: targetY, behavior: retryCount > 0 ? 'smooth' : 'auto' });
+        if (targetCard) {
+            const headerHeight = 70; // [V3.8.1] 현재 디자인에 맞게 조정
+            const rect = targetCard.getBoundingClientRect();
+            const targetY = rect.top + window.pageYOffset - headerHeight;
 
-                if (retryCount < 3) {
-                    setTimeout(() => tryScroll(retryCount + 1), 200);
-                }
-            } else if (retryCount < 10) {
-                setTimeout(() => tryScroll(retryCount + 1), 100);
+            window.scrollTo({ top: targetY, behavior: retryCount > 0 ? 'smooth' : 'auto' });
+
+            // 레이아웃 보정 (3회)
+            if (retryCount < 3) {
+                setTimeout(() => tryScroll(retryCount + 1), 250);
             }
-        };
+        } else if (retryCount < 15) {
+            setTimeout(() => tryScroll(retryCount + 1), 150);
+        }
+    };
 
-        requestAnimationFrame(() => tryScroll());
-    }
+    requestAnimationFrame(() => tryScroll());
 }
 
 /**
@@ -715,7 +759,7 @@ function renderAcademicGrid(data) {
         monthBox.innerHTML = `
             <div class="academic-month-row" data-month="${month}">
                 <div class="academic-month-title">${month}월</div>
-                <div class="academic-grid-container">
+                <div class="academic-day-grid">
                     <div class="academic-day-header">월</div>
                     <div class="academic-day-header">화</div>
                     <div class="academic-day-header">수</div>
@@ -728,22 +772,26 @@ function renderAcademicGrid(data) {
         grid.appendChild(monthBox);
     });
 
-    // 당월 섹션으로 자동 스크롤 (v2.34 개선)
-    setTimeout(() => {
-        const currentSection = document.getElementById('current-month-section');
-        const popupBody = document.querySelector('.academic-popup-body');
+    // [V3.8.4] 4월부터만 자동 스크롤 적용 (3월은 최상단이므로 제외)
+    if (currentMonth >= 4) {
+        setTimeout(() => {
+            const currentSection = document.getElementById('current-month-section');
+            const popupBody = document.querySelector('.academic-popup-body');
 
-        if (currentSection && popupBody) {
-            // [V3.6.4] 타이틀이 가려지지 않게 offsetTop을 정확히 제어
-            setTimeout(() => {
-                const targetY = currentSection.offsetTop - 5;
-                popupBody.scrollTo({
-                    top: targetY,
-                    behavior: 'smooth'
-                });
-            }, 100);
-        }
-    }, 500); // 팝업 애니메이션 완료 기다림
+            if (currentSection && popupBody) {
+                setTimeout(() => {
+                    // 부모 컨테이너(#academic-grid)의 위치를 고려하여 계산
+                    const grid = document.getElementById('academic-grid');
+                    const targetY = currentSection.offsetTop;
+
+                    popupBody.scrollTo({
+                        top: targetY,
+                        behavior: 'smooth'
+                    });
+                }, 100);
+            }
+        }, 550); // 팝업 애니메이션 대기 시간을 약간 늘림 (안정성)
+    }
 }
 
 function generateMonthHTML(year, month, events) {
