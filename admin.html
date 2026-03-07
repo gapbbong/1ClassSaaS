@@ -116,8 +116,9 @@
             text-align: left;
             padding: 10px 4px;
             background: #f8fafc;
-            color: #64748b;
-            font-size: 0.7rem;
+            color: #1e293b;
+            font-size: 0.85rem;
+            font-weight: 800;
             border-bottom: 2px solid #f1f5f9;
             white-space: nowrap;
         }
@@ -125,10 +126,11 @@
         td {
             padding: 8px 4px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.78rem;
+            font-size: 0.85rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: #000000;
         }
 
         .badge {
@@ -147,9 +149,9 @@
         }
 
         .stay-info {
-            font-size: 0.7rem;
-            color: #64748b;
-            font-weight: 500;
+            font-size: 0.85rem;
+            color: #000000;
+            font-weight: 600;
         }
 
         .teacher-info {
@@ -163,12 +165,13 @@
             font-weight: 800;
             flex-shrink: 0;
             font-size: 0.85rem;
+            color: #000000;
         }
 
         .teacher-class {
-            font-size: 0.7rem;
-            color: #94a3b8;
-            font-weight: 500;
+            font-size: 0.8rem;
+            color: #000000;
+            font-weight: 600;
             flex-shrink: 0;
         }
 
@@ -196,7 +199,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.07</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.09</span></h1>
     </header>
 
     <main>
@@ -276,6 +279,7 @@
                 const activeEmails = new Set(data.map(l => l.teacher_email));
                 document.getElementById('active-teachers-count').textContent = `${activeEmails.size}명 활동`;
 
+                // 시간순 분석을 위해 복사본 정렬
                 const sortedLogsAsc = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
                 const timeSlots = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
@@ -287,7 +291,7 @@
                     teacherAnalysis[t.email] = {
                         name: t.name,
                         classInfo: t.assigned_class ? `(${t.assigned_class})` : '',
-                        lastPage: '-', total: 0, teacherTotalStay: 0
+                        lastPage: '-', total: 0, teacherTotalStay: 0, lastActivityAt: null
                     };
                 });
 
@@ -295,7 +299,6 @@
                     const email = log.teacher_email;
                     const tMapInfo = teacherMap[email] || { name: email.split('@')[0], classInfo: '' };
 
-                    // 핵심 페이지 이름만 추출
                     let pageRaw = log.page_path.split('/').pop() || '홈';
                     let page = pageRaw;
                     if (page === 'index.html' || page === '') page = '메인 홈';
@@ -311,9 +314,15 @@
 
                     const tData = teacherAnalysis[email];
                     if (tData) {
-                        if (page !== '메인 홈' || tData.lastPage === '-') {
-                            tData.lastPage = page;
+                        // 로직 보정: 무조건 최신 활동 시각 기록
+                        if (!tData.lastActivityAt || time > tData.lastActivityAt) {
+                            tData.lastActivityAt = time;
+                            // 메인 홈이 아니면 무조건 업데이트, 메인 홈이어도 첫 기록이거나 아주 최신이면 업데이트
+                            if (page !== '메인 홈' || tData.lastPage === '-' || tData.lastPage === '메인 홈') {
+                                tData.lastPage = page;
+                            }
                         }
+
                         tData.total++;
 
                         const prevSession = sessions[sessions.length - 1];
@@ -358,7 +367,7 @@
                     return m > 0 ? `${m}m ${s}s` : `${s}s`;
                 }
 
-                // 요약 리스트 (초밀착 너비 극대화 및 뱃지 강조)
+                // 요약 리스트 (폰트 크기 통일 및 블루 테마 복구)
                 let tHtml = '<table><colgroup><col style="width:105px;"><col style="width:115px;"><col style="width:30px;"><col style="width:55px;"></colgroup><tr><th>선생님</th><th>주요 활동</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
                     const stay = formatStayTime(t.teacherTotalStay);
@@ -370,8 +379,8 @@
                             </div>
                         </td>
                         <td><span class="badge" style="${t.total === 0 ? 'background:#f1f5f9; color:#94a3b8;' : ''}">${t.lastPage}</span></td>
-                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'}; font-size:0.75rem;">${t.total}</td>
-                        <td style="text-align:right;"><span class="stay-info" style="${t.total === 0 ? 'color:#cbd5e1;' : ''}">${stay}</span></td>
+                        <td style="text-align:center; font-weight:800; color:#000000;">${t.total}</td>
+                        <td style="text-align:right;"><span class="stay-info">${stay}</span></td>
                     </tr>`;
                 });
                 tHtml += '</table>';
