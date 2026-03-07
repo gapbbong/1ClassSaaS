@@ -130,6 +130,18 @@ function updateDynamicCalendar() {
     calendarLink.href = "calendar.html";
     // 타겟 제거 (현재창 이동)
     calendarLink.removeAttribute("target");
+
+    // [v3.4.1] 캘린더 힌트 소멸 로직
+    const isHintHidden = localStorage.getItem('calendar_hint_hidden') === 'true';
+    if (isHintHidden) {
+      calendarLink.classList.add('hide-hint');
+    }
+
+    // 클릭 시 힌트 영구 숨김
+    calendarLink.addEventListener('click', () => {
+      localStorage.setItem('calendar_hint_hidden', 'true');
+      calendarLink.classList.add('hide-hint');
+    }, { once: true });
   }
 }
 
