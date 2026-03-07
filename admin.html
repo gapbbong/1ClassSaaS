@@ -109,35 +109,44 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         th {
             text-align: left;
-            padding: 10px 12px;
+            padding: 10px 8px;
             background: #f8fafc;
             color: #64748b;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             border-bottom: 2px solid #f1f5f9;
+            white-space: nowrap;
         }
 
         td {
-            padding: 10px 12px;
+            padding: 10px 8px;
             border-bottom: 1px solid #f1f5f9;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .badge {
             background: #eff6ff;
             color: #1d4ed8;
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 6px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .stay-info {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #64748b;
             font-weight: 600;
         }
@@ -145,13 +154,21 @@
         .teacher-info {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .teacher-name {
+            font-weight: 700;
+            flex-shrink: 0;
         }
 
         .teacher-class {
             font-size: 0.7rem;
             color: #94a3b8;
             font-weight: 500;
+            flex-shrink: 0;
         }
 
         .timeline-item {
@@ -178,7 +195,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v4.04</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.05</span></h1>
     </header>
 
     <main>
@@ -206,8 +223,8 @@
         </div>
 
         <!-- 선생님별 분석 (요약) -->
-        <div class="admin-card">
-            <div style="margin-bottom: 15px; display: flex; align-items: center;">
+        <div class="admin-card" style="padding: 15px 10px;">
+            <div style="margin-bottom: 15px; display: flex; align-items: center; padding-left: 10px;">
                 <h2 style="font-size: 1.1rem; margin: 0;">선생님별 요약</h2>
                 <span id="active-teachers-count" class="count-active">- 명 활동 중</span>
             </div>
@@ -241,7 +258,7 @@
                 teachers.forEach(t => {
                     teacherMap[t.email] = {
                         name: t.name,
-                        classInfo: t.assigned_class ? `(${t.assigned_class}반)` : ''
+                        classInfo: t.assigned_class ? `(${t.assigned_class})` : ''
                     };
                 });
 
@@ -268,7 +285,7 @@
                 teachers.forEach(t => {
                     teacherAnalysis[t.email] = {
                         name: t.name,
-                        classInfo: t.assigned_class ? `(${t.assigned_class}반)` : '',
+                        classInfo: t.assigned_class ? `(${t.assigned_class})` : '',
                         lastPage: '-', total: 0, teacherTotalStay: 0
                     };
                 });
@@ -336,18 +353,18 @@
                 }
 
                 // 요약 리스트
-                let tHtml = '<table><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:center; width:80px;">활동수</th><th style="text-align:right; width:100px;">체류 시간</th></tr>';
+                let tHtml = '<table><colgroup><col style="width:75px;"><col><col style="width:45px;"><col style="width:75px;"></colgroup><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:center;">활동</th><th style="text-align:right;">체류시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
                     const stay = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : (t.total > 0 ? '-' : '없음');
                     tHtml += `<tr>
                         <td>
                             <div class="teacher-info">
-                                <span style="font-weight:700;">${t.name}</span>
+                                <span class="teacher-name">${t.name}</span>
                                 <span class="teacher-class">${t.classInfo}</span>
                             </div>
                         </td>
                         <td><span class="badge" style="${t.total === 0 ? 'background:#f1f5f9; color:#94a3b8;' : ''}">${t.lastPage}</span></td>
-                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'};">${t.total}회</td>
+                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'};">${t.total}</td>
                         <td style="text-align:right;"><span class="stay-info" style="${t.total === 0 ? 'color:#cbd5e1;' : ''}">${stay}</span></td>
                     </tr>`;
                 });
