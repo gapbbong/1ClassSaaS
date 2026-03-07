@@ -554,14 +554,15 @@ function scrollToRelevantDate() {
         // 그 외 요일은 오늘로 스크롤
         const todayCard = document.querySelector('.day-card.today');
         if (todayCard) {
-            // [V3.6.1] 더 정교한 스크롤: 뷰포트에 안착할 때까지 확인
-            const scrollAction = () => {
-                todayCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                // 고정 버튼 높이(약 80-90px)를 고려한 보정
-                setTimeout(() => window.scrollBy(0, -100), 500);
+            // [V3.6.4] 수동 Offset 기반 정밀 스크롤 (가장 확실한 방식)
+            const executeScroll = () => {
+                const headerHeight = 110; // 상단 헤더 높이 여유분
+                const targetY = todayCard.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                window.scrollTo({ top: targetY, behavior: 'smooth' });
             };
 
-            scrollAction();
+            // 렌더링 완료 후 2단계 실행
+            requestAnimationFrame(() => setTimeout(executeScroll, 100));
         } else {
             // 카드가 아직 안 그려졌을 경우를 대비한 Observer (V3.6.1)
             const listContainer = document.getElementById('day-list');
@@ -569,13 +570,14 @@ function scrollToRelevantDate() {
                 const observer = new MutationObserver(() => {
                     const found = document.querySelector('.day-card.today');
                     if (found) {
-                        found.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        setTimeout(() => window.scrollBy(0, -100), 500);
+                        const headerHeight = 110;
+                        const targetY = found.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                        window.scrollTo({ top: targetY, behavior: 'smooth' });
                         observer.disconnect();
                     }
                 });
                 observer.observe(listContainer, { childList: true, subtree: true });
-                setTimeout(() => observer.disconnect(), 3000); // 3초 후 포기
+                setTimeout(() => observer.disconnect(), 3000);
             }
         }
     }
@@ -713,14 +715,16 @@ function renderAcademicGrid(data) {
         const popupBody = document.querySelector('.academic-popup-body');
 
         if (currentSection && popupBody) {
-            // scrollIntoView 대신 scrollTop 직접 제어로 정확도 향상
-            const targetY = currentSection.offsetTop - 10;
-            popupBody.scrollTo({
-                top: targetY,
-                behavior: 'smooth'
-            });
+            // [V3.6.4] 타이틀이 가려지지 않게 offsetTop을 정확히 제어
+            setTimeout(() => {
+                const targetY = currentSection.offsetTop - 5;
+                popupBody.scrollTo({
+                    top: targetY,
+                    behavior: 'smooth'
+                });
+            }, 100);
         }
-    }, 600); // 팝업 애니메이션 완료 기다림
+    }, 500); // 팝업 애니메이션 완료 기다림
 }
 
 function generateMonthHTML(year, month, events) {
