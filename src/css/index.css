@@ -472,8 +472,8 @@ body {
 
     .class-grid {
         gap: 1px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 55px 5px;
-        /* 하단 여백 최종 최적화 (65px -> 55px) */
+        padding: clamp(2px, 0.5dvh, 5px) 5px 75px 5px;
+        /* 하단 여백 최종 최적화 (55px -> 75px) */
     }
 
     .class-box {
