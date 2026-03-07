@@ -279,8 +279,8 @@ body {
     flex: 1;
     height: 100%;
     padding: 0;
-    gap: 14px;
-    /* 카드 사이 상하 간격 확대 */
+    gap: clamp(2px, 1.2vh, 14px);
+    /* 고정 14px에서 지능형 간격으로 변경 */
 }
 
 /* 각 반(카드) */
@@ -299,7 +299,8 @@ body {
     background: #fff;
     border: 2px solid #ddd;
     border-radius: 12px;
-    padding: 4px 10px;
+    padding: clamp(2px, 0.8vh, 8px) 10px;
+    /* 높이에 따른 지능형 패딩 */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     text-align: center;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -307,7 +308,8 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    /* 수직 중앙 정렬 */
+    min-height: 0;
+    /* 높이 압축 허용 */
 }
 
 .class-section:hover {
@@ -317,12 +319,12 @@ body {
 
 /* 반 제목 */
 .class-section .class-title {
-    font-size: 1.3em;
-    /* 1.6em * 0.8 = 1.28em (약 1.3em) */
+    font-size: clamp(0.9rem, 2.8vh, 1.3rem);
+    /* 지능형 폰트 크기 */
     font-weight: 800;
     color: #333;
     margin: 0;
-    margin-bottom: 2px;
+    margin-bottom: clamp(1px, 0.2vh, 4px);
     white-space: nowrap;
     line-height: 1.1;
 }
@@ -411,9 +413,9 @@ body {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    margin: 1px 0;
-    font-size: 0.93em;
-    /* 1.16em * 0.8 = 0.928em (약 0.93em) */
+    margin: clamp(0px, 0.1vh, 2px) 0;
+    font-size: clamp(0.7rem, 2vh, 0.93rem);
+    /* 지능형 폰트 크기 */
     font-weight: 700;
     flex-wrap: nowrap;
     line-height: 1.2;
