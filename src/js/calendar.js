@@ -105,10 +105,8 @@ async function loadMonthData(year, month, append = false) {
 
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
-        showLoading(true, `데이터 분석 중...`, "거의 다 되었습니다", 70);
+        showLoading(true, `데이터 수신 완료!`, "화면을 준비합니다", 100);
         const data = await response.json();
-
-        showLoading(true, `화면 구성 중...`, "데이터 렌더링", 90);
 
         if (append) {
             loadedEvents.push(...data);
@@ -156,11 +154,9 @@ async function loadAllData() {
         const response = await fetch(`${CONFIG.API_URL}?all=true&t=${Date.now()}`);
         clearInterval(interval);
 
-        showLoading(true, "대용량 데이터를 수신했습니다.", "분석 시작", 65);
+        showLoading(true, "데이터 수신 완료!", "전체 일정을 구성합니다", 100);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-
-        showLoading(true, "화면을 구성하고 있습니다.", "잠시만 더 기다려 주세요", 85);
         loadedEvents = data;
 
         if (viewMode === 'academic_only') {
@@ -246,6 +242,7 @@ function renderCalendar(events, year, month, append = false) {
         const isToday = dateObj.toDateString() === new Date().toDateString();
 
         const card = document.createElement("div");
+        card.id = `day-${year}-${m}-${d}`; // [v3.0.2] 고유 ID 부여
         card.className = `day-card ${isToday ? 'today' : ''} ${dayClasses[currentDayIdx]}`;
 
         const eventsHtml = dayEvents.map((ev, idx) => {
@@ -358,6 +355,7 @@ function renderGroupedEvents(container, events) {
         const dayClasses = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
         const card = document.createElement("div");
+        card.id = `day-${y}-${m}-${d}`; // [v3.0.2] 고유 ID 부여
         card.className = `day-card ${dayClasses[currentDayIdx]}`;
 
         const dayEvents = grouped[dateStr];
@@ -507,17 +505,23 @@ function scrollToRelevantDate() {
 
         const m = lastFri.getMonth() + 1;
         const d = lastFri.getDate();
+        const y = lastFri.getFullYear();
 
-        // 해당 금요일 카드를 찾아 스크롤
-        const cards = document.querySelectorAll('.day-card');
-        let found = false;
-        for (let card of cards) {
-            const dayName = card.querySelector('.day-name');
-            if (dayName && dayName.innerText.includes(`${m}월 ${d}일`)) {
-                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                window.scrollBy(0, -90); // 상단 여백 확보
-                found = true;
-                break;
+        // [v3.0.2] ID 기반 직접 탐색
+        const targetCard = document.getElementById(`day-${y}-${m}-${d}`);
+        if (targetCard) {
+            targetCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.scrollBy(0, -90);
+        } else {
+            // ID로 못 찾을 경우 텍스트 검색 (Fallback)
+            const cards = document.querySelectorAll('.day-card');
+            for (let card of cards) {
+                const dayName = card.querySelector('.day-name');
+                if (dayName && dayName.innerText.includes(`${m}월 ${d}일`)) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    window.scrollBy(0, -90);
+                    break;
+                }
             }
         }
     } else {
