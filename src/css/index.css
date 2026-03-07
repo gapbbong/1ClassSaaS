@@ -282,8 +282,8 @@ body {
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(1px, 0.2dvh, 4px);
-    /* 세로 간격 최소화하여 밀착 (v3.1.9) */
+    gap: clamp(1px, 0.6dvh, 10px);
+    /* 세로 간격 미세 확대 (v3.2.0) */
 }
 
 /* 각 반(카드) */
@@ -465,8 +465,8 @@ body {
 
     .class-grid {
         gap: 1px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 60px 5px;
-        /* 하단 작업표시줄 대응을 위해 하단 패딩 대폭 확대 (20px -> 60px) */
+        padding: clamp(2px, 0.5dvh, 5px) 5px 85px 5px;
+        /* 하단 작업표시줄 대응을 위해 하단 패딩 추가 확대 (60px -> 85px) */
     }
 
     .grade-column {
