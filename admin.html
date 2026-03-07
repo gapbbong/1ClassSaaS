@@ -10,48 +10,68 @@
         body {
             background: #f8fafc;
             padding: 20px;
-            font-family: sans-serif;
+            font-family: 'Pretendard', sans-serif;
+            color: #1e293b;
         }
 
         .admin-header {
+            position: relative;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
             margin-bottom: 30px;
+            min-height: 50px;
+        }
+
+        .admin-header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
         }
 
         .admin-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            margin-bottom: 20px;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            color: #1e293b;
-        }
-
-        .back-btn {
-            background: #64748b;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
         }
 
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+            align-items: center;
+            gap: 10px;
         }
 
         .stat-box {
+            flex: 1;
             text-align: center;
-            padding: 15px;
-            border-right: 1px solid #e2e8f0;
+            padding: 10px;
+            border-right: 1px solid #f1f5f9;
         }
 
         .stat-box:last-child {
@@ -59,51 +79,87 @@
         }
 
         .stat-val {
-            font-size: 2rem;
-            font-weight: bold;
+            font-size: 1.6rem;
+            font-weight: 800;
             color: #2563eb;
             display: block;
+            line-height: 1.2;
         }
 
         .stat-label {
             color: #64748b;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            margin-top: 5px;
+            display: block;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            background: #f8fafc;
+            color: #64748b;
+            font-size: 0.85rem;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .count-tag {
+            color: #ef4444;
+            font-weight: 800;
+            margin-left: 2px;
         }
     </style>
 </head>
 
 <body>
     <header class="admin-header">
-        <h1>📊 사용자/화면 분석 (관리자)</h1>
-        <button class="back-btn" onclick="location.href='index.html'">홈으로</button>
+        <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
+        <h1>사용자/화면 분석</h1>
     </header>
 
     <main>
         <div class="admin-card stats-grid">
             <div class="stat-box">
                 <span id="total-views" class="stat-val">-</span>
-                <span class="stat-label">누적 페이지뷰</span>
+                <span class="stat-label">페이지뷰</span>
             </div>
             <div class="stat-box">
                 <span id="active-teachers" class="stat-val">-</span>
-                <span class="stat-label">활동 교사 수</span>
+                <span class="stat-label">활동교사</span>
             </div>
             <div class="stat-box">
                 <span id="avg-stay" class="stat-val">-</span>
-                <span class="stat-label">평균 체류(추정)</span>
+                <span class="stat-label">체류시간</span>
             </div>
-        </div>
-
-        <div id="summary-section" class="admin-card stats-grid" style="display:none; background: #f1f5f9;">
-            <!-- 지능형 요약 정보가 들어갈 자리 -->
         </div>
 
         <div class="admin-card">
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-size: 1.1rem; margin: 0;">선생님별 활동 요약 (최근 500건)</h2>
-                <div style="font-size: 0.8rem; color: #64748b;">* 동일 페이지 반복 방문은 숫자로 합산</div>
+            <div style="margin-bottom: 20px;">
+                <h2 style="font-size: 1.1rem; margin: 0;">선생님별 활동 분석 (연속 방문 합산)</h2>
             </div>
-            <div id="log-list" style="font-size: 0.9rem; color: #334155;">
+            <div id="log-list">
                 데이터를 분석하는 중입니다...
             </div>
         </div>
@@ -114,7 +170,17 @@
 
         async function loadStats() {
             try {
-                // 최근 500건 로그 가져오기 (더 정확한 분석을 위해)
+                // 1. 교사 정보 로드 (이름 매핑용)
+                const { data: teachers, error: tError } = await supabase
+                    .from('teachers')
+                    .select('email, name');
+
+                const teacherMap = {};
+                if (teachers) {
+                    teachers.forEach(t => { teacherMap[t.email] = t.name; });
+                }
+
+                // 2. 로그 로드
                 const { data, error } = await supabase
                     .from('user_logs')
                     .select('*')
@@ -122,118 +188,76 @@
                     .limit(500);
 
                 if (error) throw error;
-
                 if (!data || data.length === 0) {
-                    document.getElementById('log-list').innerHTML = "아직 수집된 로그가 없습니다.";
+                    document.getElementById('log-list').innerHTML = "수집된 데이터가 없습니다.";
                     return;
                 }
 
-                // 1. 기초 통계
+                // 3. 통계 처리
                 document.getElementById('total-views').textContent = data.length;
-                const uniqueTeachers = new Set(data.map(l => l.teacher_email)).size;
-                document.getElementById('active-teachers').textContent = uniqueTeachers;
+                const uniqueEmails = new Set(data.map(l => l.teacher_email)).size;
+                document.getElementById('active-teachers').textContent = uniqueEmails;
 
-                // 2. 선생님별 데이터 그룹화 및 분석
+                const sortedLogs = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
                 const teacherAnalysis = {};
-                const timeSlots = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
-                let totalStayTime = 0;
+                let totalStay = 0;
                 let stayCount = 0;
 
-                // 시간순(과거->현재)으로 정렬하여 체류 시간 계산 준비
-                const sortedLogs = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-                for (let i = 0; i < sortedLogs.length; i++) {
-                    const log = sortedLogs[i];
-                    const teacher = log.teacher_email;
+                sortedLogs.forEach((log, i) => {
+                    const email = log.teacher_email;
+                    const name = teacherMap[email] || email.split('@')[0];
                     const page = log.page_path.split('/').pop() || '홈';
                     const time = new Date(log.created_at);
-                    const hour = time.getHours();
 
-                    // 시간대 분류
-                    if (hour >= 8 && hour < 12) timeSlots.morning++;
-                    else if (hour >= 12 && hour < 14) timeSlots.lunch++;
-                    else if (hour >= 14 && hour < 18) timeSlots.afternoon++;
-                    else timeSlots.evening++;
-
-                    // 사용자 그룹화
-                    if (!teacherAnalysis[teacher]) {
-                        teacherAnalysis[teacher] = {
-                            pages: {},
-                            firstVisit: time,
-                            lastLog: time,
-                            totalLogs: 0
-                        };
+                    if (!teacherAnalysis[email]) {
+                        teacherAnalysis[email] = { name, compactLogs: [], total: 0 };
                     }
-                    teacherAnalysis[teacher].pages[page] = (teacherAnalysis[teacher].pages[page] || 0) + 1;
-                    teacherAnalysis[teacher].totalLogs++;
 
-                    // 체류 시간 추정 (동일 사용자의 다음 로그가 30분 이내일 경우)
-                    const nextLog = sortedLogs.find((l, idx) => idx > i && l.teacher_email === teacher);
-                    if (nextLog) {
-                        const nextTime = new Date(nextLog.created_at);
-                        const diffSec = (nextTime - time) / 1000;
-                        if (diffSec < 1800) { // 30분 이내면 연속된 활동으로 간주
-                            totalStayTime += diffSec;
-                            stayCount++;
-                        }
+                    const userLogs = teacherAnalysis[email].compactLogs;
+                    const lastLog = userLogs[userLogs.length - 1];
+
+                    // 동일 사용자가 같은 페이지를 연속해서 방문한 경우 합산
+                    if (lastLog && lastLog.page === page) {
+                        lastLog.count++;
+                    } else {
+                        userLogs.push({ page, count: 1 });
                     }
-                }
+                    teacherAnalysis[email].total++;
 
-                // 평균 체류 시간 표시
-                const avgStaySec = stayCount > 0 ? Math.round(totalStayTime / stayCount) : 0;
-                document.getElementById('avg-stay').textContent = avgStaySec > 60 ? `${Math.floor(avgStaySec / 60)}분 ${avgStaySec % 60}초` : `${avgStaySec}초`;
-
-                // 3. 지능형 요약 렌더링
-                const summaryEl = document.getElementById('summary-section');
-                const mostActiveTime = Object.keys(timeSlots).reduce((a, b) => timeSlots[a] > timeSlots[b] ? a : b);
-                const timeLabels = { morning: '오전(8-12시)', lunch: '점심(12-14시)', afternoon: '오후(14-18시)', evening: '저녁/밤' };
-
-                summaryEl.style.display = 'grid';
-                summaryEl.innerHTML = `
-                    <div class="stat-box" style="border:none; text-align:left;">
-                        <span class="stat-label">💡 <b>피크 시간대</b></span>
-                        <span style="font-size:1.1rem; color:#1e293b; display:block; margin-top:5px;">${timeLabels[mostActiveTime]}</span>
-                    </div>
-                    <div class="stat-box" style="border:none; text-align:left;">
-                        <span class="stat-label">💡 <b>가장 많이 본 화면</b></span>
-                        <span id="summary-top-page" style="font-size:1.1rem; color:#1e293b; display:block; margin-top:5px;">분석 중...</span>
-                    </div>
-                `;
-
-                // 4. 분석 결과 테이블 렌더링
-                let html = '<table style="width:100%; border-collapse: collapse;">';
-                html += '<tr style="text-align:left; border-bottom:2px solid #f1f5f9;"><th style="padding:12px;">선생님</th><th>방문 페이지 및 횟수</th><th style="text-align:right;">총 활동</th></tr>';
-
-                // 활동량 순으로 정렬
-                const sortedTeachers = Object.entries(teacherAnalysis).sort(([, a], [, b]) => b.totalLogs - a.totalLogs);
-
-                let overallTopPage = { name: '-', count: 0 };
-                const allPageCounts = {};
-
-                sortedTeachers.forEach(([email, info]) => {
-                    const pagesStr = Object.entries(info.pages)
-                        .map(([p, c]) => {
-                            allPageCounts[p] = (allPageCounts[p] || 0) + c;
-                            return `<span style="background:#eff6ff; color:#1d4ed8; padding:2px 6px; border-radius:4px; margin-right:5px; display:inline-block; margin-bottom:3px;">${p} <b>(${c})</b></span>`;
-                        })
-                        .join(' ');
-
-                    html += `<tr style="border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:12px; font-weight:600; vertical-align:top;">${email.split('@')[0]}</td>
-                        <td style="padding:12px 0;">${pagesStr}</td>
-                        <td style="padding:12px; text-align:right; font-weight:bold; color:#64748b;">${info.totalLogs}</td>
-                    </tr>`;
+                    // 체류 시간 계산
+                    const next = sortedLogs.find((l, idx) => idx > i && l.teacher_email === email);
+                    if (next) {
+                        const diff = (new Date(next.created_at) - time) / 1000;
+                        if (diff < 1800) { totalStay += diff; stayCount++; }
+                    }
                 });
+
+                const avg = stayCount > 0 ? Math.round(totalStay / stayCount) : 0;
+                document.getElementById('avg-stay').textContent = avg > 60 ? `${Math.floor(avg / 60)}분 ${avg % 60}초` : `${avg}초`;
+
+                // 4. 렌더링
+                let html = '<table>';
+                html += '<tr><th>선생님</th><th>방문 경로 (연속 중복 합산)</th><th style="text-align:right;">활동수</th></tr>';
+
+                Object.values(teacherAnalysis)
+                    .sort((a, b) => b.total - a.total)
+                    .forEach(t => {
+                        const logsHtml = t.compactLogs.map(cl =>
+                            `<span class="badge">${cl.page}${cl.count > 1 ? `<span class="count-tag">(${cl.count})</span>` : ''}</span>`
+                        ).join('');
+
+                        html += `<tr>
+                            <td style="font-weight:700; vertical-align:top; white-space:nowrap;">${t.name}</td>
+                            <td>${logsHtml}</td>
+                            <td style="text-align:right; font-weight:800; color:#64748b;">${t.total}</td>
+                        </tr>`;
+                    });
                 html += '</table>';
                 document.getElementById('log-list').innerHTML = html;
 
-                // 요약의 인기 페이지 업데이트
-                const topPageName = Object.keys(allPageCounts).reduce((a, b) => (allPageCounts[a] || 0) > (allPageCounts[b] || 0) ? a : b, '-');
-                document.getElementById('summary-top-page').textContent = `${topPageName} (${allPageCounts[topPageName]}회)`;
-
             } catch (err) {
                 console.error(err);
-                document.getElementById('log-list').innerHTML = "분석에 실패했습니다: " + err.message;
+                document.getElementById('log-list').innerHTML = "분석 중 오류 발생: " + err.message;
             }
         }
 
