@@ -121,7 +121,7 @@
         }
 
         td {
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-bottom: 1px solid #f1f5f9;
             font-size: 0.85rem;
         }
@@ -136,16 +136,20 @@
             display: inline-block;
         }
 
-        .activity-stats {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
-            white-space: nowrap;
+        .stay-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
         }
 
-        .stay-info {
-            font-size: 0.75rem;
+        .teacher-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .teacher-class {
+            font-size: 0.7rem;
             color: #94a3b8;
             font-weight: 500;
         }
@@ -174,7 +178,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>사용자/화면 분석 <span class="version-badge">v3.98</span></h1>
+        <h1>사용자/화면 분석 <span class="version-badge">v4.02</span></h1>
     </header>
 
     <main>
@@ -214,7 +218,7 @@
 
         <!-- 상세 타임라인 -->
         <div class="admin-card">
-            <h2 style="font-size: 1.1rem; margin: 0 0 15px 0;">최근 활동 타임라인 (세션 그룹화)</h2>
+            <h2 style="font-size: 1.1rem; margin: 0 0 15px 0;">최근 활동 타임라인 (상세 300개)</h2>
             <div id="timeline-list">
                 분석 중...
             </div>
@@ -226,41 +230,53 @@
 
         async function loadStats() {
             try {
+                // 1. 전체 교사 정보 로드 (학반 정보 포함)
                 const { data: teachers, error: tError } = await supabase
                     .from('teachers')
-                    .select('email, name');
+                    .select('email, name, grade, class_num');
+
+                if (tError) throw tError;
 
                 const teacherMap = {};
-                if (teachers) {
-                    teachers.forEach(t => { teacherMap[t.email] = t.name; });
-                }
+                teachers.forEach(t => {
+                    teacherMap[t.email] = {
+                        name: t.name,
+                        classInfo: (t.grade && t.class_num) ? `${t.grade}-${t.class_num}반` : ''
+                    };
+                });
 
+                // 2. 로그 로드
                 const { data, error } = await supabase
                     .from('user_logs')
                     .select('*')
                     .order('created_at', { ascending: false })
-                    .limit(500);
+                    .limit(1000);
 
                 if (error) throw error;
-                if (!data || data.length === 0) {
-                    document.getElementById('log-list').innerHTML = "데이터가 없습니다.";
-                    return;
-                }
 
-                const uniqueEmails = new Set(data.map(l => l.teacher_email)).size;
-                document.getElementById('active-teachers-count').textContent = `${uniqueEmails}명 활동 중`;
+                // 3. 데이터 분석 준비
+                const activeEmails = new Set(data.map(l => l.teacher_email));
+                document.getElementById('active-teachers-count').textContent = `${activeEmails.size}명 활동 중`;
 
-                // 최신 기록을 먼저 분석하기 위해 역순(사실 쿼리에서 이미 DESC임) 데이터 활용
-                // 타임라인용 세션 분석을 위해서는 다시 ASC로 정렬해서 처리하는 것이 로직상 편함
                 const sortedLogsAsc = [...data].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-                const teacherAnalysis = {};
                 const timeSlots = { morning: 0, lunch: 0, afternoon: 0, evening: 0 };
                 const sessions = [];
+                const teacherAnalysis = {};
 
+                // 모든 교사를 초기화 (학반 정보 포함)
+                teachers.forEach(t => {
+                    teacherAnalysis[t.email] = {
+                        name: t.name,
+                        classInfo: (t.grade && t.class_num) ? `${t.grade}-${t.class_num}반` : '',
+                        lastPage: '-', total: 0, teacherTotalStay: 0
+                    };
+                });
+
+                // 로그 기반 분석 수행
                 sortedLogsAsc.forEach((log, i) => {
                     const email = log.teacher_email;
-                    const name = teacherMap[email] || email.split('@')[0];
+                    const tMapInfo = teacherMap[email] || { name: email.split('@')[0], classInfo: '' };
                     let page = log.page_path.split('/').pop() || '홈';
                     if (page === 'index.html' || page === '') page = '홈';
 
@@ -273,10 +289,14 @@
                     else timeSlots.evening++;
 
                     if (!teacherAnalysis[email]) {
-                        teacherAnalysis[email] = { name, lastPage: page, total: 0, teacherTotalStay: 0 };
+                        teacherAnalysis[email] = {
+                            name: tMapInfo.name,
+                            classInfo: tMapInfo.classInfo,
+                            lastPage: page, total: 0, teacherTotalStay: 0
+                        };
                     }
                     const tData = teacherAnalysis[email];
-                    tData.lastPage = page; // 계속 갱신하여 마지막 페이지 유지
+                    tData.lastPage = page;
                     tData.total++;
 
                     const prevSession = sessions[sessions.length - 1];
@@ -297,7 +317,7 @@
                         if (!prevSession.pages.includes(page)) prevSession.pages.push(page);
                     } else {
                         sessions.push({
-                            email, name, startTime: time, endTime: time,
+                            email, name: tMapInfo.name, classInfo: tMapInfo.classInfo, startTime: time, endTime: time,
                             pages: [page], count: 1, totalStay: currentStay
                         });
                     }
@@ -315,34 +335,43 @@
                     return m > 0 ? `${m}분 ${s}초` : `${s}초`;
                 }
 
-                // 요약 리스트 (배지 대신 단일 최종 페이지, 통계 데이터 상하 행 분리)
-                let tHtml = '<table><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:right;">활동수 / 체류</th></tr>';
+                // 요약 리스트 (담임 정보 포함)
+                let tHtml = '<table><tr><th>선생님</th><th>최종 페이지</th><th style="text-align:center; width:80px;">활동수</th><th style="text-align:right; width:100px;">체류 시간</th></tr>';
                 Object.values(teacherAnalysis).sort((a, b) => b.total - a.total).forEach(t => {
-                    const stay = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : '-';
+                    const stay = t.teacherTotalStay > 0 ? formatStayTime(t.teacherTotalStay) : (t.total > 0 ? '-' : '없음');
                     tHtml += `<tr>
-                        <td style="font-weight:700;">${t.name}</td>
-                        <td><span class="badge">${t.lastPage}</span></td>
-                        <td style="text-align:right;">
-                            <div class="activity-stats">
-                                <span style="font-weight:800; font-size:0.9rem;">${t.total}회</span>
-                                <span class="stay-info">${stay}</span>
+                        <td>
+                            <div class="teacher-info">
+                                <span style="font-weight:700;">${t.name}</span>
+                                <span class="teacher-class">${t.classInfo}</span>
                             </div>
                         </td>
+                        <td><span class="badge" style="${t.total === 0 ? 'background:#f1f5f9; color:#94a3b8;' : ''}">${t.lastPage}</span></td>
+                        <td style="text-align:center; font-weight:800; color:${t.total === 0 ? '#cbd5e1' : '#1e293b'};">${t.total}회</td>
+                        <td style="text-align:right;"><span class="stay-info" style="${t.total === 0 ? 'color:#cbd5e1;' : ''}">${stay}</span></td>
                     </tr>`;
                 });
                 tHtml += '</table>';
                 document.getElementById('log-list').innerHTML = tHtml;
 
+                // 타임라인 (요일 및 담임 정보 추가)
                 let sHtml = '';
-                sessions.reverse().slice(0, 30).forEach(s => {
-                    const timeStr = s.startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+                const today = new Date().toDateString();
+                const weekDays = ['일', '월', '화', '수', '목', '금', '토'];
+
+                sessions.reverse().slice(0, 300).forEach(s => {
+                    const isToday = s.startTime.toDateString() === today;
+                    const datePart = isToday ? '' : `${s.startTime.getMonth() + 1}.${s.startTime.getDate()}(${weekDays[s.startTime.getDay()]}) `;
+                    const timeStr = s.startTime.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+
                     const pages = s.pages.join(', ');
                     const stay = s.totalStay > 0 ? ` / ${formatStayTime(s.totalStay)}` : '';
+                    const classLabel = s.classInfo ? ` (${s.classInfo})` : '';
                     sHtml += `
                     <div class="timeline-item">
-                        <div style="font-weight:800; font-size:0.95rem;">${s.name} <span style="color:#2563eb;">${s.count > 1 ? `[${s.count}회 활동]` : ''}</span></div>
+                        <div style="font-weight:800; font-size:0.95rem;">${s.name}${classLabel} <span style="color:#2563eb;">${s.count > 1 ? `[${s.count}회 활동]` : ''}</span></div>
                         <div style="font-size:0.8rem; color:#64748b; margin-top:2px;">
-                            ${timeStr} | ${pages}${stay}
+                            ${datePart}${timeStr} | ${pages}${stay}
                         </div>
                     </div>`;
                 });
