@@ -328,8 +328,8 @@ body {
     font-weight: 800;
     color: #333;
     margin: 0;
-    margin-bottom: clamp(2px, 0.8dvh, 10px);
-    /* 반 이름과 교사 이름 사이 간격 확보 (v3.2.1) */
+    margin-bottom: clamp(4px, 1.2dvh, 12px);
+    /* 반 이름과 교사 이름 사이 간격 최적화 (v3.2.7) */
     white-space: nowrap;
     line-height: 1.0;
     /* 1.1 -> 1.0 */
