@@ -276,14 +276,15 @@ body {
 .grade-column {
     display: flex;
     flex-direction: column;
-    justify-content: space-evenly;
+    justify-content: center;
+    /* space-evenly에서 center로 변경하여 간격 확보 강제화 */
     align-items: center;
     flex: 1;
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(5px, 2.2dvh, 40px);
-    /* 세로 간격 2차 추가 확대 (v3.2.2) */
+    gap: clamp(10px, 4dvh, 60px);
+    /* 세로 간격 3차 대폭 상향 (v3.2.3) */
 }
 
 /* 각 반(카드) */
@@ -417,8 +418,8 @@ body {
 .teacher-line {
     display: flex;
     flex-direction: column;
-    gap: clamp(1px, 0.4dvh, 5px);
-    /* 담임-부담임 사이 간격 (v3.2.2) */
+    gap: clamp(2px, 0.8dvh, 10px);
+    /* 담임-부담임 사이 간격 추가 확대 (v3.2.3) */
 }
 
 .teacher-line div {
@@ -472,8 +473,15 @@ body {
 
     .class-grid {
         gap: 1px;
-        padding: clamp(2px, 0.5dvh, 5px) 5px 85px 5px;
-        /* 하단 작업표시줄 대응을 위해 하단 패딩 추가 확대 (60px -> 85px) */
+        padding: clamp(2px, 0.5dvh, 5px) 5px 95px 5px;
+        /* 하단 여백 추가 확보 (85px -> 95px) */
+    }
+
+    .class-box {
+        flex: 0 1 auto;
+        /* 무조건 꽉 채우지 않고 간격을 위해 수축 허용 */
+        max-height: 12dvh;
+        /* 개별 카드의 최대 높이를 제한하여 여백 공간 확보 */
     }
 
     .grade-column {
