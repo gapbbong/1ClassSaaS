@@ -241,6 +241,7 @@ body {
     align-items: center;
     width: 100%;
     height: 100dvh;
+    /* dvh 적용: 주소창/하단바 자동 계산 */
     /* 모바일 하단바 대응 */
     padding: 0;
     margin: 0;
@@ -310,8 +311,8 @@ body {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    max-height: 11.5vh;
-    /* 카드 높이 강제 제한 (v3.0.7) */
+    max-height: 13dvh;
+    /* 카드 높이 상향 및 dvh 적용 */
 }
 
 .class-section:hover {
@@ -475,8 +476,10 @@ body {
     }
 
     .class-section {
-        padding: clamp(1px, 0.4vh, 4px) 5px;
-        /* 수직 패딩 극소화 */
+        padding: clamp(1px, 0.5dvh, 6px) 5px;
+        /* dvh 적용 */
+        max-height: 13.5dvh;
+        /* 모바일에서 조금 더 시원하게 가변 조절 */
     }
 }
 
