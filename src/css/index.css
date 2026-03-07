@@ -276,21 +276,21 @@ body {
 .grade-column {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    /* space-evenly에서 center로 변경하여 간격 확보 강제화 */
+    justify-content: stretch;
     align-items: center;
     flex: 1;
     height: 100%;
     min-height: 0;
     padding: 0;
-    gap: clamp(4px, 0.8dvh, 12px);
-    /* 세로 간격 최적화 축소 (v3.2.7) */
+    gap: clamp(4px, 0.8dvh, 10px);
+    /* 세로 간격 최종 최적화 (v3.2.8) */
 }
 
 /* 각 반(카드) */
 .class-box {
-    flex: 0 1 auto;
-    /* 무조건 늘어나지 않고 정해진 크기 내에서 배치 (v3.2.7) */
+    width: 100%;
+    flex: 1;
+    /* 화면을 꽉 채우도록 다시 확장 (v3.2.8) */
     min-height: 0;
     display: flex;
 }
@@ -312,8 +312,8 @@ body {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    max-height: 14dvh;
-    /* 높이 제한 완화하여 자동 조절 허용 (v3.1.9) */
+    max-height: none;
+    /* 높이 제한을 완전히 풀어 화면에 맞게 자동 확장 (v3.2.8) */
 }
 
 .class-section:hover {
@@ -429,12 +429,12 @@ body {
     /* 10px -> 8px */
     margin: 0;
     /* 강제 제거 */
-    font-size: clamp(0.65rem, 1.8vh, 0.9rem);
-    /* 하한선과 비율 축소 */
+    font-size: clamp(0.75rem, 2.0vh, 1.0rem);
+    /* 가독성을 위해 폰트 크기 상향 (v3.2.8) */
     font-weight: 700;
     flex-wrap: nowrap;
-    line-height: 1.0;
-    /* 1.2 -> 1.0 */
+    line-height: 1.1;
+    /* 1.0 -> 1.1 */
 }
 
 /* 반응형 여백 조정 */
@@ -477,10 +477,9 @@ body {
     }
 
     .class-box {
-        flex: 0 1 auto;
-        /* 무조건 꽉 채우지 않고 간격을 위해 수축 허용 */
-        max-height: 12dvh;
-        /* 개별 카드의 최대 높이를 제한하여 여백 공간 확보 */
+        flex: 1;
+        /* 모바일에서도 화면 꽉 채우기 (v3.2.8) */
+        max-height: none;
     }
 
     .grade-column {
