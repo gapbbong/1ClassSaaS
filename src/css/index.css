@@ -135,14 +135,15 @@
     position: absolute;
     top: 8px;
     right: 20px;
-    font-size: 0.8rem;
-    color: #5f6368;
-    font-weight: 800;
+    font-size: 0.65rem;
+    /* 0.8rem -> 0.65rem 주어짐 */
+    color: #888;
+    /* 조금 더 연하게 */
+    font-weight: 700;
     z-index: 101;
-    background: rgba(255, 255, 255, 0.8);
-    padding: 2px 8px;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.5);
+    padding: 1px 6px;
+    border-radius: 4px;
 }
 
 /* 햄버거 메뉴 */
@@ -156,9 +157,15 @@
     border: none;
     font-size: 1.6em;
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 0px 8px;
+    /* 위아래 패딩 제거 */
+    margin-top: -5px;
+    /* 위로 더 올림 */
     color: #333;
     transition: transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .hamburger-btn:active {

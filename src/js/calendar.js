@@ -181,6 +181,13 @@ async function loadAllData() {
         if (btnFull) btnFull.style.display = 'none';
 
         showLoading(true, "로딩 완료!", "화면으로 이동합니다.", 100);
+        // [V3.6.7] 연간 일정에서도 현재 월로 스크롤 보정 (상단 밀착)
+        const currentMonthTitle = academicGrid.querySelector(`[data-month="${month}"]`);
+        if (currentMonthTitle) {
+            setTimeout(() => {
+                academicGrid.scrollTop = currentMonthTitle.offsetTop - 5;
+            }, 100);
+        }
     } catch (e) {
         clearInterval(interval);
         console.error("Fetch All Error:", e);
@@ -551,45 +558,31 @@ function scrollToRelevantDate() {
             }
         }
     } else {
-        // [V3.6.5] 스크롤 무결성 최적화
-        const scrollToTarget = () => {
+        // [V3.6.7] 무결점 스크롤 최종본: 재귀적 시도 + requestAnimationFrame 레이아웃 대기
+        const tryScroll = (retryCount = 0) => {
             let targetCard = document.querySelector('.day-card.today');
-
-            // [V3.6.6] 주말(토/일)이라 오늘 카드가 없을 경우, 가장 마지막에 그려진 카드(금요일)로 스크롤
             if (!targetCard) {
                 const allCards = document.querySelectorAll('.day-card');
-                if (allCards.length > 0) {
-                    targetCard = allCards[allCards.length - 1]; // 현재 리스트 중 최신 평일
-                }
+                if (allCards.length > 0) targetCard = allCards[allCards.length - 1];
             }
 
             if (targetCard) {
-                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                setTimeout(() => {
-                    const headerOffset = 110;
-                    const elementPosition = targetCard.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    });
-                }, 500);
+                const headerHeight = 110;
+                const targetY = targetCard.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+                window.scrollTo({ top: targetY, behavior: retryCount > 0 ? 'smooth' : 'auto' });
+
+                // 한 번 더 확인하여 보정
+                if (retryCount < 3) {
+                    setTimeout(() => tryScroll(retryCount + 1), 200);
+                }
+            } else if (retryCount < 10) {
+                // 아직 카드가 없으면 더 기다림
+                setTimeout(() => tryScroll(retryCount + 1), 100);
             }
         };
 
-        setTimeout(scrollToTarget, 300);
-
-        const listContainer = document.getElementById('day-list');
-        if (listContainer) {
-            const observer = new MutationObserver(() => {
-                if (document.querySelectorAll('.day-card').length > 0) {
-                    scrollToTarget();
-                    observer.disconnect();
-                }
-            });
-            observer.observe(listContainer, { childList: true, subtree: true });
-            setTimeout(() => observer.disconnect(), 2000);
-        }
+        // 즉시 실행 및 지연 실행 병행
+        requestAnimationFrame(() => tryScroll());
     }
 }
 
