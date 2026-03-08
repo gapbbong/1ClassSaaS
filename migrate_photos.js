@@ -27,50 +27,67 @@ async function migrateLocalPhotos() {
     }
 
     try {
-        // 0. 스토리지 버킷 존재 여부 확인 및 생성
+        // 0. 스토리지 버킷 확인 및 생성
         console.log('📦 스토리지 버킷 확인 중...');
         const { data: buckets } = await supabase.storage.listBuckets();
-        const bucketExists = buckets.find(b => b.name === 'student-photos');
+        const bucketExists = buckets?.find(b => b.name === 'student-photos');
 
         if (!bucketExists) {
-            console.log('🆕 [student-photos] 버킷이 없어 새로 생성합니다...');
+            console.log('🆕 [student-photos] 버킷 생성...');
             const { error: createError } = await supabase.storage.createBucket('student-photos', {
                 public: true,
-                fileSizeLimit: 52428800 // 50MB
+                fileSizeLimit: 52428800
             });
             if (createError) throw createError;
-            console.log('✅ 버킷 생성 완료!');
         }
 
-        // 1. 폴더 내 파일 목록 가져오기
-        const files = fs.readdirSync(PHOTO_DIR).filter(file =>
-            ['.jpg', '.jpeg', '.png'].includes(path.extname(file).toLowerCase())
-        );
+        // 1. 재귀적으로 모든 이미지 파일 찾기
+        const allFiles = [];
+        const walkSync = (dir) => {
+            const files = fs.readdirSync(dir);
+            files.forEach(file => {
+                const filePath = path.join(dir, file);
+                if (fs.statSync(filePath).isDirectory()) {
+                    walkSync(filePath);
+                } else {
+                    const ext = path.extname(file).toLowerCase();
+                    if (['.jpg', '.jpeg', '.png'].includes(ext)) {
+                        allFiles.push(filePath);
+                    }
+                }
+            });
+        };
+        walkSync(PHOTO_DIR);
 
-        if (files.length === 0) {
+        if (allFiles.length === 0) {
             console.log('📭 이관할 사진 파일이 없습니다.');
             return;
         }
 
-        console.log(`📸 총 ${files.length}장의 사진을 발견했습니다.`);
+        console.log(`📸 총 ${allFiles.length}장의 사진을 발견했습니다.`);
 
-        for (const file of files) {
-            const filePath = path.join(PHOTO_DIR, file);
-            const studentId = path.parse(file).name; // 파일명(학번) 추출
+        for (const filePath of allFiles) {
+            const fileName = path.basename(filePath);
+            const ext = path.extname(fileName).toLowerCase();
+
+            // 학번 추출: 파일명에서 숫자 4자리를 우선 찾습니다.
+            const match = fileName.match(/\d{4,}/);
+            if (!match) {
+                console.warn(`⚠️ [${fileName}] 학번을 추출할 수 없어 건너뜁니다.`);
+                continue;
+            }
+            const studentId = match[0];
 
             try {
-                console.log(`⌛ [${studentId}] 업로드 중 (원본 크기 유지)...`);
+                console.log(`⌛ [${studentId}] 업로드 중... (${fileName})`);
+                const buffer = fs.readFileSync(filePath);
 
-                // 2. 이미지 최적화 (사용자 요청: 원본 크기 유지, 고품질)
-                // sharp를 쓰지 않고 fs.readFileSync로 바로 올려도 되지만, 
-                // 포맷 통일이나 메타데이터 정리를 위해 품질 95%로 처리합니다.
-                const optimizedBuffer = await sharp(filePath)
-                    .jpeg({ quality: 95 })
+                const optimizedBuffer = await sharp(buffer)
+                    .jpeg({ quality: 90 })
                     .toBuffer();
 
-                // 3. Supabase Storage 업로드
-                const storagePath = `${ACADEMIC_YEAR}/${file}`;
-                const { data, error: uploadError } = await supabase.storage
+                const storagePath = `${ACADEMIC_YEAR}/${studentId}${ext}`;
+                const { error: uploadError } = await supabase.storage
                     .from('student-photos')
                     .upload(storagePath, optimizedBuffer, {
                         contentType: 'image/jpeg',
@@ -79,25 +96,24 @@ async function migrateLocalPhotos() {
 
                 if (uploadError) throw uploadError;
 
-                // 4. 공용 URL 생성
                 const { data: { publicUrl } } = supabase.storage
                     .from('student-photos')
                     .getPublicUrl(storagePath);
 
-                // 5. DB 업데이트 (students 테이블의 photo_url 컬럼)
+                // DB 업데이트
                 const { error: dbError } = await supabase
                     .from('students')
                     .update({ photo_url: publicUrl })
-                    .eq('student_id', studentId);
+                    .eq('student_id', studentId)
+                    .eq('academic_year', ACADEMIC_YEAR);
 
                 if (dbError) {
-                    console.warn(`⚠️ [${studentId}] DB 업데이트 실패 (학번 확인 필요):`, dbError.message);
+                    console.warn(`⚠️ [${studentId}] DB 업데이트 실패:`, dbError.message);
                 } else {
-                    console.log(`✅ [${studentId}] 이관 및 DB 연결 성공!`);
+                    console.log(`✅ [${studentId}] 이관 성공!`);
                 }
-
             } catch (err) {
-                console.error(`❌ [${file}] 처리 중 에러:`, err.message);
+                console.error(`❌ [${fileName}] 처리 중 에러:`, err.message);
             }
         }
 

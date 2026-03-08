@@ -400,9 +400,12 @@ function loadStudents() {
                             }
                         }
                     } else if (status === "graduated") {
-                        statusBadge.classList.add("graduated");
-                        statusBadge.textContent = "졸업";
-                        imgContainer.appendChild(statusBadge);
+                        // 2025학년도 아카이브에서는 졸업 배지를 숨깁니다.
+                        if (year !== '2025') {
+                            statusBadge.classList.add("graduated");
+                            statusBadge.textContent = "졸업";
+                            imgContainer.appendChild(statusBadge);
+                        }
                     } else {
                         statusBadge.textContent = status;
                         imgContainer.appendChild(statusBadge);
