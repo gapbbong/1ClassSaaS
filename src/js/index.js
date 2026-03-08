@@ -11,6 +11,10 @@ console.log("index.js loaded successfully");
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOMContentLoaded triggered");
+
+  // [v4.15] 스플래시 화면 최소 노출 시간 (1.2초)
+  const splashPromise = new Promise(resolve => setTimeout(resolve, 1200));
+
   try {
     // 인증 체크
     console.log("Starting authentication check...");
@@ -74,6 +78,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     container.classList.remove("loading-records");
     console.log("Startup process finished successfully.");
+
+    // [v4.15] 데이터 로딩 완료 후 스플래시 화면 제거
+    await splashPromise;
+    const splash = document.getElementById("splash-screen");
+    if (splash) {
+      splash.classList.add("fade-out");
+      setTimeout(() => splash.remove(), 600); // 트랜지션 완료 후 제거
+    }
 
   } catch (error) {
     console.error("CRITICAL ERROR during index load:", error);
