@@ -30,6 +30,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 5. 사진 크기 조절 초기화
     initSizeControl();
 
+    // Activities logging
+    const { getCurrentTeacherEmail, logPageView } = await import('./api.js');
+    const myEmail = getCurrentTeacherEmail();
+    if (myEmail) {
+        logPageView(myEmail, "일괄 기록");
+    }
+
     // [추가] 폰/브라우저 뒤로가기 버튼과 연결 (데이터 유실 방지)
     window.addEventListener("beforeunload", (e) => {
         if (selectedStudents.length > 0) {

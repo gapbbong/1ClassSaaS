@@ -6,6 +6,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadTodayRecords();
     subscribeToChanges();
     initLogout();
+
+    // 활동 로그 기록
+    const { getCurrentTeacherEmail, logPageView } = await import('./api.js');
+    const myEmail = getCurrentTeacherEmail();
+    if (myEmail) {
+        logPageView(myEmail, "지킴이 대시보드");
+    }
 });
 
 // 권한 체킹 (임시로 넘어가거나, localStorage 토큰 체킹)

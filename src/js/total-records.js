@@ -16,6 +16,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateTitle(grade, classNum);
     setupSortControls();
 
+    // 활동 로그 기록
+    const { getCurrentTeacherEmail, logPageView } = await import('./api.js');
+    const myEmail = getCurrentTeacherEmail();
+    if (myEmail) {
+        const pageLabel = grade && classNum ? `전체 기록 (${grade}-${classNum})` : "전체 기록 조회";
+        logPageView(myEmail, pageLabel);
+    }
+
     await loadRecords(grade, classNum);
 });
 

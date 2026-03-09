@@ -15,6 +15,15 @@ document.addEventListener("DOMContentLoaded", () => {
     initTeacherAuth(); // 교사 권한 초기화 추가
     initOwnerBatch(); // 소유자 전용 배치 분석 초기화
 
+    // 활동 로그 기록
+    (async () => {
+        const { getCurrentTeacherEmail, logPageView } = await import('./api.js');
+        const myEmail = getCurrentTeacherEmail();
+        if (myEmail) {
+            logPageView(myEmail, "AI 통합 분석");
+        }
+    })();
+
     // Check URL parameters for direct student search
     const urlParams = new URLSearchParams(window.location.search);
     const sid = urlParams.get("sid");

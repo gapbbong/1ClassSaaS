@@ -1,5 +1,20 @@
 import { API_CONFIG } from './config.js';
 import { supabase } from './supabase.js';
+import CryptoJS from 'crypto-js';
+
+/**
+ * 로컬 스토리지의 토큰을 복호화하여 현재 교사 이메일을 반환합니다.
+ */
+export function getCurrentTeacherEmail() {
+    const encrypted = localStorage.getItem('teacher_auth_token');
+    if (!encrypted) return "";
+    try {
+        const bytes = CryptoJS.AES.decrypt(encrypted, API_CONFIG.SECRET_KEY);
+        return bytes.toString(CryptoJS.enc.Utf8);
+    } catch (e) {
+        return "";
+    }
+}
 
 /**
  * 학생 기록을 조회합니다. (Supabase 버전)
