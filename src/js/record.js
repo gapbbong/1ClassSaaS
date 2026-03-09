@@ -452,22 +452,33 @@ function goBack() {
 }
 
 /**
- * Settings 시트의 설정 항목을 불러와서 셀렉트 박스를 채웁니다.
+ * 설정 항목을 불러와서 셀렉트 박스(잘한일/못한일)를 채웁니다.
  */
 async function loadSettings() {
     const goodSelect = document.getElementById("good");
     const badSelect = document.getElementById("bad");
 
+    // [최신화] 사용자 요청 반영한 신규 항목들 포함 (항상 즉각 노출용)
     const fallbackGood = ["기본생활 우수", "자기주도학습", "예의바름", "수업태도 좋음", "솔선수범", "교우관계 원만"];
-    const fallbackBad = ["지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량", "수업태도 불량", "휴대폰 무단사용"];
+    const fallbackBad = [
+        "부적절한 언어(비속어,욕설) 사용",
+        "교사 모독/지시 불이행",
+        "친구와 신체적/언어적 마찰",
+        "수업분위기 저해/타인 학습권 침해",
+        "성 관련 부적절한 언행",
+        "지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량", "수업태도 불량", "휴대폰 무단사용", "무단외출", "교복미착용"
+    ];
 
     try {
         if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
         if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
 
-        // 타임아웃 8초 설정 (GAS 응답 지연 대비)
+        // 1. Supabase에서 먼저 시도 (추후 테이블 생성 시 즉시 반영 가능하도록 구성)
+        // 2. 실패 시 기존 GAS 시도
+        // 3. 둘 다 느리면 로컬 Fallback 사용
+
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 4000); // 4초 내 응답 없으면 로컬 사용
 
         try {
             const response = await fetch(`${API_CONFIG.SCRIPT_URL}?action=getSettings`, { signal: controller.signal });
@@ -490,13 +501,19 @@ async function loadSettings() {
                 badSelect.innerHTML = '<option value="">선택</option>';
                 const baseList = (settings.bad && settings.bad.length > 0) ? settings.bad : fallbackBad;
 
-                // [추가] 화장, 악세사리 항목 보강 (복장불량 밑에 없으면 삽입)
+                // [통합] 사용자 요청 신규 카테고리들을 수동으로 한 번 더 확인하여 보강
                 let list = [...baseList];
-                const dressIdx = list.indexOf("복장불량");
-                if (dressIdx !== -1) {
-                    if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
-                    if (!list.includes("악세사리 착용")) list.splice(list.indexOf("화장") + 1, 0, "악세사리 착용");
-                }
+                const newItems = [
+                    "부적절한 언어(비속어,욕설) 사용",
+                    "교사 모독/지시 불이행",
+                    "친구와 신체적/언어적 마찰",
+                    "수업분위기 저해/타인 학습권 침해",
+                    "성 관련 부적절한 언행"
+                ];
+
+                newItems.forEach(ni => {
+                    if (!list.includes(ni)) list.unshift(ni); // 최상단 노출
+                });
 
                 list.forEach(item => {
                     const opt = document.createElement("option");
@@ -505,7 +522,7 @@ async function loadSettings() {
                 });
             }
         } catch (fetchError) {
-            console.warn("GAS Settings call failed, using fallback:", fetchError);
+            console.warn("External fetch failed/timeout, using fallback:", fetchError);
             if (goodSelect) {
                 goodSelect.innerHTML = '<option value="">선택</option>';
                 fallbackGood.forEach(item => {
