@@ -735,12 +735,18 @@ async function showPopup(student) {
     const currentClassInfo = window.classInfoData ? window.classInfoData.find(c => c.grade === grade && c.class === classNum) : null;
 
     // 관리자/소유자/상담교사 권한 체크
-    const isAdmin = window.currentTeacher && (window.currentTeacher.role === 'admin' || window.currentTeacher.role === 'counselor' || window.currentTeacher.email.toLowerCase() === 'gapbbong@naver.com');
+    const isAdmin = window.currentTeacher && (
+        window.currentTeacher.role === 'admin' ||
+        window.currentTeacher.role === 'counselor' ||
+        window.currentTeacher.email.toLowerCase() === 'gapbbong@naver.com' ||
+        window.currentTeacher.email.toLowerCase() === 'assaree0306@naver.com'
+    );
 
     const isAuthorized = isAdmin || (currentClassInfo && (
         currentClassInfo.homeroomEmail === myEmail ||
         currentClassInfo.subEmail === myEmail ||
-        myEmail === 'assari@kse.hs.kr'
+        myEmail === 'assari@kse.hs.kr' ||
+        myEmail === 'assaree0306@naver.com'
     ));
 
     if (!isAuthorized) {

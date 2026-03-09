@@ -638,11 +638,13 @@ async function openSurveyPopup(e, targetId = null) {
     const sClass = parseInt(studentIdStr.substring(1, 2));
 
     const currentClassInfo = classInfoArr ? classInfoArr.find(c => c.grade === sGrade && c.class === sClass) : null;
-    const isAuthorized = currentClassInfo && (
+    // 관리자/상담교사 또는 본인 학급 여부 확인
+    const isAdmin = myEmail === 'assari@kse.hs.kr' || myEmail === 'gapbbong@naver.com' || myEmail === 'assaree0306@naver.com';
+
+    const isAuthorized = isAdmin || (currentClassInfo && (
         currentClassInfo.homeroomEmail === myEmail ||
-        currentClassInfo.subEmail === myEmail ||
-        myEmail === 'assari@kse.hs.kr'
-    );
+        currentClassInfo.subEmail === myEmail
+    ));
 
     if (!isAuthorized) {
         infoHtml3 = `<div class="no-access-msg" style="padding:24px; text-align:center; color:#999; font-size:0.9em;">

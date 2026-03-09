@@ -649,18 +649,20 @@ async function checkClassAnalysisPermission() {
     const keeperBtn = document.getElementById("menu-keeper");
 
     // [추가] 소유자(관리자) 전용 메뉴 노출
-    if (keeperBtn && (email === 'gapbbong@naver.com' || email === 'assari@kse.hs.kr')) {
+    const isAdminEmail = email === 'gapbbong@naver.com' || email === 'assari@kse.hs.kr' || email === 'assaree0306@naver.com';
+
+    if (keeperBtn && isAdminEmail) {
       keeperBtn.style.display = "block";
     }
 
-    if (menuBtn && teacher && (teacher.role === 'homeroom_teacher' || teacher.role === 'admin' || email === 'assari@kse.hs.kr' || email === 'gapbbong@naver.com')) {
+    if (menuBtn && teacher && (teacher.role === 'admin' || teacher.role === 'homeroom_teacher' || isAdminEmail)) {
       menuBtn.style.display = "block";
 
       // 링크 설정: assigned_class가 있으면 해당 반으로, 없는데 관리자면 1-1로
       let g = "1", c = "1";
       if (teacher.assigned_class) {
         [g, c] = teacher.assigned_class.split('-');
-      } else if (teacher.role === 'admin' || email === 'assari@kse.hs.kr') {
+      } else if (teacher.role === 'admin' || isAdminEmail) {
         // 관리자인데 담임반이 없는 경우 기본 1-1
         g = "1"; c = "1";
       }
