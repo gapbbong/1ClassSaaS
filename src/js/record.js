@@ -458,62 +458,73 @@ async function loadSettings() {
     const goodSelect = document.getElementById("good");
     const badSelect = document.getElementById("bad");
 
+    const fallbackGood = ["기본생활 우수", "자기주도학습", "예의바름", "수업태도 좋음", "솔선수범", "교우관계 원만"];
+    const fallbackBad = ["지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량", "수업태도 불량", "휴대폰 무단사용"];
+
     try {
         if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
         if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
 
-        const response = await fetch(`${API_CONFIG.SCRIPT_URL}?action=getSettings`);
-        if (!response.ok) throw new Error("Network response was not ok");
-        const settings = await response.json();
+        // 타임아웃 8초 설정 (GAS 응답 지연 대비)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        if (goodSelect) {
-            goodSelect.innerHTML = '<option value="">선택</option>';
-            if (settings.good && Array.isArray(settings.good)) {
-                settings.good.forEach(item => {
+        try {
+            const response = await fetch(`${API_CONFIG.SCRIPT_URL}?action=getSettings`, { signal: controller.signal });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) throw new Error("Network response was not ok");
+            const settings = await response.json();
+
+            if (goodSelect) {
+                goodSelect.innerHTML = '<option value="">선택</option>';
+                const goodList = (settings.good && settings.good.length > 0) ? settings.good : fallbackGood;
+                goodList.forEach(item => {
                     const opt = document.createElement("option");
-                    opt.value = item;
-                    opt.textContent = item;
+                    opt.value = opt.textContent = item;
                     goodSelect.appendChild(opt);
                 });
             }
-        }
 
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
-            if (settings.bad && Array.isArray(settings.bad)) {
+            if (badSelect) {
+                badSelect.innerHTML = '<option value="">선택</option>';
+                const baseList = (settings.bad && settings.bad.length > 0) ? settings.bad : fallbackBad;
+
                 // [추가] 화장, 악세사리 항목 보강 (복장불량 밑에 없으면 삽입)
-                let list = [...settings.bad];
+                let list = [...baseList];
                 const dressIdx = list.indexOf("복장불량");
                 if (dressIdx !== -1) {
                     if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
                     if (!list.includes("악세사리 착용")) list.splice(list.indexOf("화장") + 1, 0, "악세사리 착용");
-                } else {
-                    if (!list.includes("화장")) list.push("화장");
-                    if (!list.includes("악세사리 착용")) list.push("악세사리 착용");
                 }
 
                 list.forEach(item => {
                     const opt = document.createElement("option");
-                    opt.value = item;
-                    opt.textContent = item;
+                    opt.value = opt.textContent = item;
+                    badSelect.appendChild(opt);
+                });
+            }
+        } catch (fetchError) {
+            console.warn("GAS Settings call failed, using fallback:", fetchError);
+            if (goodSelect) {
+                goodSelect.innerHTML = '<option value="">선택</option>';
+                fallbackGood.forEach(item => {
+                    const opt = document.createElement("option");
+                    opt.value = opt.textContent = item;
+                    goodSelect.appendChild(opt);
+                });
+            }
+            if (badSelect) {
+                badSelect.innerHTML = '<option value="">선택</option>';
+                fallbackBad.forEach(item => {
+                    const opt = document.createElement("option");
+                    opt.value = opt.textContent = item;
                     badSelect.appendChild(opt);
                 });
             }
         }
-    } catch (error) {
-        console.error("Settings Load Error:", error);
-        // 실패 시 기본 항목이라도 표시
-        const badItems = ["지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량"];
-        if (goodSelect) goodSelect.innerHTML = '<option value="">선택</option>';
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
-            badItems.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = item;
-                opt.textContent = item;
-                badSelect.appendChild(opt);
-            });
-        }
+    } catch (criticalError) {
+        console.error("Critical LoadSettings Error:", criticalError);
     }
 }
 
