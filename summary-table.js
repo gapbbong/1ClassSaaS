@@ -26,7 +26,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const status = String(rawStatus ?? '').trim();
 
       if (grade === 0 && cls === 0) return;
-      if (status === "자퇴" || status === "전출") return;
+      if (status.includes("자퇴") || status.includes("전출")) return;
 
       const key = `${grade}-${cls}`;
       if (!classStats[key]) classStats[key] = { 남: 0, 여: 0, 합계: 0, 위탁: 0 };

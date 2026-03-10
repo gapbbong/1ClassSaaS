@@ -28,6 +28,10 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
                 const data = await fetchAllStudents();
                 const results = data.filter(student => {
+                    // [추가] 전출/자퇴생은 검색 결과(현황)에서 제외
+                    const status = String(student["학적"] || "").trim();
+                    if (status.includes("전출") || status.includes("자퇴")) return false;
+
                     if (category === "학생폰") {
                         return (
                             (student["학생폰"] && student["학생폰"].includes(keyword)) ||

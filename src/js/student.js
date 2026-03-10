@@ -317,8 +317,11 @@ function loadStudents() {
                 return;
             }
 
-            // 해당 반 학생 필터링
-            const filtered = data;
+            // 해당 반 학생 필터링 (전출, 자퇴생 제외 - 사용자 요청)
+            const filtered = data.filter(s => {
+                const status = String(s["학적"] || "").trim();
+                return !status.includes("전출") && !status.includes("자퇴");
+            });
 
             // 학급 전체 기록 건수 합산
             const totalClassRecords = filtered.reduce((acc, s) => acc + (parseInt(s.recordCount) || 0), 0);

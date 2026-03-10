@@ -90,7 +90,14 @@ function mapStudentData(s) {
         "출신중": s.middle_school || s["출신중"] || "", // 검색 페이지 연동용
         "보호자연락처": s.parent_contact || "",
         "보호자관계": s.parent_relation || "",
-        "학적": s.status === 'active' ? '재학' : (s.status === 'transferred' ? '전출' : (s.status === 'withdrawn' ? '자퇴' : s.status)),
+        "학적": (() => {
+            const st = String(s.status || "").toLowerCase().trim();
+            if (st === 'active' || st === '재학') return '재학';
+            if (st === 'transferred' || st === '전출') return '전출';
+            if (st === 'withdrawn' || st === 'dropout' || st === '자퇴') return '자퇴';
+            if (st === 'graduated' || st === '졸업') return '졸업';
+            return s.status || '재학';
+        })(),
     };
 }
 
