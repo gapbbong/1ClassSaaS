@@ -317,14 +317,16 @@ function loadStudents() {
                 return;
             }
 
-            // 해당 반 학생 필터링 (전출, 자퇴생 제외 - 사용자 요청)
-            const filtered = data.filter(s => {
-                const status = String(s["학적"] || "").trim();
-                return !status.includes("전출") && !status.includes("자퇴");
-            });
+            // 해당 반 학생 전체 (전출, 자퇴생 포함 - 스타일로 구분)
+            const filtered = data;
 
-            // 학급 전체 기록 건수 합산
-            const totalClassRecords = filtered.reduce((acc, s) => acc + (parseInt(s.recordCount) || 0), 0);
+            // 학급 전체 기록 건수 합산 (재학생 기준 - 자퇴/전출 제외)
+            const totalClassRecords = filtered.reduce((acc, s) => {
+                const status = String(s["학적"] || "").trim();
+                const isInactive = status.includes("자퇴") || status.includes("전출");
+                return isInactive ? acc : acc + (parseInt(s.recordCount) || 0);
+            }, 0);
+
             const titleElement = document.getElementById("class-title");
             if (titleElement && grade && classNum) {
                 titleElement.innerHTML = `${grade}학년 ${classNum}반 <span style="font-size: 0.65em; color: #64748b; font-weight: 500; margin-left: 6px;">(${totalClassRecords}건)</span>`;
@@ -340,9 +342,9 @@ function loadStudents() {
                 const container = document.createElement("div");
                 container.className = "student";
 
-                // 학적 상태에 따른 스타일 (자퇴/전출 등)
-                const status = student["학적"] || "";
-                const isInactive = status === "자퇴" || status === "전출";
+                // 학적 상태에 따른 스타일 (자퇴/전출 등 - 약간 흐리게 처리)
+                const status = String(student["학적"] || "").trim();
+                const isInactive = status.includes("자퇴") || status.includes("전출");
                 if (isInactive) {
                     container.classList.add("inactive");
                 }
