@@ -44,12 +44,20 @@ const urlParams = new URLSearchParams(window.location.search);
 const studentName = urlParams.get("name") || "";
 const num = urlParams.get("num") || "";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
     setupHeader();
     setupForm();
     loadSettings();
     loadRecords();
     initSurveyPopup();
+
+    // 활동 로그 기록
+    const myEmail = getFullStoredEmail();
+    if (myEmail) {
+        const { logPageView } = await import('./api.js');
+        const pageLabel = studentName ? `생활기록 (${studentName})` : "생활기록";
+        logPageView(myEmail, pageLabel);
+    }
 });
 
 function setupHeader() {

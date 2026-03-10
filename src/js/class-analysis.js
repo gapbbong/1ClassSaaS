@@ -15,6 +15,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
             const bytes = CryptoJS.AES.decrypt(encrypted, SECRET_KEY);
             userEmail = bytes.toString(CryptoJS.enc.Utf8);
+            if (userEmail) {
+                const { logPageView } = await import('./api.js');
+                const pageLabel = grade && classNum ? `학급 분석 (${grade}-${classNum})` : "학급 분석";
+                logPageView(userEmail, pageLabel);
+            }
         } catch (e) { }
     }
 

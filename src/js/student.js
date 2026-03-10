@@ -60,6 +60,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const myEmail = getFullStoredEmail();
     if (myEmail) {
         window.currentTeacher = await getTeacherProfile(myEmail);
+        // 활동 로그 기록
+        const pageLabel = grade && classNum ? `학급 명렬 (${grade}-${classNum})` : "학급 명렬";
+        const { logPageView } = await import('./api.js');
+        logPageView(myEmail, pageLabel);
     }
 
     // 1. 타이틀 및 교사 정보 설정
