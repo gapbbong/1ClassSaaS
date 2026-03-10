@@ -92,10 +92,10 @@ function mapStudentData(s) {
         "보호자관계": s.parent_relation || "",
         "학적": (() => {
             const st = String(s.status || "").toLowerCase().trim();
-            if (st === 'active' || st === '재학') return '재학';
-            if (st === 'transferred' || st === '전출') return '전출';
-            if (st === 'withdrawn' || st === 'dropout' || st === '자퇴') return '자퇴';
-            if (st === 'graduated' || st === '졸업') return '졸업';
+            if (st === 'active' || st.includes('재학')) return '재학';
+            if (st === 'transferred' || st.includes('전출')) return '전출';
+            if (st === 'withdrawn' || st === 'dropout' || st.includes('자퇴')) return '자퇴';
+            if (st === 'graduated' || st.includes('졸업')) return '졸업';
             return s.status || '재학';
         })(),
     };
