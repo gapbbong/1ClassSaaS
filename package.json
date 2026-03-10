@@ -1,6 +1,6 @@
 {
   "name": "oneclass25",
-  "version": "4.16",
+  "version": "4.17",
   "type": "module",
   "main": "service-worker.js",
   "scripts": {
@@ -28,5 +28,5 @@
     "iconv-lite": "^0.7.2",
     "sharp": "^0.34.5"
   },
-  "description": "OneClass 2025 - v4.16"
+  "description": "OneClass 2025 - v4.17"
 }
