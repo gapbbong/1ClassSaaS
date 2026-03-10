@@ -283,7 +283,12 @@ async function initAuth() {
   titleBar.style.display = 'none';
   classGrid.style.display = 'none';
 
+  // [v4.15.4] 인증 모달이 스플래시 화면(z-index: 99999)에 가려지는 문제 해결
+  const splash = document.getElementById("splash-screen");
+  if (splash) splash.remove();
+
   authModal.style.display = 'flex';
+  authModal.style.zIndex = '100001'; // 스플래시보다 높게 설정
   authModal.style.backgroundColor = 'rgba(255,255,255,1)'; // 불투명하게 덮기
 
   return new Promise((resolve) => {
