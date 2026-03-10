@@ -126,6 +126,11 @@ function loadSummaryTable(data) {
         grouped[g].push(row);
     });
 
+    let html = `
+        <table class="summary-table">
+            <tr><th>학년/학과</th><th>남</th><th>여</th><th>위탁</th><th>과별합</th></tr>
+    `;
+
     let totalM = 0, totalF = 0, totalW = 0, totalH = 0;
 
     for (const grade in grouped) {
