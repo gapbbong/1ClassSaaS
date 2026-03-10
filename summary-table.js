@@ -21,7 +21,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     data.forEach(s => {
       const grade = parseInt(s.grade);
       const cls = parseInt(s.class);
-      const gender = s.gender?.trim();
+      const gender = String(s.gender || "").trim();
       const rawStatus = s.status;
       const status = String(rawStatus ?? '').trim();
 
@@ -32,9 +32,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!classStats[key]) classStats[key] = { 남: 0, 여: 0, 합계: 0, 위탁: 0 };
 
       classStats[key].합계++;
-      if (status === "위탁") classStats[key].위탁++;
-      if (gender === "남") classStats[key].남++;
-      else if (gender === "여") classStats[key].여++;
+      if (status.includes("위탁")) classStats[key].위탁++;
+      if (gender === "남" || gender === "남자") classStats[key].남++;
+      else if (gender === "여" || gender === "여자") classStats[key].여++;
 
       let dept = "";
       if ([1, 2, 3].includes(cls)) dept = "IoT전기과";
@@ -47,9 +47,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       if (!gradeDeptStats[grade] || !gradeDeptStats[grade][dept]) return;
 
       gradeDeptStats[grade][dept].합계++;
-      if (status === "위탁") gradeDeptStats[grade][dept].위탁++;
-      if (gender === "남") gradeDeptStats[grade][dept].남++;
-      else if (gender === "여") gradeDeptStats[grade][dept].여++;
+      if (status.includes("위탁")) gradeDeptStats[grade][dept].위탁++;
+      if (gender === "남" || gender === "남자") gradeDeptStats[grade][dept].남++;
+      else if (gender === "여" || gender === "여자") gradeDeptStats[grade][dept].여++;
     });
 
     let html = "";

@@ -102,10 +102,13 @@ function loadSummaryTable(data) {
         else if (grade >= 2 && [4, 5, 6].includes(cls)) major = "전자제어과";
 
         const key = `${grade}-${major}`;
-        if (!summary[key]) summary[key] = { grade, major, m: 0, f: 0, witak: 0 };
+        if (!summary[key]) summary[key] = { grade, major, m: 0, f: 0, witak: 0, headcount: 0 };
 
-        if (s["성별"] === "남" || s["성별"] === "남자") summary[key].m++;
-        else if (s["성별"] === "여" || s["성별"] === "여자") summary[key].f++;
+        summary[key].headcount++; // 실제 인원수 증가
+
+        const gender = String(s["성별"] || "").trim();
+        if (gender === "남" || gender === "남자") summary[key].m++;
+        else if (gender === "여" || gender === "여자") summary[key].f++;
 
         if (status.includes("위탁")) summary[key].witak++;
     });
@@ -123,22 +126,18 @@ function loadSummaryTable(data) {
         grouped[g].push(row);
     });
 
-    let html = `
-        <table class="summary-table">
-            <tr><th>학년/학과</th><th>남</th><th>여</th><th>위탁</th><th>과별합</th></tr>
-    `;
-
-    let totalM = 0, totalF = 0, totalW = 0;
+    let totalM = 0, totalF = 0, totalW = 0, totalH = 0;
 
     for (const grade in grouped) {
         const rows = grouped[grade];
-        let subM = 0, subF = 0, subW = 0;
+        let subM = 0, subF = 0, subW = 0, subH = 0;
 
         rows.forEach(r => {
-            const sum = r.m + r.f + r.witak;
+            const sum = r.headcount; // r.m + r.f + r.witak 대신 r.headcount 사용
             subM += r.m;
             subF += r.f;
             subW += r.witak;
+            subH += sum;
             html += `<tr>
                 <td>${r.grade}학년 ${r.major}</td>
                 <td>${r.m}</td>
@@ -148,7 +147,7 @@ function loadSummaryTable(data) {
             </tr>`;
         });
 
-        const subTotal = subM + subF + subW;
+        const subTotal = subH; // 성별+위탁 합산 대신 실제 인원수 합산 사용
         html += `<tr class="subtotal">
             <td><b>${grade}학년 성별합계</b></td>
             <td><b>${subM}</b></td>
@@ -160,9 +159,10 @@ function loadSummaryTable(data) {
         totalM += subM;
         totalF += subF;
         totalW += subW;
+        totalH += subH;
     }
 
-    const grandTotal = totalM + totalF + totalW;
+    const grandTotal = totalH; // 실제 누적 합계 사용
     html += `
         <tr class="grandtotal">
             <td><b>전교생</b></td>
@@ -192,8 +192,10 @@ function loadSummaryTable(data) {
         const key = `${grade}-${cls}`;
         if (!classSummary[key]) classSummary[key] = { m: 0, f: 0, total: 0, witak: 0 };
 
-        if (s["성별"] === "남") classSummary[key].m++;
-        else if (s["성별"] === "여") classSummary[key].f++;
+        const gender = String(s["성별"] || "").trim();
+        if (gender === "남" || gender === "남자") classSummary[key].m++;
+        else if (gender === "여" || gender === "여자") classSummary[key].f++;
+
         classSummary[key].total++;
         if (status.includes("위탁")) classSummary[key].witak++;
     });
