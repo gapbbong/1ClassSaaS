@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>일괄 생활기록</title>
-    <link rel="stylesheet" href="src/css/main.css?v=4.21">
-    <link rel="stylesheet" href="src/css/bulk-record.css?v=4.21">
+    <link rel="stylesheet" href="src/css/main.css?v=4.22">
+    <link rel="stylesheet" href="src/css/bulk-record.css?v=4.22">
 
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
@@ -53,11 +53,6 @@
 
         <!-- 2. 공통 기록 폼 -->
         <div class="section form-section">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: bold; margin-bottom: 8px; display: block;">📅 기록 일시 (수정 가능)</label>
-                <input type="datetime-local" id="record-time" class="time-input" style="width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; font-size: 1rem;">
-            </div>
-
             <div class="form-row">
                 <div class="form-group">
                     <label>잘한 일</label>
@@ -71,6 +66,15 @@
                         <option value="">선택</option>
                     </select>
                 </div>
+            </div>
+
+            <!-- [v4.22] 기록 시간 선택 (선택형으로 변경) -->
+            <div class="form-group" style="margin: 15px 0; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <input type="checkbox" id="use-custom-time" style="width: 18px; height: 18px; cursor: pointer;">
+                    <label for="use-custom-time" style="font-size: 0.9rem; font-weight: 700; color: #475569; cursor: pointer;">📅 기록 시간 직접 설정 (소급 입력)</label>
+                </div>
+                <input type="datetime-local" id="record-time" disabled style="width: 100%; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.95rem; background: #f1f5f9; outline: none; transition: all 0.2s;">
             </div>
 
             <div class="form-group">
@@ -100,7 +104,7 @@
         </div>
     </div>
 
-    <script type="module" src="src/js/bulk-record.js?v=4.21"></script>
+    <script type="module" src="src/js/bulk-record.js?v=4.22"></script>
 </body>
 
 </html>

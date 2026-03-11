@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>학생 생활기록</title>
-  <link rel="stylesheet" href="src/css/main.css?v=4.21">
-  <link rel="stylesheet" href="src/css/stu-list.css?v=4.21">
-  <link rel="stylesheet" href="src/css/record.css?v=4.21">
+  <link rel="stylesheet" href="src/css/main.css?v=4.22">
+  <link rel="stylesheet" href="src/css/stu-list.css?v=4.22">
+  <link rel="stylesheet" href="src/css/record.css?v=4.22">
 
   <script type="text/javascript">
     (function (c, l, a, r, i, t, y) {
@@ -31,12 +31,6 @@
 
   <form id="recordForm">
     <!-- 숨김 필드 -->
-    <!-- 기록 시간 선택 (과거 시간 소급 가능) -->
-    <div style="padding: 15px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-      <label for="recordTime" style="display: block; font-size: 0.9rem; font-weight: 700; color: #64748b; margin-bottom: 8px;">📅 기록 일시 (과거 시간 선택 가능)</label>
-      <input type="datetime-local" id="recordTime" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; color: #1e293b; background: white; outline: none;">
-    </div>
-
     <!-- 잘한 일 / 못한 일 -->
     <div class="behavior-row" id="behavior-section">
       <div class="behavior-group-good">
@@ -51,6 +45,15 @@
           <option value="">선택</option>
         </select>
       </div>
+    </div>
+
+    <!-- [v4.22] 기록 시간 선택 (자세히 위로 이동 및 선택형으로 변경) -->
+    <div id="time-toggle-section" style="margin-bottom: 15px; padding: 12px; background: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <input type="checkbox" id="useCustomTime" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="useCustomTime" style="font-size: 0.9rem; font-weight: 700; color: #475569; cursor: pointer;">📅 기록 시간 직접 설정 (소급 입력)</label>
+      </div>
+      <input type="datetime-local" id="recordTime" disabled style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95rem; color: #1e293b; background: #f1f5f9; outline: none; transition: all 0.2s;">
     </div>
 
     <!-- 자세히 -->
@@ -122,7 +125,7 @@
       style="max-width:95%; max-height:90%; object-fit:contain; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
   </div>
 
-  <script type="module" src="src/js/record.js?v=4.21"></script>
+  <script type="module" src="src/js/record.js?v=4.22"></script>
 </body>
 
 </html>

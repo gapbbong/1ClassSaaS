@@ -90,6 +90,20 @@ function setupForm() {
     const recordTimeInput = document.getElementById("recordTime");
     if (recordTimeInput) recordTimeInput.value = localISOTime;
 
+    // [v4.22] 시간 토글 로직
+    const useCustomTime = document.getElementById("useCustomTime");
+    if (useCustomTime && recordTimeInput) {
+        useCustomTime.addEventListener("change", function () {
+            recordTimeInput.disabled = !this.checked;
+            recordTimeInput.style.background = this.checked ? "white" : "#f1f5f9";
+            if (!this.checked) {
+                const nowLatest = new Date();
+                const isoLatest = new Date(nowLatest - offset).toISOString().slice(0, 16);
+                recordTimeInput.value = isoLatest;
+            }
+        });
+    }
+
     const mode = urlParams.get("mode");
     const behaviorSection = document.getElementById("behavior-section");
     const detailTextarea = document.getElementById("detail");
@@ -165,7 +179,9 @@ function setupForm() {
             btn.textContent = "저장 중...";
 
             try {
-                const selectedTime = recordTimeInput.value;
+                const useCustom = document.getElementById("useCustomTime")?.checked;
+                let selectedTime = useCustom ? new Date(recordTimeInput.value).toISOString() : new Date().toISOString();
+                
                 const detail = document.getElementById("detail").value;
                 const mode = urlParams.get("mode");
                 

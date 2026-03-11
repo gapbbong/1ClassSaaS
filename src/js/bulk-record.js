@@ -44,6 +44,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         const offset = now.getTimezoneOffset() * 60000;
         const localISOTime = new Date(now - offset).toISOString().slice(0, 16);
         recordTimeInput.value = localISOTime;
+
+        // [v4.22] 시간 토글 로직
+        const useCustomTime = document.getElementById("use-custom-time");
+        if (useCustomTime) {
+            useCustomTime.addEventListener("change", function () {
+                recordTimeInput.disabled = !this.checked;
+                recordTimeInput.style.background = this.checked ? "white" : "#f1f5f9";
+                if (!this.checked) {
+                    const nowLatest = new Date();
+                    const isoLatest = new Date(nowLatest - offset).toISOString().slice(0, 16);
+                    recordTimeInput.value = isoLatest;
+                }
+            });
+        }
     }
 
     // [추가] 폰/브라우저 뒤로가기 버튼과 연결 (데이터 유실 방지)
@@ -368,7 +382,8 @@ async function handleSaveAll() {
     const bad = document.getElementById("bad-select").value;
     const detail = document.getElementById("detail-input").value;
     const teacher = getTeacherId();
-    const selectedTime = document.getElementById("record-time").value;
+    const useCustom = document.getElementById("use-custom-time")?.checked;
+    const selectedTime = useCustom ? new Date(document.getElementById("record-time").value).toISOString() : new Date().toISOString();
 
     if (!good && !bad && !detail) {
         alert("기록할 내용을 입력해주세요.");
