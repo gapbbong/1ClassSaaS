@@ -1,4 +1,4 @@
-import { fetchAllStudents, bulkSaveRecords, fetchPresets } from './api.js';
+import { fetchAllStudents, bulkSaveRecords, fetchPresets, checkDuplicateRecord } from './api.js';
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
 
@@ -35,6 +35,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     const myEmail = getCurrentTeacherEmail();
     if (myEmail) {
         logPageView(myEmail, "일괄 기록");
+    }
+
+    // [추가] 기록 시간 초기화
+    const recordTimeInput = document.getElementById("record-time");
+    if (recordTimeInput) {
+        const now = new Date();
+        const offset = now.getTimezoneOffset() * 60000;
+        const localISOTime = new Date(now - offset).toISOString().slice(0, 16);
+        recordTimeInput.value = localISOTime;
     }
 
     // [추가] 폰/브라우저 뒤로가기 버튼과 연결 (데이터 유실 방지)
@@ -358,11 +367,25 @@ async function handleSaveAll() {
     const good = document.getElementById("good-select").value;
     const bad = document.getElementById("bad-select").value;
     const detail = document.getElementById("detail-input").value;
-    const teacher = getTeacherId(); // 자동으로 아이디 추출
+    const teacher = getTeacherId();
+    const selectedTime = document.getElementById("record-time").value;
 
     if (!good && !bad && !detail) {
         alert("기록할 내용을 입력해주세요.");
         return;
+    }
+
+    const category = good || bad || "일반";
+
+    // [v4.21] 중복 체크 (첫 번째 학생 기준으로 대표 체크 또는 전체 체크)
+    // 여기서는 간단히 선택된 학생 중 첫 번째 학생이라도 중복이 있는지 확인
+    if (selectedStudents.length > 0) {
+        const firstStudent = selectedStudents[0];
+        const isDuplicate = await checkDuplicateRecord(firstStudent["학번"], category, detail, selectedTime);
+        if (isDuplicate) {
+            const confirmSave = confirm(`⚠️ 선택된 학생들(예: ${firstStudent["이름"]})에게 이미 오늘 동일한 [${category}] 기록이 존재합니다.\n그래도 일괄 저장하시겠습니까?`);
+            if (!confirmSave) return;
+        }
     }
 
     if (!confirm(`${selectedStudents.length}명의 학생에게 이 기록을 일괄 저장할까요?`)) {
@@ -377,8 +400,10 @@ async function handleSaveAll() {
     const recordData = {
         good,
         bad,
+        category,
         detail,
-        teacher
+        teacher,
+        time: selectedTime
     };
 
     // 선택된 학생 리스트

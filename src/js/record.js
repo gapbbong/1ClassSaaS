@@ -1,4 +1,4 @@
-import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData, fetchRecordComments, addRecordComment, deleteRecordComment, fetchPresets } from './api.js';
+import { fetchStudentRecords, saveRecord, deleteRecord as apiDeleteRecord, uploadEvidencePhoto, fetchSurveyData, fetchRecordComments, addRecordComment, deleteRecordComment, fetchPresets, checkDuplicateRecord } from './api.js';
 import { formatRelativeWithPeriod } from './utils.js';
 import { API_CONFIG } from './config.js';
 import CryptoJS from 'crypto-js';
@@ -165,6 +165,26 @@ function setupForm() {
             btn.textContent = "저장 중...";
 
             try {
+                const selectedTime = recordTimeInput.value;
+                const detail = document.getElementById("detail").value;
+                const mode = urlParams.get("mode");
+                
+                let category = "상담";
+                if (mode !== "counsel") {
+                    category = document.getElementById("good").value || document.getElementById("bad").value || "일반";
+                }
+
+                // [v4.21] 중복 체크
+                const isDuplicate = await checkDuplicateRecord(num, category, detail, selectedTime);
+                if (isDuplicate) {
+                    const confirmSave = confirm(`⚠️ 오늘 이 학생에게 동일한 [${category}] 기록이 이미 존재합니다.\n그래도 추가로 저장하시겠습니까?`);
+                    if (!confirmSave) {
+                        btn.disabled = false;
+                        btn.textContent = "저장";
+                        return;
+                    }
+                }
+
                 let photoUrls = [];
                 if (selectedFile) {
                     btn.textContent = "사진 업로드 중...";
@@ -175,10 +195,9 @@ function setupForm() {
                 const formData = new FormData();
                 formData.append("num", num);
                 formData.append("name", studentName);
-                formData.append("time", recordTimeInput.value);
+                formData.append("time", selectedTime);
 
                 // 모드에 따라 값 수집
-                const mode = urlParams.get("mode");
                 if (mode === "counsel") {
                     formData.append("good", "상담");
                 } else {
@@ -188,7 +207,7 @@ function setupForm() {
                     if (badVal) formData.append("bad", badVal);
                 }
 
-                formData.append("detail", document.getElementById("detail").value);
+                formData.append("detail", detail);
 
                 // 교사 이름 자동 추출 및 추가
                 const encrypted = localStorage.getItem('teacher_auth_token');

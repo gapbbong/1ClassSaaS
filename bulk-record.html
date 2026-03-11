@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>일괄 생활기록</title>
-    <link rel="stylesheet" href="src/css/main.css">
-    <link rel="stylesheet" href="src/css/bulk-record.css">
+    <link rel="stylesheet" href="src/css/main.css?v=4.21">
+    <link rel="stylesheet" href="src/css/bulk-record.css?v=4.21">
 
 <script type="text/javascript">
     (function(c,l,a,r,i,t,y){
@@ -53,6 +53,11 @@
 
         <!-- 2. 공통 기록 폼 -->
         <div class="section form-section">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: bold; margin-bottom: 8px; display: block;">📅 기록 일시 (수정 가능)</label>
+                <input type="datetime-local" id="record-time" class="time-input" style="width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 8px; font-size: 1rem;">
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label>잘한 일</label>
@@ -95,7 +100,7 @@
         </div>
     </div>
 
-    <script type="module" src="src/js/bulk-record.js"></script>
+    <script type="module" src="src/js/bulk-record.js?v=4.21"></script>
 </body>
 
 </html>

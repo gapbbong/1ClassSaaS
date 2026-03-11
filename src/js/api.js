@@ -165,6 +165,45 @@ export async function fetchAllStudents() {
 }
 
 /**
+ * 동일한 기록이 이미 존재하는지 확인합니다. (같은 날짜, 학생, 카테고리, 내용)
+ */
+export async function checkDuplicateRecord(studentId, category, content, dateStr) {
+    try {
+        // 1. 학생 pid 조회
+        const { data: student } = await supabase
+            .from('students')
+            .select('pid')
+            .eq('student_id', studentId)
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
+            .single();
+
+        if (!student) return false;
+
+        // 2. 해당 날짜의 시작과 끝 계산 (KST 기준)
+        const date = new Date(dateStr);
+        const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
+        const endOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999).toISOString();
+
+        // 3. 중복 조회
+        const { data, error } = await supabase
+            .from('life_records')
+            .select('id')
+            .eq('student_pid', student.pid)
+            .eq('category', category)
+            .eq('content', content || '')
+            .gte('created_at', startOfDay)
+            .lte('created_at', endOfDay)
+            .limit(1);
+
+        if (error) return false;
+        return data && data.length > 0;
+    } catch (err) {
+        console.error("Duplicate Check Error:", err);
+        return false;
+    }
+}
+
+/**
  * 새로운 기록을 저장합니다. (Supabase 버전)
  * @param {FormData} formData - 기록 데이터
  * @returns {Promise<Object>} 결과 객체
@@ -705,7 +744,7 @@ export async function bulkSaveRecords(targets, recordData) {
                 content: recordData.detail || "",
                 is_positive: recordData.hasOwnProperty('is_positive') ? recordData.is_positive : !!recordData.good,
                 teacher_email_prefix: teacherValue,
-                created_at: new Date().toISOString()
+                created_at: recordData.time ? new Date(recordData.time).toISOString() : new Date().toISOString()
             };
         });
 

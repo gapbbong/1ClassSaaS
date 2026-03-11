@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>학생 생활기록</title>
-  <link rel="stylesheet" href="src/css/main.css?v=4.15.4">
-  <link rel="stylesheet" href="src/css/stu-list.css?v=4.15.4">
-  <link rel="stylesheet" href="src/css/record.css?v=4.15.4">
+  <link rel="stylesheet" href="src/css/main.css?v=4.21">
+  <link rel="stylesheet" href="src/css/stu-list.css?v=4.21">
+  <link rel="stylesheet" href="src/css/record.css?v=4.21">
 
   <script type="text/javascript">
     (function (c, l, a, r, i, t, y) {
@@ -31,7 +31,11 @@
 
   <form id="recordForm">
     <!-- 숨김 필드 -->
-    <input type="hidden" id="recordTime">
+    <!-- 기록 시간 선택 (과거 시간 소급 가능) -->
+    <div style="padding: 15px; background: #f8fafc; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+      <label for="recordTime" style="display: block; font-size: 0.9rem; font-weight: 700; color: #64748b; margin-bottom: 8px;">📅 기록 일시 (과거 시간 선택 가능)</label>
+      <input type="datetime-local" id="recordTime" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; color: #1e293b; background: white; outline: none;">
+    </div>
 
     <!-- 잘한 일 / 못한 일 -->
     <div class="behavior-row" id="behavior-section">
@@ -118,7 +122,7 @@
       style="max-width:95%; max-height:90%; object-fit:contain; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
   </div>
 
-  <script type="module" src="src/js/record.js?v=4.15.4"></script>
+  <script type="module" src="src/js/record.js?v=4.21"></script>
 </body>
 
 </html>
