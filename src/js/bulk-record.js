@@ -307,8 +307,8 @@ function updateSaveButton() {
 
 // Settings 시트에서 항목 가져오기 (기존 로직 활용)
 async function loadSettings() {
-    const goodSelect = document.getElementById("good-select");
-    const badSelect = document.getElementById("bad-select");
+    const goodContainer = document.getElementById("good-chips");
+    const badContainer = document.getElementById("bad-chips");
 
     const fallbackGood = ["1. 기본생활 우수", "2. 자기주도학습", "3. 예의바름", "4. 수업태도 좋음", "5. 솔선수범", "6. 교우관계 원만"];
     const fallbackBad = [
@@ -316,45 +316,47 @@ async function loadSettings() {
         "12. 부적절한 언어(비속어,욕설) 사용", "13. 교사 모독/지시 불이행", "14. 친구와 신체적/언어적 마찰", "15. 수업분위기 저해/타인 학습권 침해", "16. 성 관련 부적절한 언행"
     ];
 
+    function createChip(text, type) {
+        const chip = document.createElement("div");
+        chip.className = `chip ${type}`;
+        chip.textContent = text;
+        chip.onclick = () => {
+            chip.classList.toggle("active");
+        };
+        return chip;
+    }
+
     try {
-        if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
-        if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
+        if (goodContainer) goodContainer.innerHTML = "⏳ 로딩 중...";
+        if (badContainer) badContainer.innerHTML = "⏳ 로딩 중...";
 
         const settings = await fetchPresets();
 
-        if (goodSelect) {
-            goodSelect.innerHTML = '<option value="">선택</option>';
+        if (goodContainer) {
+            goodContainer.innerHTML = "";
             settings.good.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                goodSelect.appendChild(opt);
+                goodContainer.appendChild(createChip(item, "good"));
             });
         }
 
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
+        if (badContainer) {
+            badContainer.innerHTML = "";
             settings.bad.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                badSelect.appendChild(opt);
+                badContainer.appendChild(createChip(item, "bad"));
             });
         }
     } catch (err) {
         console.warn("LoadSettings failed, using fallbacks:", err);
-        if (goodSelect) {
-            goodSelect.innerHTML = '<option value="">선택</option>';
+        if (goodContainer) {
+            goodContainer.innerHTML = "";
             fallbackGood.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                goodSelect.appendChild(opt);
+                goodContainer.appendChild(createChip(item, "good"));
             });
         }
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
+        if (badContainer) {
+            badContainer.innerHTML = "";
             fallbackBad.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                badSelect.appendChild(opt);
+                badContainer.appendChild(createChip(item, "bad"));
             });
         }
     }
@@ -378,8 +380,12 @@ function getTeacherId() {
 }
 
 async function handleSaveAll() {
-    const good = document.getElementById("good-select").value;
-    const bad = document.getElementById("bad-select").value;
+    const goodChips = Array.from(document.querySelectorAll("#good-chips .chip.active")).map(c => c.textContent);
+    const badChips = Array.from(document.querySelectorAll("#bad-chips .chip.active")).map(c => c.textContent);
+    
+    const good = goodChips.length > 0 ? goodChips.join(", ") : "";
+    const bad = badChips.length > 0 ? badChips.join(", ") : "";
+    
     const detail = document.getElementById("detail-input").value;
     const teacher = getTeacherId();
     const useCustom = document.getElementById("use-custom-time")?.checked;
@@ -429,6 +435,10 @@ async function handleSaveAll() {
 
         if (result.result === "success") {
             alert(`✅ ${result.count}명의 기록이 저장되었습니다.`);
+
+            // 칩 선택 해제 (v4.23)
+            document.querySelectorAll(".chip.active").forEach(c => c.classList.remove("active"));
+            document.getElementById("detail-input").value = "";
 
             // [수정] 어디서 왔는지에 따라 돌아가는 페이지 결정
             const urlParams = new URLSearchParams(window.location.search);

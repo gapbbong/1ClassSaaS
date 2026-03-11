@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>학생 생활기록</title>
-  <link rel="stylesheet" href="src/css/main.css?v=4.22">
-  <link rel="stylesheet" href="src/css/stu-list.css?v=4.22">
-  <link rel="stylesheet" href="src/css/record.css?v=4.22">
+  <link rel="stylesheet" href="src/css/main.css?v=4.23">
+  <link rel="stylesheet" href="src/css/stu-list.css?v=4.23">
+  <link rel="stylesheet" href="src/css/record.css?v=4.23">
 
   <script type="text/javascript">
     (function (c, l, a, r, i, t, y) {
@@ -31,19 +31,19 @@
 
   <form id="recordForm">
     <!-- 숨김 필드 -->
-    <!-- 잘한 일 / 못한 일 -->
+    <!-- 잘한 일 / 못한 일 (v4.23: 칩 형태로 변경) -->
     <div class="behavior-row" id="behavior-section">
       <div class="behavior-group-good">
-        <label for="good">잘한 일</label>
-        <select id="good">
-          <option value="">선택</option>
-        </select>
+        <label>잘한 일 (중복 선택 가능)</label>
+        <div id="good-chips" class="chip-container">
+          <!-- JS에서 칩 생성 -->
+        </div>
       </div>
-      <div class="behavior-group-bad">
-        <label for="bad">못한 일</label>
-        <select id="bad">
-          <option value="">선택</option>
-        </select>
+      <div class="behavior-group-bad" style="margin-top: 20px;">
+        <label>못한 일 (중복 선택 가능)</label>
+        <div id="bad-chips" class="chip-container">
+          <!-- JS에서 칩 생성 -->
+        </div>
       </div>
     </div>
 
@@ -125,7 +125,7 @@
       style="max-width:95%; max-height:90%; object-fit:contain; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
   </div>
 
-  <script type="module" src="src/js/record.js?v=4.22"></script>
+  <script type="module" src="src/js/record.js?v=4.23"></script>
 </body>
 
 </html>

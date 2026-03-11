@@ -187,7 +187,8 @@ function setupForm() {
                 
                 let category = "상담";
                 if (mode !== "counsel") {
-                    category = document.getElementById("good").value || document.getElementById("bad").value || "일반";
+                    const activeChips = Array.from(document.querySelectorAll(".chip.active")).map(c => c.textContent);
+                    category = activeChips.length > 0 ? activeChips.join(", ") : "일반";
                 }
 
                 // [v4.21] 중복 체크
@@ -217,10 +218,11 @@ function setupForm() {
                 if (mode === "counsel") {
                     formData.append("good", "상담");
                 } else {
-                    const goodVal = document.getElementById("good").value;
-                    const badVal = document.getElementById("bad").value;
-                    if (goodVal) formData.append("good", goodVal);
-                    if (badVal) formData.append("bad", badVal);
+                    // 칩 선택 방식 대응
+                    const goodChips = Array.from(document.querySelectorAll("#good-chips .chip.active")).map(c => c.textContent);
+                    const badChips = Array.from(document.querySelectorAll("#bad-chips .chip.active")).map(c => c.textContent);
+                    if (goodChips.length > 0) formData.append("good", goodChips.join(", "));
+                    if (badChips.length > 0) formData.append("bad", badChips.join(", "));
                 }
 
                 formData.append("detail", detail);
@@ -247,6 +249,9 @@ function setupForm() {
                     form.reset();
                     photoPreviewContainer.innerHTML = "";
                     selectedFile = null;
+
+                    // 칩 선택 해제
+                    document.querySelectorAll(".chip.active").forEach(c => c.classList.remove("active"));
 
                     const now2 = new Date();
                     const localISO2 = new Date(now2 - offset).toISOString().slice(0, 16);
@@ -498,8 +503,8 @@ function goBack() {
  * 설정 항목을 불러와서 셀렉트 박스(잘한일/못한일)를 채웁니다.
  */
 async function loadSettings() {
-    const goodSelect = document.getElementById("good");
-    const badSelect = document.getElementById("bad");
+    const goodContainer = document.getElementById("good-chips");
+    const badContainer = document.getElementById("bad-chips");
 
     const fallbackGood = ["1. 기본생활 우수", "2. 자기주도학습", "3. 예의바름", "4. 수업태도 좋음", "5. 솔선수범", "6. 교우관계 원만"];
     const fallbackBad = [
@@ -507,45 +512,47 @@ async function loadSettings() {
         "12. 부적절한 언어(비속어,욕설) 사용", "13. 교사 모독/지시 불이행", "14. 친구와 신체적/언어적 마찰", "15. 수업분위기 저해/타인 학습권 침해", "16. 성 관련 부적절한 언행"
     ];
 
+    function createChip(text, type) {
+        const chip = document.createElement("div");
+        chip.className = `chip ${type}`;
+        chip.textContent = text;
+        chip.onclick = () => {
+            chip.classList.toggle("active");
+        };
+        return chip;
+    }
+
     try {
-        if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
-        if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
+        if (goodContainer) goodContainer.innerHTML = "⏳ 로딩 중...";
+        if (badContainer) badContainer.innerHTML = "⏳ 로딩 중...";
 
         const settings = await fetchPresets();
 
-        if (goodSelect) {
-            goodSelect.innerHTML = '<option value="">선택</option>';
+        if (goodContainer) {
+            goodContainer.innerHTML = "";
             settings.good.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                goodSelect.appendChild(opt);
+                goodContainer.appendChild(createChip(item, "good"));
             });
         }
 
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
+        if (badContainer) {
+            badContainer.innerHTML = "";
             settings.bad.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                badSelect.appendChild(opt);
+                badContainer.appendChild(createChip(item, "bad"));
             });
         }
     } catch (err) {
         console.warn("LoadSettings failed, using fallbacks:", err);
-        if (goodSelect) {
-            goodSelect.innerHTML = '<option value="">선택</option>';
+        if (goodContainer) {
+            goodContainer.innerHTML = "";
             fallbackGood.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                goodSelect.appendChild(opt);
+                goodContainer.appendChild(createChip(item, "good"));
             });
         }
-        if (badSelect) {
-            badSelect.innerHTML = '<option value="">선택</option>';
+        if (badContainer) {
+            badContainer.innerHTML = "";
             fallbackBad.forEach(item => {
-                const opt = document.createElement("option");
-                opt.value = opt.textContent = item;
-                badSelect.appendChild(opt);
+                badContainer.appendChild(createChip(item, "bad"));
             });
         }
     }
