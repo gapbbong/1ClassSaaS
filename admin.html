@@ -39,7 +39,7 @@
         }
 
         .version-badge::after {
-            content: 'v4.28';
+            content: 'v4.29';
         }
 
         .back-btn {
@@ -222,7 +222,7 @@
 <body>
     <header class="admin-header">
         <button class="back-btn" onclick="location.href='index.html'" title="홈으로">🏠</button>
-        <h1>user log <span class="version-badge">v4.28</span></h1>
+        <h1>user log <span class="version-badge">v4.29</span></h1>
     </header>
 
     <main>
@@ -353,15 +353,20 @@
                     };
                 });
 
-                // 2. 로그 로드 (최신 3000개 로드 후 분석을 위해 반전)
-                const { data: rawData, error } = await supabase
-                    .from('user_logs')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(3000);
-
-                if (error) throw error;
-                const data = rawData.reverse();
+                // 2. 로그 로드 (Supabase API 제한인 1000개를 넘어 최대 3000개 로드)
+                let rawData = [];
+                for (let i = 0; i < 3; i++) {
+                    const { data: page, error } = await supabase
+                        .from('user_logs')
+                        .select('*')
+                        .order('created_at', { ascending: false })
+                        .range(i * 1000, (i + 1) * 1000 - 1);
+                        
+                    if (error) throw error;
+                    if (page) rawData = rawData.concat(page);
+                    if (!page || page.length < 1000) break;
+                }
+                const data = rawData.reverse(); // 과거부터 현재순으로 분석하기 위해 반전
 
                 // 3. 분석 수행 - 이갑종 선생님은 활동 카운트에서도 제외
                 const activeEmails = new Set(
