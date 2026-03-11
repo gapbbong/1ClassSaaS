@@ -12,8 +12,22 @@ console.log("index.js loaded successfully");
 document.addEventListener("DOMContentLoaded", async () => {
   console.log("DOMContentLoaded triggered");
 
-  // [v4.15] 스플래시 화면 최소 노출 시간 (1.2초)
-  const splashPromise = new Promise(resolve => setTimeout(resolve, 1200));
+  const splash = document.getElementById("splash-screen");
+  const isSplashShown = sessionStorage.getItem("splash_shown") === "true";
+
+  // [v4.18] 세무적으로 세션 내 '처음' 접속이 아니라면 스플래시 즉시 제거
+  if (isSplashShown && splash) {
+    splash.remove();
+  }
+
+  // [v4.15] 스플래시 화면 최소 노출 시간 (1.2초) - 처음 접속 시에만 적용
+  const splashPromise = isSplashShown 
+    ? Promise.resolve() 
+    : new Promise(resolve => setTimeout(resolve, 1200));
+
+  if (!isSplashShown) {
+    sessionStorage.setItem("splash_shown", "true");
+  }
 
   try {
     // 인증 체크
