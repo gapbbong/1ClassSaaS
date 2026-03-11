@@ -1,6 +1,7 @@
 import { fetchAllStudents, bulkSaveRecords, fetchPresets, checkDuplicateRecord } from './api.js';
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
+import CryptoJS from 'crypto-js';
 
 let allStudents = [];
 let selectedStudents = [];
