@@ -1,6 +1,6 @@
 {
   "name": "oneclass25",
-  "version": "4.27",
+  "version": "4.28",
   "type": "module",
   "main": "service-worker.js",
   "scripts": {
@@ -29,5 +29,5 @@
     "sharp": "^0.34.5",
     "xlsx": "^0.18.5"
   },
-  "description": "OneClass 2025 - v4.27"
+  "description": "OneClass 2025 - v4.28"
 }
