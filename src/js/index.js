@@ -667,12 +667,14 @@ async function checkClassAnalysisPermission() {
     const menuBtn = document.getElementById("menu-class-analysis");
     const keeperBtn = document.getElementById("menu-keeper");
 
-    // [추가] 소유자(관리자) 전용 메뉴 노출
     const isAdminEmail = email === 'gapbbong@naver.com' || email === 'assari@kse.hs.kr' || email === 'assaree0306@naver.com';
 
+    // [임시] 연수를 위해 소유자용 메뉴(user log)를 일시적으로 숨김
+    /*
     if (keeperBtn && isAdminEmail) {
       keeperBtn.style.display = "block";
     }
+    */
 
     if (menuBtn && teacher && (teacher.role === 'admin' || teacher.role === 'homeroom_teacher' || isAdminEmail)) {
       menuBtn.style.display = "block";
