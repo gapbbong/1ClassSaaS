@@ -360,6 +360,57 @@ textarea:focus,
     transform: translateY(-2px);
 }
 
+/* [v4.23] 칩(태그) 스타일 */
+.chip-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+}
+
+.chip {
+    padding: 8px 14px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+/* 잘한 일 보이스 (그린 계열) */
+.chip.good.active {
+    background: #03c75a;
+    color: white;
+    border-color: #02a149;
+    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.25);
+}
+
+/* 못한 일 보이스 (레드 계열) */
+.chip.bad.active {
+    background: #ff4d4f;
+    color: white;
+    border-color: #f5222d;
+    box-shadow: 0 4px 10px rgba(255, 77, 79, 0.25);
+}
+
+.chip.active {
+    transform: scale(0.95);
+}
+
 .save-btn:disabled {
     background: #ccc;
     box-shadow: none;
