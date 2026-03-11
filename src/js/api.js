@@ -229,7 +229,7 @@ export async function saveRecord(formData) {
 
         const photos = formData.get("photos"); // JSON string of array
 
-        // [추가] 기록 교사 매핑 (2025-02-28)
+        // [추가] 기록 교사 매핑 (2026-02-28)
         let teacherValue = teacher;
         if (teacherValue === "최지은") teacherValue = "assari";
 
@@ -247,6 +247,12 @@ export async function saveRecord(formData) {
             });
 
         if (error) throw error;
+        
+        // 활동 로그 기록 (추가)
+        const currentEmail = getCurrentTeacherEmail();
+        if (currentEmail) {
+            logPageView(currentEmail, window.location.pathname, "record_save");
+        }
 
         return { result: "success" };
     } catch (error) {
@@ -754,6 +760,12 @@ export async function bulkSaveRecords(targets, recordData) {
             .insert(insertData);
 
         if (error) throw error;
+
+        // 활동 로그 기록 (추가)
+        const currentEmail = getCurrentTeacherEmail();
+        if (currentEmail) {
+            logPageView(currentEmail, window.location.pathname, "bulk_record_save");
+        }
 
         return { result: "success", count: insertData.length };
     } catch (error) {
