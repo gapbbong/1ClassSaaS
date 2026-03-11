@@ -503,12 +503,12 @@ textarea#detail {
     background: #f8fafc;
 }
 
-/* 잘한 일 보이스 (그린 계열) */
+/* 잘한 일 액티브 (블루 계열) */
 .chip.good.active {
-    background: #03c75a;
+    background: #1a73e8;
     color: white;
-    border-color: #02a149;
-    box-shadow: 0 4px 10px rgba(3, 199, 90, 0.25);
+    border-color: #1a73e8;
+    box-shadow: 0 4px 10px rgba(26, 115, 232, 0.25);
 }
 
 /* 못한 일 보이스 (레드 계열) */
