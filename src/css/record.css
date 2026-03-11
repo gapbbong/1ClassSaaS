@@ -482,9 +482,9 @@ textarea#detail {
 }
 
 .chip {
-    padding: 8px 14px;
-    border-radius: 18px;
-    font-size: 13px;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 15px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
