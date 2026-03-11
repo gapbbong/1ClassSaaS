@@ -61,10 +61,25 @@ CREATE TABLE public.access_logs (
     accessed_at TIMESTAMPTZ DEFAULT now()
 );
 
--- 7. Row Level Security (RLS) 설정
+-- 7. 생활기록 선택 항목 (Presets) 테이블
+CREATE TABLE IF NOT EXISTS public.preset_categories (
+    id SERIAL PRIMARY KEY,
+    type TEXT NOT NULL, -- 'good' (잘한 일) 또는 'bad' (못한 일)
+    item_name TEXT NOT NULL, -- 항목명 (예: "지각", "솔선수범")
+    display_order INTEGER,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(type, item_name)
+);
+
+-- 8. Row Level Security (RLS) 설정
 ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.life_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.access_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.preset_categories ENABLE ROW LEVEL SECURITY;
+
+-- [정책 0] 공통 항목(Presets) 조회 정책 (누구나 가능)
+CREATE POLICY "Anyone can view presets" ON public.preset_categories FOR SELECT USING (true);
 
 -- [정책 1] 학생 정보 조회 정책 (모든 교사는 기본 정보 열람 가능, 상세는 권한별 상이)
 CREATE POLICY "Student access policy" ON public.students

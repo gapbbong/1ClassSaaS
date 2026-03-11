@@ -1,4 +1,4 @@
-import { fetchAllStudents, bulkSaveRecords } from './api.js';
+import { fetchAllStudents, bulkSaveRecords, fetchPresets } from './api.js';
 import { API_CONFIG } from './config.js';
 import { extractDriveId, getThumbnailUrl } from './utils.js';
 
@@ -284,62 +284,59 @@ function updateSaveButton() {
 
 // Settings 시트에서 항목 가져오기 (기존 로직 활용)
 async function loadSettings() {
+    const goodSelect = document.getElementById("good-select");
+    const badSelect = document.getElementById("bad-select");
+
+    const fallbackGood = ["1. 기본생활 우수", "2. 자기주도학습", "3. 예의바름", "4. 수업태도 좋음", "5. 솔선수범", "6. 교우관계 원만"];
+    const fallbackBad = [
+        "1. 지각", "2. 복장불량", "3. 화장", "4. 악세사리 착용", "5. 신발불량", "6. 가방없음", "7. 두발불량", "8. 수업태도 불량", "9. 휴대폰 무단사용", "10. 무단외출", "11. 교복미착용",
+        "12. 부적절한 언어(비속어,욕설) 사용", "13. 교사 모독/지시 불이행", "14. 친구와 신체적/언어적 마찰", "15. 수업분위기 저해/타인 학습권 침해", "16. 성 관련 부적절한 언행"
+    ];
+
     try {
-        // [수정] API_CONFIG.SCRIPT_URL을 사용하여 설정 정보를 가져옴
-        const url = `${API_CONFIG.SCRIPT_URL}?action=getSettings`;
-        const res = await fetch(url);
-        const data = await res.json();
+        if (goodSelect) goodSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
+        if (badSelect) badSelect.innerHTML = '<option value="">⏳ 로딩 중...</option>';
 
-        // 데이터 구조가 { result: 'ok', good: [...], bad: [...] } 라고 가정
-        const settings = data;
+        const settings = await fetchPresets();
 
-        const goodSelect = document.getElementById("good-select");
-        const badSelect = document.getElementById("bad-select");
-
-        // 초기화
-        goodSelect.innerHTML = '<option value="">선택</option>';
-        badSelect.innerHTML = '<option value="">선택</option>';
-
-        if (settings.good && Array.isArray(settings.good)) {
+        if (goodSelect) {
+            goodSelect.innerHTML = '<option value="">선택</option>';
             settings.good.forEach(item => {
                 const opt = document.createElement("option");
-                opt.value = item;
-                opt.textContent = item;
+                opt.value = opt.textContent = item;
                 goodSelect.appendChild(opt);
             });
         }
-        if (settings.bad && Array.isArray(settings.bad)) {
-            // [추가] 화장, 악세사리 항목 보강 (복장불량 밑에 없으면 삽입)
-            let list = [...settings.bad];
-            const dressIdx = list.indexOf("복장불량");
-            if (dressIdx !== -1) {
-                if (!list.includes("화장")) list.splice(dressIdx + 1, 0, "화장");
-                if (!list.includes("악세사리 착용")) list.splice(list.indexOf("화장") + 1, 0, "악세사리 착용");
-            } else {
-                if (!list.includes("화장")) list.push("화장");
-                if (!list.includes("악세사리 착용")) list.push("악세사리 착용");
-            }
 
-            list.forEach(item => {
+        if (badSelect) {
+            badSelect.innerHTML = '<option value="">선택</option>';
+            settings.bad.forEach(item => {
                 const opt = document.createElement("option");
-                opt.value = item;
-                opt.textContent = item;
+                opt.value = opt.textContent = item;
                 badSelect.appendChild(opt);
             });
         }
-    } catch (e) {
-        console.error("Settings load error:", e);
-        // 실패 시 기본 항목이라도 표시
-        const badItems = ["지각", "복장불량", "화장", "악세사리 착용", "신발불량", "가방없음", "두발불량"];
-        const badSelect = document.getElementById("bad-select");
-        badItems.forEach(item => {
-            const opt = document.createElement("option");
-            opt.value = item;
-            opt.textContent = item;
-            badSelect.appendChild(opt);
-        });
+    } catch (err) {
+        console.warn("LoadSettings failed, using fallbacks:", err);
+        if (goodSelect) {
+            goodSelect.innerHTML = '<option value="">선택</option>';
+            fallbackGood.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = opt.textContent = item;
+                goodSelect.appendChild(opt);
+            });
+        }
+        if (badSelect) {
+            badSelect.innerHTML = '<option value="">선택</option>';
+            fallbackBad.forEach(item => {
+                const opt = document.createElement("option");
+                opt.value = opt.textContent = item;
+                badSelect.appendChild(opt);
+            });
+        }
     }
 }
+
 
 /**
  * 로그인된 교사의 이메일 아이디를 추출합니다.

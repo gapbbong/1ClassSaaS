@@ -283,7 +283,7 @@ async function initAuth() {
   titleBar.style.display = 'none';
   classGrid.style.display = 'none';
 
-  // [v4.17] 인증 모달이 스플래시 화면(z-index: 99999)에 가려지는 문제 해결
+  // [v4.18] 인증 모달이 가려지는 문제 해결
   const splash = document.getElementById("splash-screen");
   if (splash) splash.remove();
 
