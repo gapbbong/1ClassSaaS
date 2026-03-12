@@ -70,9 +70,17 @@
                 </div>
 
                 <div class="control-action">
+                    <div class="sort-group">
+                        <label>정렬: </label>
+                        <button id="sort-id-btn" class="sort-btn active">학번순</button>
+                        <button id="sort-latest-btn" class="sort-btn">최신순</button>
+                    </div>
                     <button id="query-btn" class="primary-btn">조회하기</button>
                     <button id="print-btn" class="secondary-btn" style="display:none; background:#6366f1;">🖨️ 인쇄하기</button>
                     <button id="download-btn" class="secondary-btn" style="display:none; background:#10b981;">📊 엑셀 저장</button>
+                </div>
+                <div class="notice-text">
+                    * 학생 이름을 클릭하면 사진을 볼 수 있습니다.
                 </div>
             </div>
             <div id="loading-msg" style="display:none; text-align:center; color:#3b82f6; font-weight:bold; margin-top:10px;">데이터를 불러오는 중입니다...</div>

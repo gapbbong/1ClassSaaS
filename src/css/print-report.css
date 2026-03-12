@@ -142,8 +142,57 @@ select:focus {
 
 .control-action {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
     margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.sort-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+}
+
+.sort-btn {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.sort-btn.active {
+    background: #1a73e8;
+    color: white;
+    border-color: #1a73e8;
+    font-weight: 600;
+}
+
+.notice-text {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: #1a73e8;
+    text-align: right;
+    font-style: italic;
+}
+
+/* Name trigger style */
+.student-name-link {
+    cursor: pointer;
+    color: #1a73e8;
+    font-weight: 600;
+    transition: text-decoration 0.2s;
+}
+
+.student-name-link:hover {
+    text-decoration: underline;
 }
 
 .primary-btn {

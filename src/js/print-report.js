@@ -5,6 +5,7 @@ let currentTeacher = null;
 let allStudents = [];
 let allRecords = [];
 let badBehaviorPresets = [];
+let currentSortMode = 'id'; // 'id' or 'latest'
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 교사 인증 확인 (기존 index.html 방식과 통일)
@@ -139,6 +140,24 @@ function setupEventListeners() {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.style.display = 'none';
     });
+
+    // 정렬 버튼 처리
+    const sortIdBtn = document.getElementById('sort-id-btn');
+    const sortLatestBtn = document.getElementById('sort-latest-btn');
+
+    sortIdBtn.addEventListener('click', () => {
+        currentSortMode = 'id';
+        sortIdBtn.classList.add('active');
+        sortLatestBtn.classList.remove('active');
+        if (allStudents.length > 0) handleQuery(); // 다시 렌더링을 위해 쿼리 재실행 (또는 캐시된 데이터 활용 가능하나 안전하게 재실행)
+    });
+
+    sortLatestBtn.addEventListener('click', () => {
+        currentSortMode = 'latest';
+        sortLatestBtn.classList.add('active');
+        sortIdBtn.classList.remove('active');
+        if (allStudents.length > 0) handleQuery();
+    });
 }
 
 function downloadExcel() {
@@ -242,11 +261,11 @@ function renderReport(students, records, categories, selectedBadSubs) {
     reportDate.textContent = `출력 일시: ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}:${now.getMinutes()}`;
 
     // 헤더 구성
-    tableHead.innerHTML = '<th class="no-print">사진</th><th>학번</th><th>성명</th>';
+    tableHead.innerHTML = '<th>학번</th><th>성명</th>';
     categories.forEach(cat => {
         tableHead.innerHTML += `<th>${cat}</th>`;
     });
-    tableHead.innerHTML += '<th>합계</th>';
+    tableHead.innerHTML += '<th>합계</th><th>최근 기록</th>';
 
     // 데이터 집계
     const stats = students.map(s => {
@@ -280,8 +299,29 @@ function renderReport(students, records, categories, selectedBadSubs) {
             row.counts[cat] = count;
             row.total += count;
         });
+
+        // 최근 기록 시간 산출
+        if (studentRecs.length > 0) {
+            const latest = studentRecs.reduce((max, r) => r.created_at > max ? r.created_at : max, studentRecs[0].created_at);
+            row.latest_time = latest;
+        } else {
+            row.latest_time = null;
+        }
+
         return row;
     }).filter(s => s.total > 0); // 기록이 0인 학생 제외
+
+    // 정렬 적용
+    if (currentSortMode === 'latest') {
+        stats.sort((a, b) => {
+            if (!a.latest_time) return 1;
+            if (!b.latest_time) return -1;
+            return b.latest_time.localeCompare(a.latest_time);
+        });
+    } else {
+        // 기본 학번순 (stats 이미 학번순으로 정렬된 학생들로부터 생성됨)
+        stats.sort((a, b) => a.id.localeCompare(b.id));
+    }
 
     // 총 인원수 표시
     if (countDisplay) {
@@ -292,14 +332,21 @@ function renderReport(students, records, categories, selectedBadSubs) {
     tableBody.innerHTML = '';
     stats.forEach(s => {
         const student = students.find(st => st.pid === s.pid);
+        
+        // 시간 포맷팅 (MM-DD HH:mm)
+        let timeStr = '-';
+        if (s.latest_time) {
+            const dt = new Date(s.latest_time);
+            timeStr = `${(dt.getMonth()+1).toString().padStart(2, '0')}-${dt.getDate().toString().padStart(2, '0')} ${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')}`;
+        }
+
         let html = `<tr data-pid="${s.pid}">
-            <td class="no-print"><button class="photo-btn" onclick="window.showPhotoModalByPid('${s.pid}')">🖼️</button></td>
             <td>${s.id}</td>
-            <td>${s.name}</td>`;
+            <td class="student-name-link" onclick="window.showPhotoModalByPid('${s.pid}')">${s.name}</td>`;
         categories.forEach(cat => {
             html += `<td>${s.counts[cat] || 0}</td>`;
         });
-        html += `<td>${s.total}</td></tr>`;
+        html += `<td>${s.total}</td><td>${timeStr}</td></tr>`;
         tableBody.innerHTML += html;
     });
 
@@ -311,7 +358,7 @@ function renderReport(students, records, categories, selectedBadSubs) {
 
     // 푸터 (합계)
     tableFoot.innerHTML = '';
-    let footHtml = `<tr style="background:#f1f5f9"><td colspan="3">합계</td>`;
+    let footHtml = `<tr style="background:#f1f5f9"><td colspan="2">합계</td>`;
     let grandTotal = 0;
     categories.forEach(cat => {
         const colSum = stats.reduce((acc, s) => acc + (s.counts[cat] || 0), 0);
