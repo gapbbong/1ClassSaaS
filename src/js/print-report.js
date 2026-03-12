@@ -1,4 +1,4 @@
-import { supabase } from './supabase.js';
+import { supabase, getTeacherProfile, getCurrentTeacherEmail } from './api.js';
 import * as XLSX from 'xlsx';
 
 let currentTeacher = null;
@@ -6,26 +6,28 @@ let allStudents = [];
 let allRecords = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. 교사 인증 확인
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    // 1. 교사 인증 확인 (기존 index.html 방식과 통일)
+    const email = getCurrentTeacherEmail();
+    if (!email) {
         alert('로그인이 필요합니다.');
         location.href = 'index.html';
         return;
     }
 
-    const { data: teacher } = await supabase
-        .from('teachers')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-    
-    if (!teacher) {
-        alert('교사 정보를 찾을 수 없습니다.');
+    try {
+        const teacher = await getTeacherProfile(email);
+        if (!teacher) {
+            alert('교사 정보를 찾을 수 없습니다.');
+            location.href = 'index.html';
+            return;
+        }
+        currentTeacher = teacher;
+    } catch (e) {
+        console.error("Auth check failed", e);
+        alert('인증 확인 중 오류가 발생했습니다.');
         location.href = 'index.html';
         return;
     }
-    currentTeacher = teacher;
 
     initUI();
     setupEventListeners();
