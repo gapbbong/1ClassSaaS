@@ -191,7 +191,7 @@ async function handleQuery() {
         }
 
         // 1. 학생 데이터 가져오기 (학번순)
-        let studentQuery = supabase.from('students').select('pid, name, student_id, class_info').eq('status', 'active');
+        let studentQuery = supabase.from('students').select('pid, name, student_id, class_info, photo_url').eq('status', 'active');
         
         if (scope === 'grade') {
             studentQuery = studentQuery.like('class_info', `${grade}-%`);
@@ -366,7 +366,7 @@ function renderReport(students, records, categories, selectedBadSubs) {
         footHtml += `<td>${colSum}</td>`;
         grandTotal += colSum;
     });
-    footHtml += `<td>${grandTotal}</td></tr>`;
+    footHtml += `<td>${grandTotal}</td><td></td></tr>`;
     tableFoot.innerHTML = footHtml;
 }
 
