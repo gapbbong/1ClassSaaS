@@ -130,6 +130,15 @@ function setupEventListeners() {
         const subs = document.querySelectorAll('.bad-sub-check');
         subs.forEach(s => s.checked = badAll.checked);
     });
+
+    const modal = document.getElementById('photo-modal');
+    document.getElementById('close-modal').addEventListener('click', () => {
+        modal.style.display = 'none';
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.style.display = 'none';
+    });
 }
 
 function downloadExcel() {
@@ -233,7 +242,7 @@ function renderReport(students, records, categories, selectedBadSubs) {
     reportDate.textContent = `출력 일시: ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}:${now.getMinutes()}`;
 
     // 헤더 구성
-    tableHead.innerHTML = '<th>번호</th><th>성명</th>';
+    tableHead.innerHTML = '<th class="no-print">사진</th><th>학번</th><th>성명</th>';
     categories.forEach(cat => {
         tableHead.innerHTML += `<th>${cat}</th>`;
     });
@@ -282,7 +291,11 @@ function renderReport(students, records, categories, selectedBadSubs) {
     // 바디 렌더링
     tableBody.innerHTML = '';
     stats.forEach(s => {
-        let html = `<tr><td>${s.id}</td><td>${s.name}</td>`;
+        const student = students.find(st => st.pid === s.pid);
+        let html = `<tr data-pid="${s.pid}">
+            <td class="no-print"><button class="photo-btn" onclick="window.showPhotoModalByPid('${s.pid}')">🖼️</button></td>
+            <td>${s.id}</td>
+            <td>${s.name}</td>`;
         categories.forEach(cat => {
             html += `<td>${s.counts[cat] || 0}</td>`;
         });
@@ -290,9 +303,15 @@ function renderReport(students, records, categories, selectedBadSubs) {
         tableBody.innerHTML += html;
     });
 
+    // 전역 함수로 노출 (onclick 용)
+    window.showPhotoModalByPid = (pid) => {
+        const student = students.find(st => st.pid === pid);
+        if (student) showPhotoModal(student);
+    };
+
     // 푸터 (합계)
     tableFoot.innerHTML = '';
-    let footHtml = `<tr style="background:#f1f5f9"><td colspan="2">합계</td>`;
+    let footHtml = `<tr style="background:#f1f5f9"><td colspan="3">합계</td>`;
     let grandTotal = 0;
     categories.forEach(cat => {
         const colSum = stats.reduce((acc, s) => acc + (s.counts[cat] || 0), 0);
@@ -301,4 +320,25 @@ function renderReport(students, records, categories, selectedBadSubs) {
     });
     footHtml += `<td>${grandTotal}</td></tr>`;
     tableFoot.innerHTML = footHtml;
+}
+
+function showPhotoModal(student) {
+    const modal = document.getElementById('photo-modal');
+    const photoImg = document.getElementById('modal-photo');
+    const infoText = document.getElementById('modal-student-info');
+
+    infoText.textContent = `${student.student_id} ${student.name}`;
+    
+    if (student.photo_url) {
+        let finalUrl = student.photo_url;
+        if (finalUrl.includes('drive.google.com')) {
+            const fileId = finalUrl.split('id=')[1] || finalUrl.split('/d/')[1]?.split('/')[0];
+            if (fileId) finalUrl = `https://lh3.googleusercontent.com/d/${fileId}=s500`;
+        }
+        photoImg.src = finalUrl;
+    } else {
+        photoImg.src = './default.png';
+    }
+
+    modal.style.display = 'flex';
 }
