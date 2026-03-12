@@ -280,15 +280,16 @@ function renderReport(students, records, categories, selectedBadSubs) {
         categories.forEach(cat => {
             let count = 0;
             if (cat === '조퇴') {
-                count = studentRecs.filter(r => r.category.includes('조퇴')).length;
+                count = studentRecs.filter(r => (r.category?.includes('조퇴') || r.content?.includes('조퇴'))).length;
             } else if (cat === '외출') {
-                count = studentRecs.filter(r => r.category.includes('외출')).length;
+                count = studentRecs.filter(r => (r.category?.includes('외출') || r.content?.includes('외출'))).length;
             } else if (cat === '잘한 일') {
-                count = studentRecs.filter(r => r.is_positive === true && !r.category.includes('근태')).length;
+                count = studentRecs.filter(r => r.is_positive === true && !(r.category?.includes('근태'))).length;
             } else if (cat === '못한 일') {
                 // 세부 항목 필터링 적용
                 count = studentRecs.filter(r => {
-                    if (r.is_positive !== false || r.category.includes('근태')) return false;
+                    if (r.is_positive !== false || r.category?.includes('근태')) return false;
+                    if (!r.category) return false;
                     // 선택된 세부 항목이 있는지 확인 (쉼표로 구분된 여러 항목 지원)
                     const recordCats = r.category.split(',').map(s => s.trim());
                     return recordCats.some(rc => selectedBadSubs.includes(rc));
