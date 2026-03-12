@@ -25,7 +25,8 @@ export default defineConfig({
         show_one_photo: resolve(__dirname, 'show-one-photo.html'),
         select_range: resolve(__dirname, 'select-range.html'),
         admin: resolve(__dirname, 'admin.html'),
-        calendar: resolve(__dirname, 'calendar.html')
+        calendar: resolve(__dirname, 'calendar.html'),
+        room_search: resolve(__dirname, 'room-search.html')
       }
     }
   },
