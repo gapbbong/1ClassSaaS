@@ -224,6 +224,7 @@ function renderReport(students, records, categories, selectedBadSubs) {
     const tableFoot = document.getElementById('table-foot');
     const reportTitle = document.getElementById('report-title');
     const reportDate = document.getElementById('report-date');
+    const countDisplay = document.getElementById('student-count-display');
 
     const now = new Date();
     reportDate.textContent = `출력 일시: ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}:${now.getMinutes()}`;
@@ -267,6 +268,11 @@ function renderReport(students, records, categories, selectedBadSubs) {
         });
         return row;
     }).filter(s => s.total > 0); // 기록이 0인 학생 제외
+
+    // 총 인원수 표시
+    if (countDisplay) {
+        countDisplay.textContent = `총 ${stats.length}명`;
+    }
 
     // 바디 렌더링
     tableBody.innerHTML = '';
