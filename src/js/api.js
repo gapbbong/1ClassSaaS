@@ -1,5 +1,5 @@
 import { API_CONFIG } from './config.js';
-import { supabase } from './supabase.js';
+export { supabase } from './supabase.js';
 import CryptoJS from 'crypto-js';
 
 /**

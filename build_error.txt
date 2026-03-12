@@ -1,0 +1,66 @@
+﻿
+> oneclass25@4.34 build
+> vite build
+
+[36mvite v7.3.0 [32mbuilding client environment for production...[36m[39m
+node.exe : 
+위치 줄:1 문자:1
++ & "C:\Program Files\nodejs/node.exe" "
+C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif 
+   ied: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom 
+   mandError
+ 
+src/css/common.css doesn't exist at buil
+d time, it will remain unchanged to be r
+esolved at runtime
+transforming...
+[32m??[39m 193 modules transformed.
+[31m??[39m Build failed in 782ms
+[31merror during build:
+[31msrc/js/print-report.js?v=4.34 (1:9)
+: "supabase" is not exported by "src/js/
+api.js", imported by "src/js/print-repor
+t.js?v=4.34".[31m
+file: [36mD:/App/1cl/src/js/print-repor
+t.js?v=4.34:1:9[31m
+[33m
+1: import { supabase, getTeacherProfile,
+ getCurrentTeacherEmail } from './api.js
+';
+            ^
+2: import * as XLSX from 'xlsx';
+[31m
+    at getRollupError (file:///D:/App/1c
+l/node_modules/rollup/dist/es/shared/par
+seAst.js:401:41)
+    at error (file:///D:/App/1cl/node_mo
+dules/rollup/dist/es/shared/parseAst.js:
+397:42)
+    at Module.error (file:///D:/App/1cl/
+node_modules/rollup/dist/es/shared/node-
+entry.js:17022:16)
+    at Module.traceVariable (file:///D:/
+App/1cl/node_modules/rollup/dist/es/shar
+ed/node-entry.js:17478:29)
+    at ModuleScope.findVariable (file://
+/D:/App/1cl/node_modules/rollup/dist/es/
+shared/node-entry.js:15141:39)
+    at FunctionScope.findVariable (file:
+///D:/App/1cl/node_modules/rollup/dist/e
+s/shared/node-entry.js:5688:38)
+    at FunctionBodyScope.findVariable (f
+ile:///D:/App/1cl/node_modules/rollup/di
+st/es/shared/node-entry.js:5688:38)
+    at BlockScope.findVariable (file:///
+D:/App/1cl/node_modules/rollup/dist/es/s
+hared/node-entry.js:5688:38)
+    at MemberExpression.bind (file:///D:
+/App/1cl/node_modules/rollup/dist/es/sha
+red/node-entry.js:7406:49)
+    at CallExpression.bind (file:///D:/A
+pp/1cl/node_modules/rollup/dist/es/share
+d/node-entry.js:2829:23)[39m
