@@ -90,12 +90,15 @@ async function initBadSubItems() {
         
         badBehaviorPresets.forEach(item => {
             const label = document.createElement('label');
-            label.innerHTML = `<input type="checkbox" class="bad-sub-check" value="${item}" checked> ${item}`;
+            label.innerHTML = `<input type="checkbox" class="bad-sub-check" value="${item}"> ${item}`;
             container.appendChild(label);
         });
 
         // "못한 일" 메인 체크박스 상태에 따라 초기 표시 여부 결정
         const badMain = document.getElementById('bad-main-check');
+        const badAll = document.getElementById('bad-all-check');
+        
+        badAll.checked = false; // 기본 해제
         document.getElementById('bad-sub-container').style.display = badMain.checked ? 'block' : 'none';
 
     } catch (e) {
@@ -248,8 +251,10 @@ function renderReport(students, records, categories, selectedBadSubs) {
         
         categories.forEach(cat => {
             let count = 0;
-            if (cat === '근태') {
-                count = studentRecs.filter(r => r.category.includes('근태')).length;
+            if (cat === '조퇴') {
+                count = studentRecs.filter(r => r.category.includes('조퇴')).length;
+            } else if (cat === '외출') {
+                count = studentRecs.filter(r => r.category.includes('외출')).length;
             } else if (cat === '잘한 일') {
                 count = studentRecs.filter(r => r.is_positive === true && !r.category.includes('근태')).length;
             } else if (cat === '못한 일') {
