@@ -1,0 +1,36 @@
+﻿node : d:\tmp\pdfparse\read_map.js:4
+위치 줄:1 문자:1
++ node d:/tmp/pdfparse/read_map.js 2>&1 
+| Out-File -Encoding utf8 d:/Ap ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecif 
+   ied: (d:\tmp\pdfparse\read_map.js:4  
+  :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCom 
+   mandError
+ 
+pdf(dataBuffer).then(function(data) {
+^
+
+TypeError: pdf is not a function
+    at Object.<anonymous> (d:\tmp\pdfpar
+se\read_map.js:4:1)
+    at Module._compile (node:internal/mo
+dules/cjs/loader:1706:14)
+    at Object..js (node:internal/modules
+/cjs/loader:1839:10)
+    at Module.load (node:internal/module
+s/cjs/loader:1441:32)
+    at Function._load (node:internal/mod
+ules/cjs/loader:1263:12)
+    at TracingChannel.traceSync (node:di
+agnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/mod
+ules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [a
+s runMain] (node:internal/modules/run_ma
+in:171:5)
+    at node:internal/main/run_main_modul
+e:36:49
+
+Node.js v22.21.0
