@@ -8,6 +8,7 @@ let allRecords = [];
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 교사 인증 확인 (기존 index.html 방식과 통일)
     const email = getCurrentTeacherEmail();
+    console.log("Current Teacher Email from Token:", email);
     if (!email) {
         alert('로그인이 필요합니다.');
         location.href = 'index.html';
@@ -16,15 +17,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         const teacher = await getTeacherProfile(email);
+        console.log("Teacher Profile Result:", teacher);
         if (!teacher) {
-            alert('교사 정보를 찾을 수 없습니다.');
+            alert(`교사 정보를 찾을 수 없습니다. (${email})`);
             location.href = 'index.html';
             return;
         }
         currentTeacher = teacher;
     } catch (e) {
         console.error("Auth check failed", e);
-        alert('인증 확인 중 오류가 발생했습니다.');
+        alert('인증 확인 중 오류가 발생했습니다: ' + e.message);
         location.href = 'index.html';
         return;
     }

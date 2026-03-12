@@ -1,5 +1,6 @@
 import { API_CONFIG } from './config.js';
-export { supabase } from './supabase.js';
+import { supabase } from './supabase.js';
+export { supabase };
 import CryptoJS from 'crypto-js';
 
 /**
@@ -454,10 +455,11 @@ export async function fetchClassInfo() {
 export async function getTeacherProfile(email) {
     if (!email) return null;
     try {
+        const cleanEmail = email.trim().toLowerCase();
         const { data, error } = await supabase
             .from('teachers')
             .select('*')
-            .eq('email', email)
+            .eq('email', cleanEmail)
             .maybeSingle();
 
         if (error) throw error;
