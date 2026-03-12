@@ -26,7 +26,8 @@ export default defineConfig({
         select_range: resolve(__dirname, 'select-range.html'),
         admin: resolve(__dirname, 'admin.html'),
         calendar: resolve(__dirname, 'calendar.html'),
-        room_search: resolve(__dirname, 'room-search.html')
+        room_search: resolve(__dirname, 'room-search.html'),
+        print_report: resolve(__dirname, 'print-report.html')
       }
     }
   },
