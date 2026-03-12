@@ -230,7 +230,7 @@ async function handleQuery() {
         // Supabase .in 은 최대 1000개 정도가 한계이나 학교 규모에선 무난
         const { data: records, error: rErr } = await supabase
             .from('life_records')
-            .select('student_pid, category, content, is_positive')
+            .select('student_pid, category, content, is_positive, created_at')
             .in('student_pid', pids);
         
         if (rErr) throw rErr;
@@ -280,9 +280,9 @@ function renderReport(students, records, categories, selectedBadSubs) {
         categories.forEach(cat => {
             let count = 0;
             if (cat === '조퇴') {
-                count = studentRecs.filter(r => (r.category?.includes('조퇴') || r.content?.includes('조퇴'))).length;
+                count = studentRecs.filter(r => /조\s*퇴/.test(r.category || '') || /조\s*퇴/.test(r.content || '')).length;
             } else if (cat === '외출') {
-                count = studentRecs.filter(r => (r.category?.includes('외출') || r.content?.includes('외출'))).length;
+                count = studentRecs.filter(r => /외\s*출/.test(r.category || '') || /외\s*출/.test(r.content || '')).length;
             } else if (cat === '잘한 일') {
                 count = studentRecs.filter(r => r.is_positive === true && !(r.category?.includes('근태'))).length;
             } else if (cat === '못한 일') {
@@ -343,7 +343,7 @@ function renderReport(students, records, categories, selectedBadSubs) {
 
         let html = `<tr data-pid="${s.pid}">
             <td>${s.id}</td>
-            <td class="student-name-link" onclick="window.showPhotoModalByPid('${s.pid}')">${s.name}</td>`;
+            <td class="student-name-link" title="사진 보기" onclick="window.showPhotoModalByPid('${s.pid}')">${s.name}</td>`;
         categories.forEach(cat => {
             html += `<td>${s.counts[cat] || 0}</td>`;
         });
