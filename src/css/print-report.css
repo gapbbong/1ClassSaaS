@@ -103,6 +103,43 @@ select:focus {
     min-width: auto;
 }
 
+/* Sub-checkbox box styles */
+.sub-checkbox-box {
+    margin-top: 10px;
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.sub-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #cbd5e1;
+}
+
+.sub-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.sub-items-grid label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
 .control-action {
     display: flex;
     gap: 10px;

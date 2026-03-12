@@ -49,12 +49,24 @@
 
                 <div class="control-row" style="margin-top: 15px;">
                     <label>2. 포함 항목</label>
-                    <div class="checkbox-group" id="category-checks">
-                        <label><input type="checkbox" value="근태" checked> 근태</label>
-                        <label><input type="checkbox" value="잘한 일" checked> 잘한 일</label>
-                        <label><input type="checkbox" value="못한 일" checked> 못한 일</label>
-                        <label><input type="checkbox" value="기타" checked> 기타</label>
-                        <label><input type="checkbox" value="메모" checked> 메모</label>
+                    <div class="flex-column" style="flex:1;">
+                        <div class="checkbox-group" id="category-checks">
+                            <label><input type="checkbox" value="근태" checked> 근태</label>
+                            <label><input type="checkbox" value="잘한 일" checked> 잘한 일</label>
+                            <label id="bad-label"><input type="checkbox" value="못한 일" checked id="bad-main-check"> 못한 일</label>
+                            <label><input type="checkbox" value="기타" checked> 기타</label>
+                            <label><input type="checkbox" value="메모" checked> 메모</label>
+                        </div>
+                        
+                        <!-- 못한 일 세부 항목 (JS에서 동적 생성) -->
+                        <div id="bad-sub-container" class="sub-checkbox-box" style="display:none;">
+                            <div class="sub-header">
+                                <label><input type="checkbox" id="bad-all-check" checked> <strong>못한 일 전체 선택</strong></label>
+                            </div>
+                            <div id="bad-sub-items" class="sub-items-grid">
+                                <!-- JS에서 채워짐 -->
+                            </div>
+                        </div>
                     </div>
                 </div>
 

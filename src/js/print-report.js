@@ -1,9 +1,10 @@
-import { supabase, getTeacherProfile, getCurrentTeacherEmail } from './api.js';
+import { supabase, getTeacherProfile, getCurrentTeacherEmail, fetchPresets } from './api.js';
 import * as XLSX from 'xlsx';
 
 let currentTeacher = null;
 let allStudents = [];
 let allRecords = [];
+let badBehaviorPresets = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. 교사 인증 확인 (기존 index.html 방식과 통일)
@@ -76,6 +77,30 @@ function initUI() {
     }
 
     updateScopeSelectors();
+    initBadSubItems();
+}
+
+async function initBadSubItems() {
+    try {
+        const presets = await fetchPresets();
+        badBehaviorPresets = presets.bad || [];
+        
+        const container = document.getElementById('bad-sub-items');
+        container.innerHTML = '';
+        
+        badBehaviorPresets.forEach(item => {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" class="bad-sub-check" value="${item}" checked> ${item}`;
+            container.appendChild(label);
+        });
+
+        // "못한 일" 메인 체크박스 상태에 따라 초기 표시 여부 결정
+        const badMain = document.getElementById('bad-main-check');
+        document.getElementById('bad-sub-container').style.display = badMain.checked ? 'block' : 'none';
+
+    } catch (e) {
+        console.error("Failed to load presets", e);
+    }
 }
 
 function updateScopeSelectors() {
@@ -90,6 +115,18 @@ function setupEventListeners() {
     document.getElementById('query-btn').addEventListener('click', handleQuery);
     document.getElementById('print-btn').addEventListener('click', () => window.print());
     document.getElementById('download-btn').addEventListener('click', downloadExcel);
+
+    // 못한 일 처리
+    const badMain = document.getElementById('bad-main-check');
+    badMain.addEventListener('change', () => {
+        document.getElementById('bad-sub-container').style.display = badMain.checked ? 'block' : 'none';
+    });
+
+    const badAll = document.getElementById('bad-all-check');
+    badAll.addEventListener('change', () => {
+        const subs = document.querySelectorAll('.bad-sub-check');
+        subs.forEach(s => s.checked = badAll.checked);
+    });
 }
 
 function downloadExcel() {
@@ -116,6 +153,7 @@ async function handleQuery() {
         const targetClass = document.getElementById('class-select').value;
         
         const categories = Array.from(document.querySelectorAll('#category-checks input:checked')).map(cb => cb.value);
+        const selectedBadSubs = Array.from(document.querySelectorAll('.bad-sub-check:checked')).map(cb => cb.value);
         
         if (categories.length === 0) {
             throw new Error('포함할 항목을 최소 하나 선택해주세요.');
@@ -166,7 +204,7 @@ async function handleQuery() {
         
         if (rErr) throw rErr;
 
-        renderReport(filteredStudents, records, categories);
+        renderReport(filteredStudents, records, categories, selectedBadSubs);
         
         loading.style.display = 'none';
         resultSec.style.display = 'block';
@@ -180,7 +218,7 @@ async function handleQuery() {
     }
 }
 
-function renderReport(students, records, categories) {
+function renderReport(students, records, categories, selectedBadSubs) {
     const tableHead = document.getElementById('table-head-row');
     const tableBody = document.getElementById('table-body');
     const tableFoot = document.getElementById('table-foot');
@@ -214,7 +252,13 @@ function renderReport(students, records, categories) {
             } else if (cat === '잘한 일') {
                 count = studentRecs.filter(r => r.is_positive === true && !r.category.includes('근태')).length;
             } else if (cat === '못한 일') {
-                count = studentRecs.filter(r => r.is_positive === false && !r.category.includes('근태')).length;
+                // 세부 항목 필터링 적용
+                count = studentRecs.filter(r => {
+                    if (r.is_positive !== false || r.category.includes('근태')) return false;
+                    // 선택된 세부 항목이 있는지 확인 (쉼표로 구분된 여러 항목 지원)
+                    const recordCats = r.category.split(',').map(s => s.trim());
+                    return recordCats.some(rc => selectedBadSubs.includes(rc));
+                }).length;
             } else {
                 count = studentRecs.filter(r => r.category === cat).length;
             }
@@ -222,7 +266,7 @@ function renderReport(students, records, categories) {
             row.total += count;
         });
         return row;
-    });
+    }).filter(s => s.total > 0); // 기록이 0인 학생 제외
 
     // 바디 렌더링
     tableBody.innerHTML = '';
