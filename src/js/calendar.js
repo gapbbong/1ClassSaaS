@@ -585,49 +585,28 @@ function scrollToRelevantDate() {
     const tryScroll = (retryCount = 0) => {
         const today = new Date();
         const day = today.getDay(); // 0:일, 1:월, ... 6:토
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-        let targetCard = null;
-
-        if (day === 1 || day === 0 || day === 6) {
-            // 월요일(1) 또는 주말(0,6)이면 가장 최근의 금요일 찾기
-            const lastFri = new Date(today);
-            const diff = (day === 1) ? 3 : (day === 0 ? 2 : 1);
-            lastFri.setDate(today.getDate() - diff);
-            const lY = lastFri.getFullYear();
-            const lM = String(lastFri.getMonth() + 1).padStart(2, '0');
-            const lD = String(lastFri.getDate()).padStart(2, '0');
-            const friStr = `${lY}-${lM}-${lD}`;
-            targetCard = document.querySelector(`.day-card[data-date="${friStr}"]`);
-        } else {
-            // 화~금이면 어제(Yesterday)를 찾음 (데이터가 있다면)
-            let todayCard = document.querySelector(`.day-card[data-date="${todayStr}"]`);
-            if (todayCard) {
-                targetCard = todayCard.previousElementSibling;
-                while (targetCard && !targetCard.classList.contains('day-card')) {
-                    targetCard = targetCard.previousElementSibling;
-                }
-            }
+        
+        let targetDate = new Date(today);
+        if (day === 0) { // 일요일 -> 내일(월)
+            targetDate.setDate(today.getDate() + 1);
+        } else if (day === 6) { // 토요일 -> 모레(월)
+            targetDate.setDate(today.getDate() + 2);
         }
+        
+        const targetStr = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}-${String(targetDate.getDate()).padStart(2, '0')}`;
+        let targetCard = document.querySelector(`.day-card[data-date="${targetStr}"]`);
 
-        // 위 조건으로 못 찾은 경우 Fallback: 오늘보다 이전인 가장 최근의 카드를 찾음
+        // 만약 해당 날짜 카드가 없으면(공동실습소 등으로 수집 안됨), 가장 가까운 미래의 카드를 찾음
         if (!targetCard) {
             const allCards = Array.from(document.querySelectorAll('.day-card:not([style*="display: none"])'));
-            targetCard = allCards.reverse().find(card => card.dataset.date <= todayStr);
-
-            // 그 카드가 오늘이라면 하나 더 위를 선택 (어제)
-            if (targetCard && targetCard.dataset.date === todayStr) {
-                const idx = Array.from(document.querySelectorAll('.day-card:not([style*="display: none"])')).indexOf(targetCard);
-                if (idx > 0) {
-                    targetCard = document.querySelectorAll('.day-card:not([style*="display: none"])')[idx - 1];
-                }
-            }
+            targetCard = allCards.find(card => card.dataset.date >= targetStr);
         }
 
         if (targetCard) {
-            const headerHeight = 70; // [V3.8.1] 현재 디자인에 맞게 조정
+            const headerHeight = 70; 
+            const viewPortOffset = window.innerHeight * 0.2; // 상단 20% 지점 (V4.15)
             const rect = targetCard.getBoundingClientRect();
-            const targetY = rect.top + window.pageYOffset - headerHeight;
+            const targetY = rect.top + window.pageYOffset - headerHeight - viewPortOffset;
 
             window.scrollTo({ top: targetY, behavior: retryCount > 0 ? 'smooth' : 'auto' });
 
