@@ -6,6 +6,10 @@ on:
     - cron: '0 15 * * *'
   workflow_dispatch:  # 수동 실행도 가능
 
+# git push 권한 부여 (필수)
+permissions:
+  contents: write
+
 jobs:
   backup:
     runs-on: ubuntu-latest
@@ -13,8 +17,6 @@ jobs:
     steps:
       - name: 레포 체크아웃
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Node.js 설정
         uses: actions/setup-node@v4
