@@ -1,0 +1,39 @@
+name: Supabase DB 자동 백업
+
+on:
+  schedule:
+    # 매일 오전 12시 KST (= UTC 15:00)
+    - cron: '0 15 * * *'
+  workflow_dispatch:  # 수동 실행도 가능
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 레포 체크아웃
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 의존성 설치
+        run: npm install @supabase/supabase-js
+
+      - name: DB 백업 실행
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node backup_db_ci.js
+
+      - name: 백업 파일 커밋
+        run: |
+          git config user.name "OneClass25 Backup Bot"
+          git config user.email "backup-bot@oneclass25.local"
+          git add backups/
+          git diff --staged --quiet || git commit -m "🗄️ Auto DB backup $(date +'%Y-%m-%d')"
+          git push
