@@ -604,7 +604,7 @@ function scrollToRelevantDate() {
 
         if (targetCard) {
             const headerHeight = 70; 
-            const viewPortOffset = window.innerHeight * 0.2; // 상단 20% 지점 (V4.15)
+            const viewPortOffset = window.innerHeight * 0.15; // 상단 15% 지점 (V4.16)
             const rect = targetCard.getBoundingClientRect();
             const targetY = rect.top + window.pageYOffset - headerHeight - viewPortOffset;
 
