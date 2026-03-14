@@ -1,6 +1,6 @@
 export const API_CONFIG = {
-    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxm9yYjNv5egdbvzucGXyUtDFla0JmnYVIyG2QkZC5DCp3Zz7gPUx1U3d1bcLO6PNE-vA/exec",
-    SEARCH_URL: "https://script.google.com/macros/s/AKfycbxm9yYjNv5egdbvzucGXyUtDFla0JmnYVIyG2QkZC5DCp3Zz7gPUx1U3d1bcLO6PNE-vA/exec",
+    SCRIPT_URL: "https://script.google.com/macros/s/AKfycbzl56WOn26zxiRWpUj_WNNoTK2r_6w5kVp_OHnzd1CrU3XuYiJ2WR02wJDSOFBTptlkmA/exec",
+    SEARCH_URL: "https://script.google.com/macros/s/AKfycbzl56WOn26zxiRWpUj_WNNoTK2r_6w5kVp_OHnzd1CrU3XuYiJ2WR02wJDSOFBTptlkmA/exec",
     SECRET_KEY: 'oneclass25-secret-auth-key',
     CURRENT_ACADEMIC_YEAR: 2026
 };
