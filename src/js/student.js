@@ -714,27 +714,51 @@ async function showPopup(student) {
     infoHtml3 += createInfoRow("보조보호자 친밀도", getValue(surveyData, {}, "보조보호자 친밀도"));
     infoHtml3 += createInfoRow("거주가족", getValue(surveyData, {}, "거주가족", "가족구성"));
 
-    // 4사분면: 상세 기초조사 (나머지 설문 데이터)
+    // 4사분면: 상세 기초조사 (기초조사 설문 순서대로 정렬 및 중복 제거)
     let infoHtml4 = "";
+    
+    // 이미 2, 3사분면에서 사용된 키들 (제외 대상)
     const usedKeys = [
-        "번호", "연락처", "인스타", "집주소", "학적", "성별", "학번", "student_id", "contact", "instagram", "insta", "인스타 아이디", "인스타id", "인스타 id", "주소", "집주소", "address", "status", "gender",
-        "주보호자 관계", "주보호자 연락처", "주보호자 친밀도", "보조보호자 관계", "보조보호자 연락처", "보조보호자 친밀도", "거주가족", "SNS", "학생폰", "학생 연락처",
-        "보호자연락처", "보호자관계", "PARENT_RELATION", "PARENT_CONTACT", "가족구성", "친밀도", "보호자 연락처",
-        "주보호자연락처", "보조보호자연락처", "주보호자친밀도", "보조보호자친밀도"
-    ];
-    const techKeys = [
-        "학년", "반", "이름", "PID", "연번", "submitted_at", "pid", "photo_url", "photo_path", "created_at", "updated_at", "data", "id", "student_pid", "비밀번호", "사진저장링크", "연번", "파일명", "학생별시트", "입력시간", "ACADEMIC_YEAR", "CLASS_INFO", "NAME"
+        "번호", "학번", "student_id", "연락처", "contact", "학생폰", "학생 연락처", "인스타id", "인스타 id", "인스타 아이디", "인스타", "instagram", "insta", "SNS", "주소", "집주소", "address", "학적", "status", "성별", "gender",
+        "주보호자 관계", "주보호자 연락처", "주보호자 친밀도", "보조보호자 관계", "보조보호자 연락처", "보조보호자 친밀도", "거주가족", "가족구성", "보호자관계", "보호자연락처", "보호자 연락처", "주보호자연락처", "보조보호자연락처", "주보호자친밀도", "보조보호자친밀도", "주보호자관계", "보조보호자관계"
     ];
 
-    const allSurveyKeys = Object.keys(surveyRaw);
-    allSurveyKeys.forEach(k => {
+    // 기술적인 필드 및 메타데이터 (제외 대상)
+    const techKeys = [
+        "학년", "반", "이름", "PID", "연번", "submitted_at", "pid", "photo_url", "photo_path", "created_at", "updated_at", "data", "id", "student_pid", "비밀번호", "사진저장링크", "파일명", "학생별시트", "입력시간", "ACADEMIC_YEAR", "CLASS_INFO", "NAME", "우편번호", "상세주소"
+    ];
+
+    // 학생들이 입력하는 기초조사 설문 순서 (4사분면 전용)
+    const orderedKeys4 = [
+        "형제", "주연락대상", "주상담대상", "반려동물", "출신중", "중학교성적", 
+        "졸업후진로", "나의꿈", "학습고민", "취미", "특기", "자주하는게임", "게임실력", 
+        "좋아하는 음식", "싫어하는 음식", "잠드는 시간", "수면시간", "나의장점", 
+        "친한친구", "MBTI", "좌우명", "힘든점", "가족종교", "종교활동", "종교메시지", 
+        "다문화여부", "다문화국가", "등교수단", "등교시간", "혈액형", "알레르기", 
+        "건강특이사항", "잘한일", "못한일", "기타메시지"
+    ];
+
+    // 1. 지정된 순서대로 먼저 추가
+    const processedKeys = new Set();
+    orderedKeys4.forEach(k => {
+        const val = surveyRaw[k];
+        if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).trim() !== "없음" && String(val).trim() !== ".") {
+            infoHtml4 += createInfoRow(k, val);
+            processedKeys.add(k.toUpperCase());
+        }
+    });
+
+    // 2. 혹시 누락된 키가 있다면 (usedKeys, techKeys 제외) 추가로 표시
+    Object.keys(surveyRaw).forEach(k => {
         const uk = k.toUpperCase();
+        if (processedKeys.has(uk)) return;
+        
         const isInUsed = usedKeys.some(key => key.toUpperCase() === uk);
         const isInTech = techKeys.some(key => key.toUpperCase() === uk);
         if (isInUsed || isInTech) return;
 
         const val = surveyRaw[k];
-        if (val && String(val).trim()) {
+        if (val !== undefined && val !== null && String(val).trim() !== "" && String(val).trim() !== "없음" && String(val).trim() !== ".") {
             infoHtml4 += createInfoRow(k, val);
         }
     });

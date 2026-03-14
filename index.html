@@ -13,9 +13,9 @@
     <link rel="shortcut icon" href="oneclass_favicon.ico?v=4.16.0" type="image/x-icon">
     <link rel="apple-touch-icon" href="icons/oneclass_192.png?v=4.16.0">
 
-    <link rel="stylesheet" href="src/css/main.css?v=4.36">
-    <link rel="stylesheet" href="src/css/index.css?v=4.36">
-    <link rel="stylesheet" href="src/css/contact-modal.css?v=4.36">
+    <link rel="stylesheet" href="src/css/main.css?v=4.70">
+    <link rel="stylesheet" href="src/css/index.css?v=4.70">
+    <link rel="stylesheet" href="src/css/contact-modal.css?v=4.70">
 
     <script type="text/javascript">
         (function (c, l, a, r, i, t, y) {
@@ -28,7 +28,7 @@
 
 <body>
     <!-- 상단 버전 정보 -->
-    <div class="version-tag">4.36</div>
+    <div class="version-tag">v4.70</div>
 
     <!-- 스플래시 화면 -->
     <div id="splash-screen">
@@ -55,24 +55,24 @@
                 <button id="hamburger-btn" class="hamburger-btn" aria-label="메뉴 열기">☰</button>
                 <div id="hamburger-dropdown" class="hamburger-dropdown">
                     <!-- 기록 건수를 최상단으로 -->
-                    <button onclick="location.href='total-records.html'">
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '기록 건수 메뉴 클릭', 'menu_click_total_records')); location.href='total-records.html'">
                         기록 <strong id="record-count-val" class="loading-dots" style="color:#007aff;">...</strong>건
                     </button>
 
-                    <button onclick="location.href='check-survey.html'">기초조사 제출 현황</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '기초조사 메뉴 클릭', 'menu_click_check_survey')); location.href='check-survey.html'">기초조사 제출 현황</button>
 
                     <div class="menu-divider"></div>
 
                     <button id="menu-class-analysis" style="display: none;"
                         onclick="location.href='class-analysis.html'">우리반 분석</button>
-                    <button onclick="location.href='bulk-record.html'">일괄기록</button>
-                    <button onclick="location.href='print-report.html'">🖨️ 인쇄/출력</button>
-                    <button onclick="location.href='analysis.html'">학생 분석</button>
-                    <button onclick="location.href='map-3d.html'">🏫 교실/실습실 위치</button>
-                    <button onclick="location.href='quiz.html'">인물 Quiz</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '일괄기록 메뉴 클릭', 'menu_click_bulk_record')); location.href='bulk-record.html'">일괄기록</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '인쇄 메뉴 클릭', 'menu_click_print_report')); location.href='print-report.html'">📊 통계 및 출력</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '학생 분석 메뉴 클릭', 'menu_click_analysis')); location.href='analysis.html'">학생 분석</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '위치 메뉴 클릭', 'menu_click_map_3d')); location.href='map-3d.html'">🏫 교실/실습실 위치</button>
+                    <button onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '퀴즈 메뉴 클릭', 'menu_click_quiz')); location.href='quiz.html'">인물 Quiz</button>
                     <button onclick="location.href='index-2025.html'">2025학년도 명렬</button>
                     <button id="menu-keeper" style="display: none; color: #ff9500; font-weight: bold;"
-                        onclick="location.href='admin.html'">user log</button>
+                        onclick="import('./src/js/api.js').then(m => m.logPageView(localStorage.getItem('teacher_email') || '', '어드민 메뉴 클릭', 'menu_click_admin')); location.href='admin.html'">user log</button>
                     <button id="logout-btn" style="color: #FF3B30;">로그아웃</button>
                 </div>
             </div>

@@ -1,4 +1,6 @@
 import { supabase, getTeacherProfile, getCurrentTeacherEmail, fetchPresets } from './api.js';
+import { API_CONFIG } from './config.js';
+import { extractDriveId, getThumbnailUrl } from './utils.js';
 import * as XLSX from 'xlsx';
 
 let currentTeacher = null;
@@ -117,8 +119,21 @@ function updateScopeSelectors() {
 function setupEventListeners() {
     document.getElementById('scope-select').addEventListener('change', updateScopeSelectors);
     document.getElementById('query-btn').addEventListener('click', handleQuery);
-    document.getElementById('print-btn').addEventListener('click', () => window.print());
-    document.getElementById('download-btn').addEventListener('click', downloadExcel);
+
+    // v4.64: 사진 저장 버튼 리스너
+    const photoSaveBtn = document.getElementById('photo-save-btn');
+    if (photoSaveBtn) {
+        photoSaveBtn.addEventListener('click', downloadAllPhotos);
+    }
+    // v4.60: print-btn -> export-dropdown 상위 요소 제어로 변경
+    const exportDropdown = document.querySelector('.export-dropdown');
+    if (exportDropdown) {
+        // 별도 리스너 없이 HTML의 onclick으로 처리하거나 필요시 추가
+    }
+    
+    if (document.getElementById('download-btn')) {
+        document.getElementById('download-btn').addEventListener('click', downloadExcel);
+    }
 
     // 못한 일 처리
     const badMain = document.getElementById('bad-main-check');
@@ -140,6 +155,67 @@ function setupEventListeners() {
     modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.style.display = 'none';
     });
+
+    // v4.67: 사진 저장 안내 모달 제어
+    const infoModal = document.getElementById('photo-info-modal');
+    const closeInfoBtn = document.getElementById('close-info-modal');
+    const startDownloadBtn = document.getElementById('start-download-btn');
+
+    if (closeInfoBtn) {
+        closeInfoBtn.addEventListener('click', () => infoModal.style.display = 'none');
+    }
+    if (infoModal) {
+        infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) infoModal.style.display = 'none';
+        });
+    }
+    if (startDownloadBtn) {
+        startDownloadBtn.addEventListener('click', async () => {
+            infoModal.style.display = 'none';
+            await executeDownloadProcess();
+        });
+    }
+
+    // v4.51: 항목(상단)과 명렬/사진(하단) 상호 배제 로직
+    const topRowChecks = document.querySelectorAll('#category-checks input[type="checkbox"]');
+    const bottomRowChecks = [document.getElementById('check-student-info'), document.getElementById('check-photo')];
+
+    const updateExclusivity = (changedGroup) => {
+        if (changedGroup === 'top') {
+            const anyTopChecked = Array.from(topRowChecks).some(c => c.checked);
+            if (anyTopChecked) {
+                bottomRowChecks.forEach(c => {
+                    c.checked = false;
+                    c.disabled = true;
+                });
+            } else {
+                bottomRowChecks.forEach(c => c.disabled = false);
+            }
+        } else {
+            const anyBottomChecked = bottomRowChecks.some(c => c.checked);
+            if (anyBottomChecked) {
+                topRowChecks.forEach(c => {
+                    c.checked = false;
+                    c.disabled = true;
+                });
+                // '못한 일' 상세 박스도 숨김 처리
+                document.getElementById('bad-sub-container').style.display = 'none';
+            } else {
+                topRowChecks.forEach(c => c.disabled = false);
+            }
+        }
+    };
+
+    topRowChecks.forEach(c => {
+        c.addEventListener('change', () => updateExclusivity('top'));
+    });
+    bottomRowChecks.forEach(c => {
+        c.addEventListener('change', () => updateExclusivity('bottom'));
+    });
+
+    // 초기 상태 체크
+    updateExclusivity('top');
+    updateExclusivity('bottom');
 
     // 정렬 버튼 처리
     const sortIdBtn = document.getElementById('sort-id-btn');
@@ -183,15 +259,21 @@ async function handleQuery() {
         const dept = document.getElementById('dept-select').value;
         const targetClass = document.getElementById('class-select').value;
         
-        const categories = Array.from(document.querySelectorAll('#category-checks input:checked')).map(cb => cb.value);
+        // v4.44: 명렬, 사진 체크박스 추가
+        const showStudentInfo = document.getElementById('check-student-info').checked;
+        const showPhoto = document.getElementById('check-photo').checked;
+        
+        const categories = Array.from(document.querySelectorAll('#category-checks input[value]:checked')).map(cb => cb.value);
         const selectedBadSubs = Array.from(document.querySelectorAll('.bad-sub-check:checked')).map(cb => cb.value);
         
-        if (categories.length === 0) {
+        if (categories.length === 0 && !showStudentInfo && !showPhoto) {
             throw new Error('포함할 항목을 최소 하나 선택해주세요.');
         }
 
-        // 1. 학생 데이터 가져오기 (학번순)
-        let studentQuery = supabase.from('students').select('pid, name, student_id, class_info, photo_url').eq('status', 'active');
+        // 1. 학생 데이터 가져오기 (v4.48: 졸업생 제외하고 당해 학년도 학생만 조회)
+        let studentQuery = supabase.from('students')
+            .select('pid, name, student_id, class_info, photo_url, status')
+            .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR);
         
         if (scope === 'grade') {
             studentQuery = studentQuery.like('class_info', `${grade}-%`);
@@ -235,21 +317,32 @@ async function handleQuery() {
         
         if (rErr) throw rErr;
 
-        renderReport(filteredStudents, records, categories, selectedBadSubs);
+        renderReport(filteredStudents, records, categories, selectedBadSubs, { showStudentInfo, showPhoto });
         
-        loading.style.display = 'none';
         resultSec.style.display = 'block';
-        document.getElementById('print-btn').style.display = 'inline-block';
+        
+        // v4.64: 사진 선택 여부에 따른 버튼 제어
+        const exportDropdown = document.querySelector('.export-dropdown');
+        const photoSaveBtn = document.getElementById('photo-save-btn');
+        if (showPhoto) {
+            if (exportDropdown) exportDropdown.style.display = 'none';
+            if (photoSaveBtn) photoSaveBtn.style.display = 'inline-block';
+        } else {
+            if (exportDropdown) exportDropdown.style.display = 'inline-block';
+            if (photoSaveBtn) photoSaveBtn.style.display = 'none';
+        }
 
     } catch (err) {
-        console.error(err);
-        loading.style.display = 'none';
-        errorMsg.textContent = err.message;
+        console.error("Query Error:", err);
+        errorMsg.textContent = err.message || "데이터를 불러오는 중 오류가 발생했습니다.";
         errorMsg.style.display = 'block';
+    } finally {
+        loading.style.display = 'none';
     }
 }
 
-function renderReport(students, records, categories, selectedBadSubs) {
+function renderReport(students, records, categories, selectedBadSubs, options = {}) {
+    const { showStudentInfo = true, showPhoto = false } = options;
     const tableHead = document.getElementById('table-head-row');
     const tableBody = document.getElementById('table-body');
     const tableFoot = document.getElementById('table-foot');
@@ -260,18 +353,28 @@ function renderReport(students, records, categories, selectedBadSubs) {
     const now = new Date();
     reportDate.textContent = `출력 일시: ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${now.getHours()}:${now.getMinutes()}`;
 
-    // 헤더 구성
-    tableHead.innerHTML = '<th>학번</th><th>성명</th>';
+    // v4.53: 학번, 이름 분리. 최근 기록 앞 합계 삭제.
+    let headHtml = '<th>학번</th><th>이름</th>'; 
+    
     categories.forEach(cat => {
-        tableHead.innerHTML += `<th>${cat}</th>`;
+        const headerName = (cat === '못한 일') ? '항목' : cat;
+        headHtml += `<th>${headerName}</th>`;
     });
-    tableHead.innerHTML += '<th>합계</th><th>최근 기록</th>';
+
+    if (showStudentInfo) {
+        headHtml += '<th>학적</th>'; // 학번은 이미 앞에 있으므로 학적만 추가
+    }
+    if (showPhoto) headHtml += '<th>사진</th>';
+    
+    headHtml += '<th>최근 기록</th>';
+    tableHead.innerHTML = headHtml;
 
     // 데이터 집계
     const stats = students.map(s => {
         const studentRecs = records.filter(r => r.student_pid === s.pid);
         const row = {
             id: s.student_id,
+            pid: s.pid,
             name: s.name,
             counts: {},
             total: 0
@@ -284,20 +387,30 @@ function renderReport(students, records, categories, selectedBadSubs) {
             } else if (cat === '외출') {
                 count = studentRecs.filter(r => /외\s*출/.test(r.category || '') || /외\s*출/.test(r.content || '')).length;
             } else if (cat === '잘한 일') {
-                count = studentRecs.filter(r => r.is_positive === true && !(r.category?.includes('근태'))).length;
+                const neutralCats = ['기록', '생활기록', '일반'];
+                count = studentRecs.filter(r => 
+                    r.is_positive === true && 
+                    !(r.category?.includes('근태')) && 
+                    !(r.category?.includes('상담')) &&
+                    !(neutralCats.includes(r.category))
+                ).length;
             } else if (cat === '못한 일') {
                 // 세부 항목 필터링 적용
-                count = studentRecs.filter(r => {
-                    if (r.is_positive !== false || r.category?.includes('근태')) return false;
+                const badRecs = studentRecs.filter(r => {
+                    if (r.is_positive !== false || r.category?.includes('근태') || r.category?.includes('상담')) return false;
                     if (!r.category) return false;
                     // 선택된 세부 항목이 있는지 확인 (쉼표로 구분된 여러 항목 지원)
                     const recordCats = r.category.split(',').map(s => s.trim());
                     return recordCats.some(rc => selectedBadSubs.includes(rc));
-                }).length;
+                });
+                count = badRecs.length;
+                // v4.53: 항목명(카테고리)들 중복 제거하여 나열
+                const uniqueCats = [...new Set(badRecs.flatMap(r => r.category.split(',').map(s => s.trim())))];
+                row.counts[cat] = uniqueCats.filter(c => selectedBadSubs.includes(c)).join(', ') || '';
             } else {
-                count = studentRecs.filter(r => r.category === cat).length;
+                row.counts[cat] = studentRecs.filter(r => r.category === cat).length;
             }
-            row.counts[cat] = count;
+            if (cat !== '못한 일') row.counts[cat] = count;
             row.total += count;
         });
 
@@ -310,7 +423,11 @@ function renderReport(students, records, categories, selectedBadSubs) {
         }
 
         return row;
-    }).filter(s => s.total > 0); // 기록이 0인 학생 제외
+    }).filter(s => {
+        // v4.47: 명렬이나 사진이 체크된 경우 모든 학생 표시, 아니면 기록이 있는 학생만 표시
+        if (showStudentInfo || showPhoto) return true;
+        return s.total > 0;
+    });
 
     // 정렬 적용
     if (currentSortMode === 'latest') {
@@ -341,32 +458,69 @@ function renderReport(students, records, categories, selectedBadSubs) {
             timeStr = `${(dt.getMonth()+1).toString().padStart(2, '0')}-${dt.getDate().toString().padStart(2, '0')} ${dt.getHours().toString().padStart(2, '0')}:${dt.getMinutes().toString().padStart(2, '0')}`;
         }
 
+        // v4.53: 학번, 이름 분리
+        const displayStatus = (student?.status && student.status !== 'active' && student.status !== '재학') ? ` (${student.status})` : '';
+        
         let html = `<tr data-pid="${s.pid}">
             <td>${s.id}</td>
-            <td class="student-name-link" title="사진 보기" onclick="window.showPhotoModalByPid('${s.pid}')">${s.name}</td>`;
+            <td class="student-name-link" title="사진 보기" onclick="window.showPhotoModalByPid('${s.pid}')">${s.name}${displayStatus}</td>`;
+        
         categories.forEach(cat => {
-            html += `<td>${s.counts[cat] || 0}</td>`;
+            html += `<td>${s.counts[cat]}</td>`;
         });
-        html += `<td>${s.total}</td><td>${timeStr}</td></tr>`;
+
+        if (showStudentInfo) {
+            html += `<td>${student?.status || '재학'}</td>`;
+        }
+
+        if (showPhoto) {
+            const driveFileId = extractDriveId(student?.photo_url);
+            const thumbUrl = driveFileId ? getThumbnailUrl(driveFileId) : (student?.photo_url || './default.png');
+            html += `<td><img src="${thumbUrl}" style="width:40px; height:50px; object-fit:cover; border-radius:4px;" onerror="this.src='./default.png'"></td>`;
+        }
+
+        html += `<td>${timeStr}</td></tr>`;
         tableBody.innerHTML += html;
     });
 
     // 전역 함수로 노출 (onclick 용)
     window.showPhotoModalByPid = (pid) => {
-        const student = students.find(st => st.pid === pid);
+        const student = students.find(st => String(st.pid) === String(pid));
         if (student) showPhotoModal(student);
     };
 
-    // 푸터 (합계)
+    // 푸터 (합계) - v4.53: 학번/이름 분리에 맞춰 수정 및 합계 삭제
     tableFoot.innerHTML = '';
     let footHtml = `<tr style="background:#f1f5f9"><td colspan="2">합계</td>`;
-    let grandTotal = 0;
+    
     categories.forEach(cat => {
-        const colSum = stats.reduce((acc, s) => acc + (s.counts[cat] || 0), 0);
+        // '못한 일' 항목인 경우 숫자로 합계 계산을 위해 별도 필터링 수행 (s.counts[cat]은 문자열일 수 있음)
+        let colSum = 0;
+        if (cat === '못한 일') {
+            colSum = stats.reduce((acc, obj) => {
+                // 이전에 각 학생 객체에 숫자로 된 count를 저장하지 않았으므로, 
+                // 임시로 해당 카테고리가 비어있지 않은 학생 수를 세거나, 기존 stats 계산 시의 로직을 참고해야 함.
+                // 여기서는 단순히 '항목'에 내용이 있는 학생의 수로 표시하거나, 0으로 둠.
+                // 기록 건수로 표시하는 것이 합리적이므로 건수를 계산함.
+                const studentRecs = records.filter(r => r.student_pid === obj.pid);
+                const badCount = studentRecs.filter(r => {
+                    if (r.is_positive !== false || r.category?.includes('근태') || r.category?.includes('상담')) return false;
+                    if (!r.category) return false;
+                    const recordCats = r.category.split(',').map(s => s.trim());
+                    return recordCats.some(rc => selectedBadSubs.includes(rc));
+                }).length;
+                return acc + badCount;
+            }, 0);
+        } else {
+            colSum = stats.reduce((acc, obj) => acc + (obj.counts[cat] || 0), 0);
+        }
         footHtml += `<td>${colSum}</td>`;
-        grandTotal += colSum;
     });
-    footHtml += `<td>${grandTotal}</td><td></td></tr>`;
+
+    if (showStudentInfo) footHtml += '<td></td>'; // 학적
+    if (showPhoto) footHtml += '<td></td>'; // 사진
+
+    footHtml += `<td></td></tr>`;
     tableFoot.innerHTML = footHtml;
 }
 
@@ -379,14 +533,142 @@ function showPhotoModal(student) {
     
     if (student.photo_url) {
         let finalUrl = student.photo_url;
-        if (finalUrl.includes('drive.google.com')) {
-            const fileId = finalUrl.split('id=')[1] || finalUrl.split('/d/')[1]?.split('/')[0];
-            if (fileId) finalUrl = `https://lh3.googleusercontent.com/d/${fileId}=s500`;
+        const driveFileId = extractDriveId(finalUrl);
+        
+        if (finalUrl.startsWith('http') && !finalUrl.includes('drive.google.com')) {
+            photoImg.src = finalUrl;
+        } else if (driveFileId) {
+            photoImg.src = getThumbnailUrl(driveFileId);
+        } else {
+            // ID만 있거나 기타 경우
+            photoImg.src = getThumbnailUrl(finalUrl);
         }
-        photoImg.src = finalUrl;
     } else {
         photoImg.src = './default.png';
     }
 
     modal.style.display = 'flex';
+}
+
+// v4.67: 다운로드 프로세스 분리 및 UI 개선
+async function downloadAllPhotos() {
+    const tableBody = document.getElementById('table-body');
+    const rows = tableBody.querySelectorAll('tr');
+    
+    if (rows.length === 0) {
+        alert('조회된 데이터가 없습니다.');
+        return;
+    }
+
+    const infoModal = document.getElementById('photo-info-modal');
+    if (infoModal) {
+        infoModal.style.display = 'flex';
+    } else {
+        await executeDownloadProcess();
+    }
+}
+
+async function executeDownloadProcess() {
+    const tableBody = document.getElementById('table-body');
+    const rows = tableBody.querySelectorAll('tr');
+    const btn = document.getElementById('photo-save-btn');
+    const originalText = btn.textContent;
+
+    // v4.68: 범위에 따른 자동 폴더명 생성
+    const scope = document.getElementById('scope-select').value;
+    const grade = document.getElementById('grade-select').value;
+    const dept = document.getElementById('dept-select').value;
+    const targetClass = document.getElementById('class-select').value;
+    
+    let subDirName = "";
+    if (scope === 'all') subDirName = "전체_학생_사진";
+    else if (scope === 'grade') subDirName = `${grade}학년_사진`;
+    else if (scope === 'dept') subDirName = `${dept}_사진`;
+    else if (scope === 'grade_dept') subDirName = `${grade}학년_${dept}_사진`;
+    else if (scope === 'class') {
+        // v4.70: class-select의 '학년-반' 형식을 파싱하여 정확한 폴더명 생성
+        if (targetClass.includes('-')) {
+            const [g, c] = targetClass.split('-');
+            subDirName = `${g}학년_${c}반_사진`;
+        } else {
+            subDirName = `${grade}학년_${targetClass}반_사진`;
+        }
+    }
+    
+    // 중복 방지를 위한 날짜 추가 (예: 1학년_1반_사진_240314)
+    const now = new Date();
+    const dateSuffix = `${now.getFullYear().toString().slice(-2)}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+    subDirName = `${subDirName}_${dateSuffix}`;
+
+    // v4.65: File System Access API 시도
+    let directoryHandle = null;
+    let targetFolderHandle = null; // 실제 파일이 담길 하위 폴더
+    let useFileSystemAPI = false;
+
+    if ('showDirectoryPicker' in window) {
+        try {
+            // v4.67: 안내창에서 이미 확인했으므로 바로 피커 실행 시도
+            directoryHandle = await window.showDirectoryPicker();
+            
+            // v4.68: 하위 폴더 자동 생성
+            targetFolderHandle = await directoryHandle.getDirectoryHandle(subDirName, { create: true });
+            useFileSystemAPI = true;
+        } catch (err) {
+            console.warn("User cancelled directory picker or error occured:", err);
+            if (err.name === 'AbortError') {
+                if (!confirm(`폴더 선택이 취소되었습니다.\n대신 브라우저 기본 다운로드 폴더로 파일을 개별 저장하시겠습니까?`)) return;
+            }
+        }
+    }
+
+    btn.disabled = true;
+    btn.textContent = '저장 준비 중...';
+
+    try {
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const studentId = row.cells[0].textContent.trim();
+            const studentName = row.cells[1].textContent.trim();
+            const img = row.querySelector('img');
+            
+            if (!img || !img.src || img.src.includes('default.png')) {
+                continue;
+            }
+
+            btn.textContent = `저장 중 (${i+1}/${rows.length})`;
+            const fileName = `${studentId} ${studentName}.jpg`;
+
+            try {
+                const response = await fetch(img.src);
+                const blob = await response.blob();
+
+                if (useFileSystemAPI && targetFolderHandle) {
+                    // v4.68: 생성된 하위 폴더(targetFolderHandle)에 저장
+                    const fileHandle = await targetFolderHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                } else {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+            } catch (err) {
+                console.error(`Failed to save ${studentId}:`, err);
+            }
+        }
+        alert(`모든 사진이 '${subDirName}' 폴더(또는 기본 폴더)에 저장되었습니다.`);
+    } catch (e) {
+        console.error("Batch save failed", e);
+        alert('저장 중 오류가 발생했습니다.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
 }

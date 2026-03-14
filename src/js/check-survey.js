@@ -151,7 +151,7 @@ async function loadClassSurveyStatus() {
         currentClassData = students
             .filter(student => {
                 const status = String(student["학적"] || "").trim();
-                return !status.includes("전출") && !status.includes("자퇴");
+                return !status.includes("전출") && !status.includes("자퇴") && !status.includes("위탁");
             })
             .map(student => {
                 // PID를 문자열로 변환하고 양 끝 공백 제거 후 비교 (안정성 강화)
@@ -390,18 +390,19 @@ async function loadAllPendingStudents() {
         // 1. 전교생 명단 가져오기
         const { data: allStudents, error: sError } = await supabase
             .from('students')
-            .select('pid, student_id, name, class_info, contact')
+            .select('pid, student_id, name, class_info, contact, status')
             .eq('academic_year', API_CONFIG.CURRENT_ACADEMIC_YEAR)
             .neq('status', 'graduated')
             .order('student_id', { ascending: true });
 
         if (sError) throw sError;
 
-        // [추가] 전출/자퇴생 제외 (학적 필드 기준)
+        // [추가] 전출/자퇴/위탁생 제외 (학적 필드 기준)
         const activeStudents = allStudents.filter(s => {
             const status = String(s.status || '').trim().toLowerCase();
             // DB의 status 값이 English일 수도 있으므로 둘 다 체크
-            return !status.includes('전출') && !status.includes('자퇴') && status !== 'transferred' && status !== 'withdrawn' && status !== 'dropout';
+            return !status.includes('전출') && !status.includes('자퇴') && !status.includes('위탁') && 
+                   status !== 'transferred' && status !== 'withdrawn' && status !== 'dropout' && status !== 'consigned';
         });
 
         // 2. 전체 설문 데이터의 student_pid 목록 가져오기

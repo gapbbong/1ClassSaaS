@@ -185,6 +185,12 @@ function initHeaderMenu() {
     hamburgerBtn.addEventListener("click", (e) => {
       e.stopPropagation(); // 바디 클릭 방지
       hamburgerDropdown.style.display = hamburgerDropdown.style.display === "block" ? "none" : "block";
+      
+      // [v4.37] 메뉴 열림 로그
+      const email = getFullStoredEmail();
+      if (hamburgerDropdown.style.display === "block" && email) {
+        logPageView(email, "햄버거 메뉴 열기", "menu_open");
+      }
     });
 
     // 화면 다른 곳 클릭하면 닫히게 설정
@@ -687,6 +693,13 @@ async function checkClassAnalysisPermission() {
 
       menuBtn.onclick = (e) => {
         e.preventDefault();
+        
+        // [v4.37] 메뉴 클릭 로그
+        const email = getFullStoredEmail();
+        if (email) {
+          logPageView(email, "우리반 분석 메뉴 진입", "menu_click_analysis");
+        }
+        
         location.href = `class-analysis.html?grade=${g}&class=${c}`;
       };
     }
