@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1Class | 신규 학교 온보딩</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.3);
+        }
+
+        body {
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Pretendard', sans-serif;
+            overflow-x: hidden;
+            color: #1a202c; /* 기본 텍스트 색상을 더 진하게 */
+        }
+
+        .background-blob {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            background: var(--primary-gradient);
+            filter: blur(80px);
+            opacity: 0.1;
+            z-index: -1;
+            border-radius: 50%;
+        }
+
+        .blob-1 { top: -100px; left: -100px; }
+        .blob-2 { bottom: -100px; right: -100px; }
+
+        .onboarding-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 2rem;
+            padding: 3rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .text-muted {
+            color: #2d3748 !important; /* 짙은 회색 */
+        }
+
+        .step-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #cbd5e0;
+            transition: all 0.3s ease;
+        }
+
+        .step-dot.active {
+            background: #6366f1;
+            width: 30px;
+            border-radius: 10px;
+        }
+
+        .text-gradient {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text; /* 표준 속성 추가 */
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-control {
+            border-radius: 1rem;
+            padding: 0.75rem 1.25rem;
+            border: 1px solid #cbd5e0;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1a202c;
+            font-weight: 500;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+        }
+
+        .btn-primary-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 1rem;
+            padding: 0.75rem 2rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .school-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 1rem;
+        }
+
+        .school-item:hover {
+            background: white;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="background-blob blob-1"></div>
+    <div class="background-blob blob-2"></div>
+
+    <div class="onboarding-card animate__animated animate__fadeIn">
+        <div class="text-center mb-5">
+            <h1 class="display-6 fw-bold mb-2">1Class <span class="text-gradient">시작하기</span></h1>
+            <p class="text-muted">모든 반을 하나의 반으로, 모든 선생님이 함께하는 생활지도</p>
+        </div>
+
+        <div class="step-indicator">
+            <div id="dot-1" class="step-dot active"></div>
+            <div id="dot-2" class="step-dot"></div>
+            <div id="dot-3" class="step-dot"></div>
+        </div>
+
+        <!-- Step 1: 학교 검색 -->
+        <div id="step-1" class="step-container">
+            <h4 class="fw-bold mb-4">🏫 학교를 찾아주세요</h4>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-1">학교 이름 입력</label>
+                <p class="text-muted small mb-2">
+                    <i class="bi bi-info-circle"></i> "현대고" 대신 "현대"처럼 <strong>두 글자만 입력</strong>해도 찾을 수 있습니다.
+                </p>
+                <div class="input-group mb-3">
+                    <input type="text" id="search-input" class="form-control" placeholder="예: 미래원클">
+                    <button id="search-btn" class="btn btn-primary-gradient">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+
+                <div id="region-filter-area" class="animate__animated animate__fadeIn hidden">
+                    <label class="form-label fw-bold small text-primary mb-1">동명의 학교가 많습니다. 지역을 선택해주세요:</label>
+                    <select id="region-select" class="form-select mb-3" style="border-radius: 1rem; padding: 0.75rem;">
+                        <option value="">전국 (명칭으로만 검색)</option>
+                        <option value="B10">서울특별시</option>
+                        <option value="C10">부산광역시</option>
+                        <option value="D10">대구광역시</option>
+                        <option value="E10">인천광역시</option>
+                        <option value="F10">광주광역시</option>
+                        <option value="G10">대전광역시</option>
+                        <option value="H10">울산광역시</option>
+                        <option value="I10">세종특별자치시</option>
+                        <option value="J10">경기도</option>
+                        <option value="K10">강원도</option>
+                        <option value="L10">충청북도</option>
+                        <option value="M10">충청남도</option>
+                        <option value="N10">전라북도</option>
+                        <option value="O10">전라남도</option>
+                        <option value="P10">경상북도</option>
+                        <option value="Q10">경상남도</option>
+                        <option value="R10">제주특별자치도</option>
+                    </select>
+                </div>
+            </div>
+            <div id="search-results" class="mb-4">
+                <!-- 결과 리스트가 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- Step 2: 도메인 및 설정 -->
+        <div id="step-2" class="step-container hidden">
+            <h4 class="fw-bold mb-4">🌐 학교 주소 및 로그인 설정</h4>
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-1">우리 학교 전용 주소</label>
+                <p class="text-muted small mb-2">영문 소문자와 숫자만 사용 가능합니다 (점, 특수문자 금지)</p>
+                <div class="input-group">
+                    <input type="text" id="domain-input" class="form-control" placeholder="예: ks" maxlength="20" inputmode="latin" pattern="[a-z0-9]*" spellcheck="false" autocapitalize="none">
+                    <span class="input-group-text fw-bold">.1class.app</span>
+                </div>
+                <div id="domain-check-msg" class="small mt-1 fw-bold"></div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-1">접속 정보 기억하기</label>
+                <select id="login-session-mode" class="form-select mb-2" style="border-radius: 1rem; padding: 0.75rem;">
+                    <option value="session">창을 닫으면 로그아웃 (공용 PC 권장)</option>
+                    <option value="local" selected>항상 자동 로그인 (개인 노트북 권장)</option>
+                </select>
+                <p class="text-muted small bg-light p-2 rounded-3 border">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>팁:</strong> 교무실 공용 컴퓨터라면 '창을 닫으면 로그아웃'을 선택해야 다른 사람이 선생님 성함으로 글을 쓰는 것을 막을 수 있습니다.
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-2">💡 선생님들의 로그인 계정은 어떻게 할까요?</label>
+                <div class="d-flex gap-2">
+                    <div class="account-option-card flex-fill flex-column border p-3 rounded-4 cursor-pointer text-center bg-white shadow-sm" onclick="selectAccountType('workspace')" id="acc-workspace" style="transition:0.3s;">
+                        <i class="bi bi-google text-danger fs-4 mb-2"></i>
+                        <div class="fw-bold small">워크스페이스 계정</div>
+                        <div class="text-muted" style="font-size: 0.65rem;">@school.go.kr 등<br>학교 메일로 통일</div>
+                    </div>
+                    <div class="account-option-card flex-fill flex-column border p-3 rounded-4 cursor-pointer text-center bg-white shadow-sm" onclick="selectAccountType('personal')" id="acc-personal" style="transition:0.3s;">
+                        <i class="bi bi-envelope-paper-fill text-primary fs-4 mb-2"></i>
+                        <div class="fw-bold small">개인 이메일 계정</div>
+                        <div class="text-muted" style="font-size: 0.65rem;">네이버, 지메일 등<br>자유로운 가입</div>
+                    </div>
+                </div>
+                <input type="hidden" id="teacher-account-type" value="workspace">
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-1">선생님 본인 인증 방식</label>
+                <select id="auth-mode" class="form-select mb-2" style="border-radius: 1rem; padding: 0.75rem;">
+                    <option value="email">이메일로 간편하게 (비번 없음)</option>
+                    <option value="password">이메일 + 비밀번호 (보안 중시)</option>
+                </select>
+                <p class="text-muted small bg-light p-2 rounded-3 border">
+                    <i class="bi bi-shield-check me-1"></i>
+                    <strong>추천:</strong> 처음에는 '이메일로 간편하게'를 추천드립니다. 접속 링크가 메일로 즉시 발송됩니다.
+                </p>
+            </div>
+
+            <hr class="my-4 opacity-10">
+
+            <div class="mb-4">
+                <label class="form-label fw-bold mb-1">📢 공식 관리자(문의처) 정보</label>
+                <div class="p-3 mb-3" style="background-color: #f8faff; border-radius: 1rem; border: 1px dashed #d1e1ff;">
+                    <p class="text-dark small mb-2 fw-bold">
+                        <i class="bi bi-chat-heart text-primary me-1"></i> 관리자 선생님, 문의 처리가 걱정되시나요?
+                    </p>
+                    <p class="text-muted small mb-0" style="line-height: 1.5;">
+                        걱정 마세요! 단순 비밀번호 찾기 등은 시스템이 자동으로 응대합니다. <br>
+                        정말 해결이 어려운 경우에만 동료 선생님들이 도움을 요청하실 수 있도록 <strong>부드럽고 정중한 톤으로 안내</strong>해 드릴 예정입니다.
+                    </p>
+                </div>
+                
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <input type="text" id="admin-name" class="form-control" placeholder="성함 (예: 홍길동)">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" id="admin-dept" class="form-control" placeholder="소속 부서 (예: 미래교육부)">
+                    </div>
+                    <div class="col-12 mt-2">
+                        <input type="email" id="admin-email" class="form-control" placeholder="공식 이메일 주소" inputmode="email">
+                    </div>
+                    <div class="col-12 mt-2">
+                        <input type="text" id="admin-phone" class="form-control" placeholder="내선 번호 (예: 102 또는 02-xxx-xxxx)" inputmode="tel">
+                    </div>
+                </div>
+                <p class="text-primary-emphasis small mt-2 mb-0" style="font-size: 0.75rem;">
+                    <i class="bi bi-lightbulb-fill me-1"></i> 로그인 페이지 하단에 "문의: <span id="preview-dept" class="fw-bold">...</span> <span id="preview-name" class="fw-bold">...</span> 선생님"으로 신뢰감 있게 표시됩니다.
+                </p>
+            </div>
+
+            <button id="next-to-3" class="btn btn-primary-gradient w-100" disabled>다음 단계로 (Enter)</button>
+        </div>
+
+        <!-- Step 3: 결재 및 라이선스 -->
+        <div id="step-3" class="tab-pane fade">
+            <h4 class="fw-bold mb-3"><span class="badge bg-primary me-2">Step 3</span>결재 및 라이선스 등록</h4>
+            
+            <div class="card border-0 shadow-sm mb-4" style="border-radius: 1.5rem; overflow: hidden;">
+                <div class="card-body p-4">
+                    <label class="form-label fw-bold mb-3">결재 방식 선택</label>
+                    
+                    <div class="row g-3">
+                        <!-- 토스 페이 -->
+                        <div class="col-12">
+                            <div class="payment-option border p-3 rounded-4 d-flex align-items-center cursor-pointer" onclick="selectPayment('toss')" id="pay-toss" style="transition: 0.3s; border-color: #eee;">
+                                <div class="icon-box bg-light rounded-circle p-2 me-3">
+                                    <img src="https://static.toss.im/assets/homepage/safety/icn-safety-toss-pay.png" alt="Toss" style="width: 24px;">
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">토스 페이 / 계좌이체</div>
+                                    <div class="text-muted small">즉시 결제 확인 및 자동 활성화</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payMethod" id="method-toss" value="toss">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 라이선스 키 -->
+                        <div class="col-12">
+                            <div class="payment-option border p-3 rounded-4 d-flex align-items-center cursor-pointer" onclick="selectPayment('key')" id="pay-key" style="transition: 0.3s; border-color: #eee;">
+                                <div class="icon-box bg-light rounded-circle p-2 me-3">
+                                    <i class="bi bi-key-fill text-warning fs-5"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">라이선스 키 (승인 코드)</div>
+                                    <div class="text-muted small">S2B/에듀파인 선처리용 코드 입력</div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payMethod" id="method-key" value="key">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 한 학급 무료 체험 -->
+                        <div class="col-md-6">
+                            <div class="payment-option border p-3 rounded-4 h-100 d-flex flex-column cursor-pointer" onclick="selectPayment('trial-class')" id="pay-trial-class" style="transition: 0.3s; border-color: #eee;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="icon-box bg-light rounded-circle p-2 me-2">
+                                        <i class="bi bi-person-video3 text-success"></i>
+                                    </div>
+                                    <div class="fw-bold small">한 학급 한 달 맛보기</div>
+                                    <div class="form-check ms-auto">
+                                        <input class="form-check-input" type="radio" name="payMethod" id="method-trial-class" value="trial-class">
+                                    </div>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.7rem;">부담 없이 한 반만 먼저 써보세요.</div>
+                            </div>
+                        </div>
+
+                        <!-- 전체 학교 무료 체험 -->
+                        <div class="col-md-6">
+                            <div class="payment-option border p-3 rounded-4 h-100 d-flex flex-column cursor-pointer" onclick="selectPayment('trial-school')" id="pay-trial-school" style="transition: 0.3s; border-color: #eee;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="icon-box bg-light rounded-circle p-2 me-2">
+                                        <i class="bi bi-building-check text-success"></i>
+                                    </div>
+                                    <div class="fw-bold small">전체 학교 한 달 체험</div>
+                                    <div class="form-check ms-auto">
+                                        <input class="form-check-input" type="radio" name="payMethod" id="method-trial-school" value="trial-school">
+                                    </div>
+                                </div>
+                                <div class="text-muted" style="font-size: 0.7rem;">전교생 데이터로 완벽히 검토하세요.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 라이선스 키 입력란 (숨김 상태) -->
+                    <div id="key-input-area" class="mt-4 hidden animate__animated animate__fadeIn">
+                        <label class="form-label small fw-bold text-primary">보유하신 라이선스 키를 입력해주세요</label>
+                        <input type="text" id="license-key" class="form-control form-control-lg text-center fw-bold" placeholder="XXXX-XXXX-XXXX" style="letter-spacing: 2px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 강력한 보안 및 개인정보 보호 안내 -->
+            <div class="card border-0 mb-4" style="background-color: #f0fdf4; border-radius: 1.5rem;">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-shield-lock-fill fs-5"></i>
+                        </div>
+                        <h6 class="fw-bold mb-0 text-success-emphasis">선생님들의 보안 걱정, 1Class가 책임집니다.</h6>
+                    </div>
+                    <ul class="list-unstyled small mb-0 text-success-emphasis" style="line-height: 1.6;">
+                        <li class="mb-2"><i class="bi bi-check2-circle me-1"></i> <strong>철저한 데이터 보호</strong>: 모든 개인정보는 AES-256 방식으로 암호화되어 안전하게 관리됩니다.</li>
+                        <li class="mb-2"><i class="bi bi-check2-circle me-1"></i> <strong>체험 후 자동 파기</strong>: 무료체험 후 미결재 시, 14일 이내 모든 정보가 완벽히 영구 삭제됩니다.</li>
+                        <li><i class="bi bi-check2-circle me-1"></i> <strong>행정실 제출 서류</strong>: 보안서약서(공문 표준 양식) 및 관련 필수 서류를 메일로 보내드립니다.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-4 border-0 h-100">
+                        <div class="fw-bold small mb-1"><i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> 행정실 프리패스</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">견적서, 사업자등록증, 통장사본, 보안서약서 일체를 메일로 자동 발송해 드립니다.</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-4 border-0 h-100">
+                        <div class="fw-bold small mb-1"><i class="bi bi-magic text-primary me-1"></i> S2B 품의 헬퍼</div>
+                        <div class="text-muted" style="font-size: 0.7rem;">에듀파인 품의에 필요한 품목 정보를 원클릭으로 복사하여 붙여넣을 수 있습니다.</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="finish-onboarding" class="btn btn-dark w-100 py-3 rounded-4 fw-bold" disabled>학교 등록 완료하기 (Enter)</button>
+        </div>
+
+        <!-- Step 3: 최종 확인 및 개설 -->
+        <div id="step-3" class="step-container hidden">
+            <h4 class="fw-bold mb-4">🚀 환경 구축 준비 완료</h4>
+            <div class="p-3 bg-light rounded-4 mb-4">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">학교명</span>
+                    <span id="summary-school" class="fw-bold">-</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">접속 주소</span>
+                    <span id="summary-domain" class="fw-bold">-</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">학급 구성</span>
+                    <span id="summary-classes" class="fw-bold">-</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <div>
+                        <span class="text-muted d-block small">권장 학번 체계</span>
+                        <span id="summary-student-id-format" class="fw-bold text-primary">-</span>
+                    </div>
+                    <select id="student-id-format-select" class="form-select form-select-sm w-auto" style="border-radius: 0.5rem;">
+                        <option value="4">4자리 (10101)</option>
+                        <option value="5">5자리 (10101)</option>
+                    </select>
+                </div>
+                <p class="text-muted x-small mt-2 mb-0">
+                    <i class="bi bi-magic"></i> 우리 학교 학급 수를 분석하여 자동으로 제안된 방식입니다.
+                </p>
+            </div>
+            <button id="setup-btn" class="btn btn-primary-gradient w-100">
+                <span id="setup-text">즉시 개설 시작!</span>
+                <div id="setup-spinner" class="loading-spinner d-inline-block ms-2 hidden" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
+            </button>
+        </div>
+    </div>
+
+    <script type="module" src="./src/js/onboarding.js"></script>
+</body>
+</html>

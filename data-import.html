@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1Class | 데이터 관리 센터</title>
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --text-dark: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: #f8fafc;
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.5rem;
+        }
+
+        .data-card {
+            background: var(--glass-bg);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .nav-pills .nav-link {
+            border-radius: 1rem;
+            color: #64748b;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--primary-gradient);
+        }
+
+        .upload-zone {
+            border: 2px dashed #e2e8f0;
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fff;
+        }
+
+        .upload-zone:hover {
+            border-color: #6366f1;
+            background: #f5f3ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary-gradient {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            font-weight: 600;
+            border-radius: 1rem;
+            padding: 0.75rem 1.5rem;
+            transition: opacity 0.3s;
+        }
+
+        .btn-primary-gradient:hover {
+            opacity: 0.9;
+            color: white;
+        }
+
+        .student-photo-preview {
+            width: 60px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            background: #f1f5f9;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 2rem;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 0.25em solid #f3f4f6;
+            border-top: 0.25em solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
+    <div class="container">
+        <a class="navbar-brand" href="#">1Class Admin</a>
+        <div class="ms-auto d-flex align-items-center">
+            <div id="school-info-badge" class="d-flex align-items-center bg-light px-3 py-2 rounded-pill me-3">
+                <div class="loading-spinner me-2" style="width: 1rem; height: 1rem; border-width: 2px;"></div>
+                <span id="school-name" class="fw-bold text-secondary small">학교 연결 중...</span>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm px-3 rounded-pill" onclick="location.href='index.html'">
+                <i class="bi bi-box-arrow-left me-1"></i> 대시보드
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="fw-bold mb-1">📦 데이터 관리 센터</h2>
+            <p class="text-muted">학생 명렬, 교사 정보 및 사진을 대량으로 업로드하고 관리합니다.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="data-card p-3">
+                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                    <button class="nav-link active mb-2" data-bs-toggle="pill" data-bs-target="#tab-students" type="button">
+                        <i class="bi bi-people me-2"></i> 학생 명렬 업로드
+                    </button>
+                    <button class="nav-link mb-2" data-bs-toggle="pill" data-bs-target="#tab-photos" type="button">
+                        <i class="bi bi-person-bounding-box me-2"></i> 학생 사진 벌크 매핑
+                    </button>
+                    <button class="nav-link mb-2" data-bs-toggle="pill" data-bs-target="#tab-teachers" type="button">
+                        <i class="bi bi-person-vcard me-2"></i> 교직원 정보 관리
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="tab-content" id="v-pills-tabContent">
+                <!-- 학생 명렬 업로드 탭 -->
+                <div class="tab-pane fade show active" id="tab-students">
+                    <div class="data-card p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold m-0">학생 명렬 대량 등록 (Excel)</h5>
+                            <button id="btn-download-template" class="btn btn-link btn-sm text-decoration-none p-0 fw-bold">
+                                <i class="bi bi-download"></i> 스마트 엑셀 템플릿 받기
+                            </button>
+                        </div>
+                        
+                        <div class="upload-zone mb-4" id="excel-drop-zone">
+                            <input type="file" id="excel-input" class="hidden" accept=".xlsx, .xls">
+                            <i class="bi bi-file-earmark-excel upload-icon"></i>
+                            <h5 class="fw-bold mt-3">나이스 엑셀 파일을 이리로 끌어오세요</h5>
+                            <p class="text-muted small">또는 클릭하여 파일을 선택하세요</p>
+                        </div>
+
+                        <div id="excel-preview-container" class="hidden">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-eye"></i> 업로드 미리보기</h6>
+                            <div class="table-responsive border rounded-3 mb-3" style="max-height: 400px;">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead class="bg-light sticky-top">
+                                        <tr>
+                                            <th>학년</th><th>반</th><th>번호</th><th>학번</th><th>이름</th><th>상태</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="excel-preview-body">
+                                        <!-- 미리보기 데이터 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button class="btn btn-light" id="btn-cancel-excel">취소</button>
+                                <button class="btn btn-primary-gradient" id="btn-save-excel">
+                                    <span id="save-excel-text">전체 데이터 저장하기</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 사진 벌크 매핑 탭 -->
+                <div class="tab-pane fade" id="tab-photos">
+                    <div class="data-card p-4">
+                        <h5 class="fw-bold mb-4">지능형 사진 대량 매핑</h5>
+                        
+                        <div class="alert alert-info border-0 shadow-sm" style="background-color: #f0f7ff; color: #0056b3; border-radius: 1.25rem;">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-info-circle-fill fs-4 me-2"></i>
+                                <h6 class="fw-bold m-0">지능형 사진 최적화 가이드</h6>
+                            </div>
+                            <ul class="small mb-0 opacity-90 ps-3">
+                                <li><strong>학번 인식</strong>: 파일명에 포함된 <strong>학번(<span id="expected-id-length">?</span>자리)</strong>을 자동으로 인식합니다.</li>
+                                <li><strong>스마트 리사이징</strong>: 서버 저장 공간을 절약하고 페이지 로딩을 10배 더 빠르게 하기 위해 모든 사진을 <strong>증명사진 규격(400x500px)</strong>으로 자동 최적화합니다.</li>
+                                <li><strong>품질 보장</strong>: 1Class만의 압축 알고리즘을 통해 용량은 줄이되 이미지 선명도는 유지합니다.</li>
+                            </ul>
+                        </div>
+
+                        <div class="upload-zone mb-4" id="photo-drop-zone">
+                            <input type="file" id="photo-input" class="hidden" accept="image/*" multiple>
+                            <i class="bi bi-images upload-icon"></i>
+                            <h5 class="fw-bold mt-3">대량의 사진 파일을 한 번에 선택하세요</h5>
+                            <p class="text-muted small">압축 파일(ZIP) 또는 여러 장의 이미지 선택 가능</p>
+                        </div>
+
+                        <div id="photo-preview-container" class="hidden">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="fw-bold m-0"><i class="bi bi-magic"></i> 자동 매핑 결과</h6>
+                                <span class="badge bg-primary rounded-pill py-2 px-3" id="photo-count-badge">0장 선택됨</span>
+                            </div>
+                            
+                            <div class="row g-3" id="photo-preview-grid" style="max-height: 500px; overflow-y: auto;">
+                                <!-- 사진 미리보기 카드 -->
+                            </div>
+
+                            <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
+                                <button class="btn btn-light" id="btn-cancel-photos">초기화</button>
+                                <button class="btn btn-primary-gradient" id="btn-upload-photos">
+                                    <span id="upload-photos-text">자동 매핑 및 리로드</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 교직원 관리 탭 -->
+                <div class="tab-pane fade" id="tab-teachers">
+                    <div class="data-card p-4">
+                        <h5 class="fw-bold mb-4">교직원 정보 관리</h5>
+                        <div class="text-center py-5">
+                            <i class="bi bi-hourglass-split display-1 text-muted opacity-25"></i>
+                            <p class="mt-3 text-muted">이 기능은 곧 준비됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 개별 수정 모달 -->
+<div class="modal fade" id="edit-photo-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow" style="border-radius: 1.5rem;">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">사진 개별 수정</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="modal-photo-preview" src="" class="mb-4 shadow-sm" style="width: 200px; height: 250px; object-fit: cover; border-radius: 1rem;">
+                <h6 id="modal-student-info" class="fw-bold mb-3">학생 정보</h6>
+                <p class="text-muted small mb-4">이 학생의 사진만 새로 업로드하여 교체합니다.</p>
+                <input type="file" id="modal-photo-input" class="hidden" accept="image/*">
+                <button class="btn btn-primary-gradient w-100" onclick="document.getElementById('modal-photo-input').click()">
+                    <i class="bi bi-upload"></i> 새 사진 선택
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="liveToast" class="toast border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" style="border-radius: 1rem;">
+            <div class="d-flex bg-white" style="border-radius: 1rem; overflow: hidden;">
+                <div id="toast-icon-bg" class="px-3 d-flex align-items-center bg-primary text-white">
+                    <i id="toast-icon" class="bi bi-info-circle"></i>
+                </div>
+                <div class="toast-body py-3 ps-3 pe-4">
+                    <div id="toast-title" class="fw-bold text-dark mb-1">알림</div>
+                    <div id="toast-message" class="text-secondary small">메시지 내용입니다.</div>
+                </div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

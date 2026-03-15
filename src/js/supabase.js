@@ -1,29 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_CONFIG } from './config.js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// config.js의 설정을 우선 사용하고, 없으면 환경변수 사용
+const supabaseUrl = SUPABASE_CONFIG.URL || import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = SUPABASE_CONFIG.ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-    console.error("Supabase URL or Anon Key is missing! Check your .env file.");
+    console.warn("Supabase configuration is missing in both config.js and .env!");
 }
 
-// createClient will throw if URL is missing. Let's handle it.
 export const supabase = (supabaseUrl && supabaseAnonKey)
     ? createClient(supabaseUrl, supabaseAnonKey)
-    : {
-        from: () => ({
-            select: () => ({
-                eq: () => ({
-                    single: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }),
-                    maybeSingle: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }),
-                    limit: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: new Error("Missing Supabase Config") }) })
-                }),
-                order: () => Promise.resolve({ data: [], error: new Error("Missing Supabase Config") }),
-                in: () => Promise.resolve({ data: [], error: new Error("Missing Supabase Config") })
-            }),
-            insert: () => Promise.resolve({ error: new Error("Missing Supabase Config") }),
-            update: () => Promise.resolve({ error: new Error("Missing Supabase Config") }),
-            delete: () => Promise.resolve({ error: new Error("Missing Supabase Config") })
-        })
-    };
+    : null;
 

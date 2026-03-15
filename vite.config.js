@@ -27,7 +27,9 @@ export default defineConfig({
         admin: resolve(__dirname, 'admin.html'),
         calendar: resolve(__dirname, 'calendar.html'),
         room_search: resolve(__dirname, 'room-search.html'),
-        print_report: resolve(__dirname, 'print-report.html')
+        print_report: resolve(__dirname, 'print-report.html'),
+        onboarding: resolve(__dirname, 'onboarding.html'),
+        data_import: resolve(__dirname, 'data-import.html')
       }
     }
   },

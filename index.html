@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>경성전자고 학급 목록</title>
+    <title id="page-title">OneClass Dashboard</title>
 
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#3399ff">
@@ -48,7 +48,7 @@
                 </div>
             </a>
         </div>
-        <h1 class="school-name">경성전자고</h1>
+        <h1 class="school-name" id="top-school-name">로드 중...</h1>
         <div class="nav-actions">
             <!-- 햄버거 메뉴 -->
             <div class="hamburger-menu">
@@ -138,7 +138,26 @@
     </div>
 
     <!-- script type="module"이 중요함 -->
+    <!-- script type="module"이 중요함 -->
     <script type="module" src="src/js/index.js?v=4.36"></script>
+    
+    <!-- SaaS: 도메인 기반 학교 정보 동적 설정 -->
+    <script type="module">
+        import { getSchoolContext } from './src/js/config.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const school = getSchoolContext();
+            
+            // 상단 바 학교명
+            const topSchoolElem = document.getElementById('top-school-name');
+            if (topSchoolElem) topSchoolElem.textContent = school.name;
+            
+            // 브라우저 탭 타이틀
+            document.title = `${school.name} - OneClass Dashboard`;
+            
+            console.log('SaaS Context Loaded:', school);
+        });
+    </script>
 </body>
 
 </html>
