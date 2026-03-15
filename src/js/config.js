@@ -36,7 +36,10 @@ export function getSchoolContext() {
     }
 
     // 매핑 테이블에서 찾거나 서브도메인을 prefix로 간주
-    const school = schoolMap[hostname] || { prefix: prefix, name: prefix === 'main' ? '1Class 메인' : '원클래스 가입 학교' };
+    const school = schoolMap[hostname] || { 
+        prefix: prefix, 
+        name: prefix === 'main' ? '1Class 메인' : (prefix === 'onboarding' ? '1Class 학교 등록' : '원클래스 가입 학교') 
+    };
     
     return {
         prefix: school.prefix,

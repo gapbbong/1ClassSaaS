@@ -3,6 +3,16 @@
   "trailingSlash": false,
   "rewrites": [
     {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "onboarding.creat1324.com"
+        }
+      ],
+      "destination": "/onboarding.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/$1"
     }

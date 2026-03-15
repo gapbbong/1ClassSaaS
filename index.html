@@ -148,6 +148,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const school = getSchoolContext();
             
+            // SaaS: 온보딩 서브도메인이면 온보딩 페이지로 즉시 리다이렉트 (서버 리라이트 미작동 대비)
+            if (school.prefix === 'onboarding' && !window.location.pathname.includes('onboarding.html')) {
+                window.location.href = '/onboarding.html';
+                return;
+            }
+            
             // 상단 바 학교명
             const topSchoolElem = document.getElementById('top-school-name');
             if (topSchoolElem) topSchoolElem.textContent = school.name;
