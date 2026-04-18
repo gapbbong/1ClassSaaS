@@ -1,0 +1,10 @@
+{
+  "date": "2026-04-19",
+  "total": 1126,
+  "tables": [
+    "students",
+    "surveys",
+    "life_records",
+    "teachers"
+  ]
+}
