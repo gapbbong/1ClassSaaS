@@ -1,0 +1,338 @@
+[
+  {
+    "id": "bdd8029d-8105-4eeb-a7e5-e2b4bd3a9f40",
+    "email": "daegal96@kakao.com",
+    "name": "신승현",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:25.092866+00:00"
+  },
+  {
+    "id": "de9685b4-47c0-4f4c-9c93-a4282db52e1b",
+    "email": "eunioioi@naver.com",
+    "name": "김정은",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:46.475896+00:00"
+  },
+  {
+    "id": "14694334-52c9-4327-9b3c-56938348cea2",
+    "email": "jh850324@naver.com",
+    "name": "전지훈",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:32.886883+00:00"
+  },
+  {
+    "id": "84ce2449-2da6-4209-aafa-5564165a073b",
+    "email": "kkoma0911@kse.hs.kr",
+    "name": "최현정",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:39.654487+00:00"
+  },
+  {
+    "id": "081174ec-8485-4f9f-a81d-dc2de005ccba",
+    "email": "kimwh00@nate.com",
+    "name": "김웅환",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:44.714378+00:00"
+  },
+  {
+    "id": "7d681936-4ae7-4e51-84ea-27e78785d695",
+    "email": "royals@daum.net",
+    "name": "이관태",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:11.164749+00:00"
+  },
+  {
+    "id": "191ddf8b-ffd7-4a93-80d5-29deb72126a5",
+    "email": "5120ehdvud@naver.com",
+    "name": "박성환",
+    "role": "homeroom_teacher",
+    "assigned_class": "3-1",
+    "created_at": "2026-02-21T12:06:07.940996+00:00"
+  },
+  {
+    "id": "c7d40082-a5ac-4c06-8d17-f2e2d7f2794b",
+    "email": "rnehdgn@naver.com",
+    "name": "구동후",
+    "role": "homeroom_teacher",
+    "assigned_class": "3-2",
+    "created_at": "2026-02-21T12:06:13.097813+00:00"
+  },
+  {
+    "id": "1df88e58-ea61-4a6c-9239-a233a406a97b",
+    "email": "jarange@kse.hs.kr",
+    "name": "김민경",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-5",
+    "created_at": "2026-02-21T12:06:14.71937+00:00"
+  },
+  {
+    "id": "d420079a-dc86-4b7b-8b2d-253fc421a9b5",
+    "email": "ssonagi0721@naver.com",
+    "name": "손주희",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:22.964714+00:00"
+  },
+  {
+    "id": "b1360950-a33c-4394-b417-8a3560501b06",
+    "email": "duo0083@Nate.com",
+    "name": "박창우",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:21.374542+00:00"
+  },
+  {
+    "id": "cfe35dcb-4973-4b9e-9494-f0f4d59da1c2",
+    "email": "unknown1@daum.net",
+    "name": "김덕원",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:04.740115+00:00"
+  },
+  {
+    "id": "8a5960d9-64eb-4d74-9c01-bd0bb4502ad4",
+    "email": "godls2156@naver.com",
+    "name": "박해인",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:09.541599+00:00"
+  },
+  {
+    "id": "6634dfad-9024-458d-afb0-f94bd720abbb",
+    "email": "bbo_yaa_@naver.com",
+    "name": "김보윤",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:56.735036+00:00"
+  },
+  {
+    "id": "3154ed11-2055-4c0c-a123-e77b2c8d11f6",
+    "email": "lkm9912@hanmail.net",
+    "name": "이경미",
+    "role": "counselor",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:29.928302+00:00"
+  },
+  {
+    "id": "72cfceec-c9d0-4dd3-aa0c-9a3169d3ba2c",
+    "email": "assaree0306@naver.com",
+    "name": "최지은",
+    "role": "admin",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:38.654163+00:00"
+  },
+  {
+    "id": "6609ef65-d1e8-450b-83ba-135775ce23cb",
+    "email": "sook4966@hanmail.net",
+    "name": "김나경",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:54.851961+00:00"
+  },
+  {
+    "id": "86a4581c-693b-459c-ada8-47096fe1fba0",
+    "email": "janghyt@kse.hs.kr",
+    "name": "장효윤",
+    "role": "homeroom_teacher",
+    "assigned_class": "2-6",
+    "created_at": "2026-02-22T05:52:37.908926+00:00"
+  },
+  {
+    "id": "a2341748-a44e-40c6-b9e5-24a9813fef19",
+    "email": "lsskor@nate.com",
+    "name": "이상수",
+    "role": "admin",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:30.92344+00:00"
+  },
+  {
+    "id": "12772640-635e-4b2d-b62e-2070316cf5a9",
+    "email": "kbJseeun@naver.com",
+    "name": "김변정",
+    "role": "nurse",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:16.322992+00:00"
+  },
+  {
+    "id": "82a948c3-93fb-490d-b694-6feb11a8a072",
+    "email": "okcosi@hanmail.net",
+    "name": "이강정",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:28.28887+00:00"
+  },
+  {
+    "id": "bbc98388-0255-41ae-8c11-4333a08b1d34",
+    "email": "hamitgif@hanmail.net",
+    "name": "하미경",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:03.149094+00:00"
+  },
+  {
+    "id": "661eab7d-8680-4d14-be21-b093f3a27f2e",
+    "email": "gapbbong@naver.com",
+    "name": "이갑종",
+    "role": "admin",
+    "assigned_class": "3-4",
+    "created_at": "2026-02-21T12:06:26.693036+00:00"
+  },
+  {
+    "id": "b26e3475-6133-41a3-bcb4-65313c95c5bd",
+    "email": "lbskw@naver.com",
+    "name": "이경원",
+    "role": "admin",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:51.646622+00:00"
+  },
+  {
+    "id": "e0733884-0312-40ff-9b6b-564a79413443",
+    "email": "kh-ryu1@hanmail.net",
+    "name": "류기현",
+    "role": "admin",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:05:48.374609+00:00"
+  },
+  {
+    "id": "9ac35810-16ea-43d0-9e31-0561f0377759",
+    "email": "dhmh7656@naver.com",
+    "name": "김미희",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:06.352363+00:00"
+  },
+  {
+    "id": "d30dbe7d-054b-49ea-a520-ea9561319e92",
+    "email": "keeper@kse.hs.kr",
+    "name": "지킴이",
+    "role": "admin",
+    "assigned_class": null,
+    "created_at": "2026-02-23T06:34:31.040009+00:00"
+  },
+  {
+    "id": "a01a7ef2-d8b4-425b-9aa1-8b115ccabbc4",
+    "email": "ajshdcg@hanmail.net",
+    "name": "양지원",
+    "role": "homeroom_teacher",
+    "assigned_class": "2-4",
+    "created_at": "2026-02-21T12:05:50.015267+00:00"
+  },
+  {
+    "id": "7e3812c5-5c64-457e-b143-31ded538fc61",
+    "email": "lhs003410@naver.com",
+    "name": "이효상",
+    "role": "homeroom_teacher",
+    "assigned_class": "3-6",
+    "created_at": "2026-02-21T12:05:53.253862+00:00"
+  },
+  {
+    "id": "1aa5a007-7cb4-4f9f-ad1a-ef851960dfdf",
+    "email": "monte2002@naver.com",
+    "name": "김현정",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-3",
+    "created_at": "2026-02-21T12:05:58.34387+00:00"
+  },
+  {
+    "id": "4aa1b6ba-53d6-44bc-ab77-c47db1f8d6f3",
+    "email": "namjihyen7@naver.com",
+    "name": "남지현",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-2",
+    "created_at": "2026-02-21T12:05:59.935111+00:00"
+  },
+  {
+    "id": "8c7f3323-39f2-4c89-af00-5a2152ccbc87",
+    "email": "rotc990@naver.com",
+    "name": "박창국",
+    "role": "homeroom_teacher",
+    "assigned_class": "3-3",
+    "created_at": "2026-02-21T12:06:19.528288+00:00"
+  },
+  {
+    "id": "678e235c-9ce8-474e-b06e-41831a67562f",
+    "email": "hyleemay@gmail.com",
+    "name": "이혜영",
+    "role": "homeroom_teacher",
+    "assigned_class": "3-5",
+    "created_at": "2026-02-21T12:06:31.871082+00:00"
+  },
+  {
+    "id": "74486f15-6f12-41f2-b2cd-506f8f39a74b",
+    "email": "Jge0808@nate.com",
+    "name": "정고은",
+    "role": "subject_teacher",
+    "assigned_class": "2-2",
+    "created_at": "2026-02-21T12:06:33.797514+00:00"
+  },
+  {
+    "id": "76ba6c3a-e8b8-48e6-af76-6a6e11c9f8f6",
+    "email": "mjjoa01@naver.com",
+    "name": "정민주",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-1",
+    "created_at": "2026-02-21T12:06:34.815227+00:00"
+  },
+  {
+    "id": "001bd5a4-93b6-41bb-b9e1-76504121ac3d",
+    "email": "akarde@naver.com",
+    "name": "정재열",
+    "role": "homeroom_teacher",
+    "assigned_class": "2-3",
+    "created_at": "2026-02-21T12:06:35.752525+00:00"
+  },
+  {
+    "id": "12979cee-37e1-4cd6-b0be-102e7e90b47c",
+    "email": "philku@nate.com",
+    "name": "정필구",
+    "role": "homeroom_teacher",
+    "assigned_class": "2-5",
+    "created_at": "2026-02-21T12:06:36.740579+00:00"
+  },
+  {
+    "id": "3f65a837-e0b3-4501-a257-5ef8471a30cc",
+    "email": "whduswn4814@naver.com",
+    "name": "조연주",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-6",
+    "created_at": "2026-02-21T12:06:37.703434+00:00"
+  },
+  {
+    "id": "bcd933a1-1efe-4529-9ee6-24ae1ef5a22d",
+    "email": "heaven1024@hanmai.net",
+    "name": "한현숙",
+    "role": "homeroom_teacher",
+    "assigned_class": "2-1",
+    "created_at": "2026-02-21T12:06:40.57343+00:00"
+  },
+  {
+    "id": "5e9c946e-1bd4-48a1-88ef-05a1d4a4d55f",
+    "email": "cheolhyun012@naver.com",
+    "name": "황철현",
+    "role": "homeroom_teacher",
+    "assigned_class": "1-4",
+    "created_at": "2026-02-21T12:06:41.59403+00:00"
+  },
+  {
+    "id": "ce871582-4997-4bf2-b12f-f67c406acc19",
+    "email": "flavorhee@naver.com",
+    "name": "박경희",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-02-21T12:06:17.922473+00:00"
+  },
+  {
+    "id": "6e5971bc-f903-4c39-b9b5-c1057fb20a6b",
+    "email": "slalee@kse.hs.kr",
+    "name": "이슬아",
+    "role": "subject_teacher",
+    "assigned_class": null,
+    "created_at": "2026-03-02T22:52:20.387696+00:00"
+  }
+]
